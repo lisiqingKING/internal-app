@@ -1,0 +1,162 @@
+<template>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <button class="new-chat-btn" @click="$emit('new-chat')">
+        <span>+</span> 新建对话
+      </button>
+    </div>
+    <div class="sidebar-title">历史对话</div>
+    <div class="session-list">
+      <div
+        v-for="session in sortedSessions"
+        :key="session.id"
+        class="session-item"
+        :class="{ active: session.id === currentSessionId, loading: session.isLoading }"
+        @click="$emit('switch-session', session.id)"
+      >
+        <span class="session-title">{{ session.title }}</span>
+        <span v-if="session.isLoading" class="loading-indicator"></span>
+        <button class="delete-btn" @click.stop="$emit('delete-session', session.id)">×</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { ChatSession } from '../types'
+
+const props = defineProps<{
+  sessions: ChatSession[]
+  currentSessionId: string | null
+}>()
+
+const sortedSessions = computed(() => {
+  return [...props.sessions].sort((a, b) => b.createdAt - a.createdAt)
+})
+
+defineEmits<{
+  'new-chat': []
+  'switch-session': [id: string]
+  'delete-session': [id: string]
+}>()
+</script>
+
+<style scoped>
+.sidebar {
+  width: 260px;
+  background: #1a1a2e;
+  border-right: 1px solid #2d2d44;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sidebar-header {
+  padding: 16px;
+}
+
+.new-chat-btn {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px dashed #4d4d6a;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.new-chat-btn:hover {
+  background: #2d2d44;
+  border-color: #667eea;
+}
+
+.new-chat-btn span {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sidebar-title {
+  padding: 8px 16px;
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+}
+
+.session-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 8px;
+}
+
+.session-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 4px;
+  transition: background 0.2s;
+}
+
+.session-item:hover {
+  background: #2d2d44;
+}
+
+.session-item.active {
+  background: #3b82f6;
+}
+
+.session-title {
+  flex: 1;
+  font-size: 14px;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loading-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #3b82f6;
+  animation: bounce 1.4s infinite ease-in-out both;
+  flex-shrink: 0;
+}
+
+.loading-indicator:nth-child(2) { animation-delay: -0.32s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+.delete-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #888;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.session-item:hover .delete-btn {
+  opacity: 1;
+}
+
+.delete-btn:hover {
+  background: #ff4757;
+  color: #fff;
+}
+</style>
