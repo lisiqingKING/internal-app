@@ -11,26 +11,36 @@
 
     <!-- 右侧主内容区 -->
     <div class="main-content">
-      <!-- 顶部标题 -->
-      <div class="chat-header">
-        <h1>{{ currentSessionTitle }}</h1>
+      <!-- 无会话时显示默认页面 -->
+      <div v-if="sessions.length === 0" class="empty-state">
+        <div class="empty-icon">💬</div>
+        <h2>开始新对话</h2>
+        <p>点击左侧「新建对话」开始聊天</p>
+        <button class="start-btn" @click="handleNewChat">新建对话</button>
       </div>
 
-      <!-- 聊天消息列表 -->
-      <ChatMessages
-        :messages="currentService?.state.chatHistory || []"
-        :loading="currentService?.state.loading || false"
-        :current-text="currentService?.state.currentText || ''"
-      />
+      <template v-else-if="currentSessionId">
+        <!-- 顶部标题 -->
+        <div class="chat-header">
+          <h1>{{ currentSessionTitle }}</h1>
+        </div>
 
-      <!-- 输入区域 -->
-      <ChatInput
-        v-model="inputText"
-        :disabled="currentService?.state.loading || false"
-        :loading="currentService?.state.loading || false"
-        @send="send"
-        @cancel="cancelRequest"
-      />
+        <!-- 聊天消息列表 -->
+        <ChatMessages
+          :messages="currentService?.state.chatHistory || []"
+          :loading="currentService?.state.loading || false"
+          :current-text="currentService?.state.currentText || ''"
+        />
+
+        <!-- 输入区域 -->
+        <ChatInput
+          v-model="inputText"
+          :disabled="currentService?.state.loading || false"
+          :loading="currentService?.state.loading || false"
+          @send="send"
+          @cancel="cancelRequest"
+        />
+      </template>
     </div>
   </div>
 </template>
@@ -48,12 +58,15 @@ const inputText = ref('')
 const {
   sessions,
   currentSessionId,
+  init,
   createSession,
   getCurrentSession,
   switchSession,
   deleteSession,
   updateCurrentMessages
 } = useChatHistory()
+
+
 
 // 每个 session 的 service 实例
 const services = new Map<string, ChatService>()
@@ -77,17 +90,21 @@ const currentSessionTitle = computed(() => {
   return session?.title || '新会话'
 })
 
-onMounted(() => {
+onMounted(async () => {
+  await init()
   if (sessions.value.length > 0) {
     const firstSession = sessions.value[0]
     switchSession(firstSession.convId)
   }
 })
 
-function handleNewChat() {
+async function handleNewChat() {
+  console.log('[AiChat] handleNewChat called, sessions.value.length:', sessions.value.length)
   // 保存当前 session 状态
   saveCurrentSession()
-  const session = createSession()
+  console.log('[AiChat] before createSession, sessions.value.length:', sessions.value.length)
+  const session = await createSession()
+  console.log('[AiChat] handleNewChat session created:', session, 'sessions.value.length:', sessions.value.length)
   getOrCreateService(session)
 }
 
@@ -114,7 +131,8 @@ function saveCurrentSession() {
   const session = getCurrentSession()
   if (session) {
     const service = services.get(session.convId)
-    if (service) {
+    // 只有当有消息时才保存
+    if (service && service.state.chatHistory.length > 0) {
       service.syncState()
       updateCurrentMessages(service.state.chatHistory)
     }
@@ -135,6 +153,7 @@ async function send() {
   inputText.value = ''
 
   await service.sendMessage(msg)
+  saveCurrentSession()
 }
 </script>
 
@@ -164,5 +183,47 @@ async function send() {
   font-weight: 600;
   color: #fff;
   margin: 0;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-align: center;
+  padding: 40px;
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 24px;
+}
+
+.empty-state h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+
+.empty-state p {
+  color: #888;
+  margin: 0 0 24px;
+}
+
+.start-btn {
+  padding: 12px 24px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.start-btn:hover {
+  background: #2563eb;
 }
 </style>

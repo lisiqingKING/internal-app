@@ -1,42 +1,35 @@
 import { ref, watch } from 'vue'
 import type { Message, ChatSession } from '../types'
+import { electronStorageAdapter, initElectronStorage } from './storageElectron'
 
-// 从 localStorage 加载历史
-function loadSessions(): ChatSession[] {
-  try {
-    const data = localStorage.getItem('ai-chat-sessions')
-    return data ? JSON.parse(data) : []
-  } catch {
-    return []
-  }
-}
-
-// 保存到 localStorage
-function saveSessions(sessions: ChatSession[]) {
-  localStorage.setItem('ai-chat-sessions', JSON.stringify(sessions))
-}
+export { initElectronStorage }
 
 export function useChatHistory() {
-  const storedSessions = loadSessions()
-  const sessions = ref<ChatSession[]>(storedSessions)
-  // 如果有历史会话，默认选中第一个（最新的）
-  const currentSessionId = ref<string | null>(storedSessions[0]?.convId || null)
+  const sessions = ref<ChatSession[]>([])
+  const currentSessionId = ref<string | null>(null)
 
-  // 监听变化自动保存
-  watch(sessions, (newSessions) => {
-    saveSessions(newSessions)
+  // 监听 sessions 变化
+  watch(sessions, (newVal, oldVal) => {
+    console.log('[useChatHistory] sessions changed:', { oldLength: oldVal?.length, newLength: newVal.length })
   }, { deep: true })
 
+  // 初始化加载数据
+  async function init() {
+    await initElectronStorage()
+    const data = await electronStorageAdapter.readAll()
+    sessions.value = data
+    currentSessionId.value = null
+  }
+
   // 创建新对话
-  function createSession(): ChatSession {
-    const session: ChatSession = {
-      convId: `session-${Date.now()}`,
-      title: '新对话',
-      messages: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    }
+  async function createSession(): Promise<ChatSession> {
+    console.log('[useChatHistory] createSession called, sessions.value.length before:', sessions.value.length)
+    const title = '新对话'
+    const session = await electronStorageAdapter.add(title)
+    console.log('[useChatHistory] createSession result:', session)
+    console.log('[useChatHistory] sessions.value.length before unshift:', sessions.value.length)
     sessions.value.unshift(session)
+    console.log('[useChatHistory] sessions.value.length after unshift:', sessions.value.length)
     currentSessionId.value = session.convId
     return session
   }
@@ -48,34 +41,48 @@ export function useChatHistory() {
   }
 
   // 切换对话
-  function switchSession(id: string) {
-    currentSessionId.value = id
+  function switchSession(convId: string) {
+    currentSessionId.value = convId
   }
 
   // 删除对话
-  function deleteSession(id: string) {
-    const index = sessions.value.findIndex(s => s.convId === id)
+  async function deleteSession(convId: string) {
+    const index = sessions.value.findIndex(s => s.convId === convId)
     if (index !== -1) {
       sessions.value.splice(index, 1)
-      if (currentSessionId.value === id) {
+      if (currentSessionId.value === convId) {
         currentSessionId.value = sessions.value[0]?.convId || null
       }
+      await electronStorageAdapter.delete(convId)
     }
   }
 
   // 更新当前对话的消息
-  function updateCurrentMessages(messages: Message[]) {
+  async function updateCurrentMessages(messages: Message[]) {
     const session = getCurrentSession()
     if (session) {
       session.messages = messages
       session.updatedAt = Date.now()
-      // 如果还没有标题，用第一条用户消息作为标题
       if (session.title === '新对话' && messages.length > 0) {
         const firstUserMsg = messages.find(m => m.role === 'user')
         if (firstUserMsg) {
           session.title = firstUserMsg.content.slice(0, 20) + (firstUserMsg.content.length > 20 ? '...' : '')
         }
       }
+      await electronStorageAdapter.update(session.convId, {
+        messages: session.messages,
+        title: session.title,
+        updatedAt: session.updatedAt
+      })
+    }
+  }
+
+  // 更新 session 标题
+  async function updateSessionTitle(convId: string, title: string) {
+    const session = sessions.value.find(s => s.convId === convId)
+    if (session) {
+      session.title = title
+      await electronStorageAdapter.update(convId, { title })
     }
   }
 
@@ -88,11 +95,13 @@ export function useChatHistory() {
   return {
     sessions,
     currentSessionId,
+    init,
     createSession,
     getCurrentSession,
     switchSession,
     deleteSession,
     updateCurrentMessages,
+    updateSessionTitle,
     getCurrentMessages
   }
 }
