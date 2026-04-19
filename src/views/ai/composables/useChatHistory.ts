@@ -20,7 +20,7 @@ export function useChatHistory() {
   const storedSessions = loadSessions()
   const sessions = ref<ChatSession[]>(storedSessions)
   // 如果有历史会话，默认选中第一个（最新的）
-  const currentSessionId = ref<string | null>(storedSessions[0]?.id || null)
+  const currentSessionId = ref<string | null>(storedSessions[0]?.convId || null)
 
   // 监听变化自动保存
   watch(sessions, (newSessions) => {
@@ -30,21 +30,21 @@ export function useChatHistory() {
   // 创建新对话
   function createSession(): ChatSession {
     const session: ChatSession = {
-      id: `session-${Date.now()}`,
+      convId: `session-${Date.now()}`,
       title: '新对话',
       messages: [],
       createdAt: Date.now(),
       updatedAt: Date.now()
     }
     sessions.value.unshift(session)
-    currentSessionId.value = session.id
+    currentSessionId.value = session.convId
     return session
   }
 
   // 获取当前对话
   function getCurrentSession(): ChatSession | null {
     if (!currentSessionId.value) return null
-    return sessions.value.find(s => s.id === currentSessionId.value) || null
+    return sessions.value.find(s => s.convId === currentSessionId.value) || null
   }
 
   // 切换对话
@@ -54,11 +54,11 @@ export function useChatHistory() {
 
   // 删除对话
   function deleteSession(id: string) {
-    const index = sessions.value.findIndex(s => s.id === id)
+    const index = sessions.value.findIndex(s => s.convId === id)
     if (index !== -1) {
       sessions.value.splice(index, 1)
       if (currentSessionId.value === id) {
-        currentSessionId.value = sessions.value[0]?.id || null
+        currentSessionId.value = sessions.value[0]?.convId || null
       }
     }
   }

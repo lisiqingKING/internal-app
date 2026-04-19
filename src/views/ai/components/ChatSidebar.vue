@@ -9,14 +9,14 @@
     <div class="session-list">
       <div
         v-for="session in sortedSessions"
-        :key="session.id"
+        :key="session.convId"
         class="session-item"
-        :class="{ active: session.id === currentSessionId, loading: session.isLoading }"
-        @click="$emit('switch-session', session.id)"
+        :class="{ active: session.convId === currentSessionId, loading: session.isLoading }"
+        @click="$emit('switch-session', session.convId)"
       >
         <span class="session-title">{{ session.title }}</span>
         <span v-if="session.isLoading" class="loading-indicator"></span>
-        <button class="delete-btn" @click.stop="$emit('delete-session', session.id)">×</button>
+        <button class="delete-btn" @click.stop="$emit('delete-session', session.convId)">×</button>
       </div>
     </div>
   </div>

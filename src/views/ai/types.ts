@@ -7,6 +7,7 @@ export interface AIConfig {
 
 // 对话消息
 export interface Message {
+  msgId: string
   role: 'user' | 'assistant'
   content: string
 }
@@ -56,7 +57,7 @@ export interface ToolCallBuffer {
 
 // 对话会话
 export interface ChatSession {
-  id: string
+  convId: string
   title: string
   messages: Message[]
   createdAt: number

@@ -5,11 +5,11 @@ export function useMemory() {
   const messages = ref<Message[]>([])
 
   function addUser(content: string) {
-    messages.value.push({ role: 'user', content })
+    messages.value.push({ msgId: `msg-${Date.now()}`, role: 'user', content })
   }
 
   function addAssistant(content: string) {
-    messages.value.push({ role: 'assistant', content })
+    messages.value.push({ msgId: `msg-${Date.now()}`, role: 'assistant', content })
   }
 
   function getMessages() {
