@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import type { Message, ChatSession } from '../types'
 import { electronStorageAdapter, initElectronStorage } from './storageElectron'
 
@@ -7,11 +7,6 @@ export { initElectronStorage }
 export function useChatHistory() {
   const sessions = ref<ChatSession[]>([])
   const currentSessionId = ref<string | null>(null)
-
-  // 监听 sessions 变化
-  watch(sessions, (newVal, oldVal) => {
-    console.log('[useChatHistory] sessions changed:', { oldLength: oldVal?.length, newLength: newVal.length })
-  }, { deep: true })
 
   // 初始化加载数据
   async function init() {
@@ -23,14 +18,9 @@ export function useChatHistory() {
 
   // 创建新对话
   async function createSession(): Promise<ChatSession> {
-    console.log('[useChatHistory] createSession called, sessions.value.length before:', sessions.value.length)
     const title = '新对话'
     const session = await electronStorageAdapter.add(title)
-    console.log('[useChatHistory] createSession result:', session)
-    console.log('[useChatHistory] sessions.value.length before unshift:', sessions.value.length)
     sessions.value.unshift(session)
-    console.log('[useChatHistory] sessions.value.length after unshift:', sessions.value.length)
-    currentSessionId.value = session.convId
     return session
   }
 

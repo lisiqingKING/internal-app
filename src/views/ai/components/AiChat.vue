@@ -99,12 +99,10 @@ onMounted(async () => {
 })
 
 async function handleNewChat() {
-  console.log('[AiChat] handleNewChat called, sessions.value.length:', sessions.value.length)
   // 保存当前 session 状态
   saveCurrentSession()
-  console.log('[AiChat] before createSession, sessions.value.length:', sessions.value.length)
   const session = await createSession()
-  console.log('[AiChat] handleNewChat session created:', session, 'sessions.value.length:', sessions.value.length)
+  switchSession(session.convId)
   getOrCreateService(session)
 }
 
@@ -131,7 +129,6 @@ function saveCurrentSession() {
   const session = getCurrentSession()
   if (session) {
     const service = services.get(session.convId)
-    // 只有当有消息时才保存
     if (service && service.state.chatHistory.length > 0) {
       service.syncState()
       updateCurrentMessages(service.state.chatHistory)
@@ -151,8 +148,7 @@ async function send() {
   if (service.state.loading) return
 
   inputText.value = ''
-
-  await service.sendMessage(msg)
+await service.sendMessage(msg)
   saveCurrentSession()
 }
 </script>

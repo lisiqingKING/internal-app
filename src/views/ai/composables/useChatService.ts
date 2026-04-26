@@ -44,12 +44,11 @@ export function createChatService(session: ChatSession) {
     // 添加用户消息
     const userMsg: Message = { msgId: `msg-${Date.now()}`, role: 'user', content }
     state.chatHistory.push(userMsg)
-    session.messages.push(userMsg)
 
     // 准备 API 请求
     const requestMessages = [
       { role: 'system', content: systemPrompt },
-      ...session.messages.slice(0, -1),
+      ...state.chatHistory.slice(0, -1),
       { role: 'user', content }
     ]
 
@@ -88,7 +87,6 @@ export function createChatService(session: ChatSession) {
         if (fullText) {
           syncState()
           const assistantMsg: Message = { msgId: `msg-${Date.now()}`, role: 'assistant', content: fullText }
-          session.messages.push(assistantMsg)
           state.chatHistory.push(assistantMsg)
           state.currentText = ''
         }
@@ -102,7 +100,6 @@ export function createChatService(session: ChatSession) {
     // 写入响应
     syncState()
     const assistantMsg: Message = { msgId: `msg-${Date.now()}`, role: 'assistant', content: fullText }
-    session.messages.push(assistantMsg)
     state.chatHistory.push(assistantMsg)
     session.updatedAt = Date.now()
     state.loading = false
