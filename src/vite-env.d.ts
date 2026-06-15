@@ -19,4 +19,9 @@ interface Window {
     ai?: ElectronAPIModule
     [key: string]: any
   }
+  bridge: {
+    getModules(names: string[]): Record<string, Record<string, Function>>
+    on(channel: string, listener: (event: any, ...args: any[]) => void): void
+    off(channel: string, listener: (...args: any[]) => void): void
+  }
 }

@@ -52,14 +52,6 @@ interface HistoryItem {
   visitedAt: number
 }
 
-declare global {
-  interface Window {
-    bridge: {
-      getModules: (names: string[]) => Record<string, Record<string, Function>>
-    }
-  }
-}
-
 // 获取 history 模块
 const history = window.bridge.getModules(['history']).history
 
