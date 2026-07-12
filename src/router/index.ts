@@ -3,6 +3,7 @@ import DefaultPage from '../views/DefaultPage.vue'
 import HistoryPage from '../views/HistoryPage.vue'
 import AiPage from '../views/AiPage.vue'
 import DownloadsPage from '../views/DownloadsPage.vue'
+import LogsPage from '../views/LogsPage.vue'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -30,6 +31,11 @@ const router = createRouter({
       path: '/downloads',
       name: 'downloads',
       component: DownloadsPage
+    },
+    {
+      path: '/logs',
+      name: 'logs',
+      component: LogsPage
     }
   ]
 })
