@@ -6,6 +6,7 @@ import AiPage from '../views/AiPage.vue'
 import DownloadsPage from '../views/DownloadsPage.vue'
 import LogsPage from '../views/LogsPage.vue'
 import SettingsPage from '../views/SettingsPage.vue'
+import ErrorPage from '../views/ErrorPage.vue'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -55,6 +56,12 @@ const router = createRouter({
       name: 'settings',
       component: SettingsPage,
       meta: { title: '设置' }
+    },
+    {
+      path: '/error',
+      name: 'error',
+      component: ErrorPage,
+      meta: { title: '无法访问此网站' }
     }
   ]
 })
