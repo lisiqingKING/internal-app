@@ -10,7 +10,7 @@ document.title = '首页'
 const isDev = window.location.hostname === 'localhost'
 
 function getInternalUrl(route: string): string {
-  if (isDev) return `http://localhost:5273/#/${route}`
+  if (isDev) return `http://localhost:${__DEV_PORT__}/#/${route}`
   return `lsqapp://internal-app/${route}`
 }
 

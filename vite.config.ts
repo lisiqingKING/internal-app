@@ -6,6 +6,9 @@ import path from 'node:path'
 export default defineConfig({
   plugins: [vue()],
   base: './',
+  define: {
+    __DEV_PORT__: 5273,
+  },
   server: {
     port: 5273,
   },

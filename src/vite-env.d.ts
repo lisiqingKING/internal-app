@@ -1,5 +1,7 @@
 /// <reference types="vite/client" />
 
+declare const __DEV_PORT__: number
+
 declare module '*.vue' {
   import type { DefineComponent } from 'vue'
   const component: DefineComponent<{}, {}, any>
