@@ -1,30 +1,61 @@
 <template>
   <div class="header">
-    <div class="header-left">
-      <h1>历史记录</h1>
-      <p>最近访问的网页</p>
-    </div>
+    <h1>历史记录</h1>
     <button class="clear-btn" @click="showClearModal = true" :disabled="historyList.length === 0">
-      清空历史记录
+      清空
     </button>
+  </div>
+
+  <div class="search-bar">
+    <input
+      v-model="searchKeyword"
+      type="text"
+      placeholder="搜索..."
+      class="search-input"
+    />
+    <select v-model="timeFilter" class="time-select">
+      <option value="all">全部</option>
+      <option value="today">今天</option>
+      <option value="yesterday">昨天</option>
+      <option value="week">本周</option>
+      <option value="older">更早</option>
+    </select>
   </div>
 
   <div class="history-scroll">
     <div v-if="loading" class="loading">加载中...</div>
     <div v-else-if="historyList.length === 0" class="empty">暂无历史记录</div>
-    <div v-else class="history-list">
-      <div
-        v-for="item in historyList"
-        :key="item.id"
-        class="history-item"
-        @click="openHistory(item)"
-      >
-        <div class="history-item-content">
-          <div class="history-item-title">{{ item.title || item.url }}</div>
-          <div class="history-item-url">{{ item.url }}</div>
+    <div v-else-if="filteredGroups.length === 0" class="empty">无匹配结果</div>
+    <div v-else class="history-groups">
+      <div v-for="group in filteredGroups" :key="group.label" class="history-group">
+        <div class="group-label">{{ group.label }}</div>
+        <div class="history-list">
+          <div
+            v-for="item in group.items"
+            :key="item.id"
+            class="history-item"
+            @click="openHistory(item)"
+          >
+            <div class="history-item-icon">
+              <img
+                v-if="item.favicon && !failedFavicons.has(item.favicon)"
+                :src="item.favicon"
+                class="favicon-img"
+                @error="onFaviconError(item.favicon)"
+                @load="onFaviconLoad(item.favicon)"
+              />
+              <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+              </svg>
+            </div>
+            <div class="history-item-content">
+              <div class="history-item-title">{{ item.title || item.url }}</div>
+              <div class="history-item-url">{{ item.url }}</div>
+            </div>
+            <div class="history-item-time">{{ formatTime(item.visitedAt) }}</div>
+            <button class="delete-btn" @click.stop="deleteHistory(item.id)">×</button>
+          </div>
         </div>
-        <div class="history-item-time">{{ formatTime(item.visitedAt) }}</div>
-        <button class="delete-btn" @click.stop="deleteHistory(item.id)">×</button>
       </div>
     </div>
   </div>
@@ -43,16 +74,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { groupByTime, searchHistory, filterByTime, type HistoryItem, type HistoryGroup } from '../composables/historyUtils'
 
 document.title = '历史记录'
-
-interface HistoryItem {
-  id: number
-  title: string
-  url: string
-  visitedAt: number
-}
 
 // 获取 history 模块
 const history = window.bridge.getModules(['history']).history
@@ -60,6 +85,21 @@ const history = window.bridge.getModules(['history']).history
 const historyList = ref<HistoryItem[]>([])
 const loading = ref(true)
 const showClearModal = ref(false)
+const searchKeyword = ref('')
+const timeFilter = ref('all')
+const failedFavicons = ref<Set<string>>(new Set())
+
+const filteredGroups = computed<HistoryGroup[]>(() => {
+  let items = searchKeyword.value
+    ? searchHistory(historyList.value, searchKeyword.value)
+    : historyList.value
+
+  if (timeFilter.value !== 'all') {
+    items = filterByTime(items, timeFilter.value)
+  }
+
+  return groupByTime(items)
+})
 
 async function loadHistory() {
   try {
@@ -96,6 +136,14 @@ function openHistory(item: HistoryItem) {
   window.bridge.getModules(['tabs']).tabs.create({ title: '加载中...', url: item.url })
 }
 
+function onFaviconError(url: string) {
+  failedFavicons.value.add(url)
+}
+
+function onFaviconLoad(url: string) {
+  failedFavicons.value.delete(url)
+}
+
 function formatTime(timestamp: number): string {
   const date = new Date(timestamp)
   const now = new Date()
@@ -127,54 +175,102 @@ onUnmounted(() => {
 
 <style scoped>
 .header {
-  flex-shrink: 0;
-  padding: 40px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 24px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.history-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 40px 40px;
-}
-
-.header-left {
-  text-align: left;
-}
-
 .header h1 {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  color: var(--header-title);
-  margin-bottom: 8px;
-}
-
-.header p {
-  color: var(--header-subtitle);
-  font-size: 0.9rem;
+  color: var(--color-text-primary);
 }
 
 .clear-btn {
-  background: var(--btn-danger-bg);
-  border: 1px solid var(--btn-danger-border);
-  color: var(--btn-danger-text);
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .clear-btn:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.5);
+  color: var(--color-status-error);
 }
 
 .clear-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+}
+
+.search-bar {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.search-input:focus {
+  border-color: var(--color-accent);
+}
+
+.search-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.time-select {
+  padding: 8px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.time-select:focus {
+  border-color: var(--color-accent);
+}
+
+.history-scroll {
+  max-width: 720px;
+  margin: 0 auto;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  padding: 0 24px 24px;
+}
+
+.history-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.group-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  margin-bottom: 4px;
 }
 
 .history-list {
@@ -186,12 +282,11 @@ onUnmounted(() => {
 .history-item {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
-  background: var(--card-bg);
-  border-radius: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.2s ease;
-  gap: 12px;
+  transition: background 0.15s ease;
+  gap: 10px;
 }
 
 .history-item:hover {
@@ -202,17 +297,28 @@ onUnmounted(() => {
   opacity: 1;
 }
 
+.history-item-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.favicon-img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
 .history-item-content {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
 }
 
 .history-item-title {
   font-size: 0.9rem;
-  font-weight: 500;
   color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -221,7 +327,7 @@ onUnmounted(() => {
 
 .history-item-url {
   font-size: 0.75rem;
-  color: var(--color-accent);
+  color: var(--color-text-tertiary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -229,51 +335,41 @@ onUnmounted(() => {
 
 .history-item-time {
   font-size: 0.75rem;
-  color: var(--color-text-secondary);
+  color: var(--color-text-tertiary);
   white-space: nowrap;
 }
 
 .delete-btn {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border: none;
   border-radius: 4px;
-  background: var(--btn-danger-bg);
-  color: var(--btn-danger-text);
+  background: transparent;
+  color: var(--color-text-tertiary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.2s ease, background 0.2s ease;
+  transition: opacity 0.15s ease;
   flex-shrink: 0;
+  font-size: 1.1rem;
 }
 
 .delete-btn:hover {
-  background: rgba(239, 68, 68, 1);
-  color: white;
+  color: var(--color-status-error);
 }
 
-.empty {
+.empty, .loading {
   text-align: center;
-  padding: 60px 20px;
-  color: var(--color-text-secondary);
-  font-size: 0.9rem;
-}
-
-.loading {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--color-text-secondary);
+  padding: 48px 20px;
+  color: var(--color-text-tertiary);
   font-size: 0.9rem;
 }
 
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: var(--modal-overlay);
   display: flex;
   align-items: center;
@@ -283,59 +379,54 @@ onUnmounted(() => {
 
 .modal {
   background: var(--modal-bg);
-  border: 1px solid var(--modal-border);
-  border-radius: 16px;
-  padding: 24px;
-  min-width: 320px;
-  max-width: 400px;
+  border-radius: 12px;
+  padding: 20px;
+  width: 320px;
 }
 
 .modal-title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: var(--modal-title);
-  margin-bottom: 12px;
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
 }
 
 .modal-message {
-  font-size: 0.95rem;
-  color: var(--modal-message);
-  margin-bottom: 24px;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 20px;
   line-height: 1.5;
 }
 
 .modal-buttons {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   justify-content: flex-end;
 }
 
 .modal-btn {
-  padding: 8px 20px;
-  border-radius: 8px;
-  font-size: 0.9rem;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.2s ease;
   border: none;
 }
 
 .modal-btn-cancel {
   background: transparent;
-  border: 1px solid var(--input-border);
   color: var(--color-text-secondary);
 }
 
 .modal-btn-cancel:hover {
   background: var(--card-hover-bg);
-  color: var(--color-text-primary);
 }
 
 .modal-btn-confirm {
-  background: var(--btn-danger-text);
+  background: var(--color-status-error);
   color: white;
 }
 
 .modal-btn-confirm:hover {
-  background: var(--color-status-error);
+  opacity: 0.9;
 }
 </style>
