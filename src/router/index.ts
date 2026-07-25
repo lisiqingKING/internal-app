@@ -5,6 +5,7 @@ import HistoryPage from '../views/HistoryPage.vue'
 import AiPage from '../views/AiPage.vue'
 import DownloadsPage from '../views/DownloadsPage.vue'
 import LogsPage from '../views/LogsPage.vue'
+import SettingsPage from '../views/SettingsPage.vue'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -48,6 +49,12 @@ const router = createRouter({
       name: 'logs',
       component: LogsPage,
       meta: { title: '日志查看' }
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: SettingsPage,
+      meta: { title: '设置' }
     }
   ]
 })

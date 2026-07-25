@@ -44,7 +44,7 @@ function handleSend() {
 <style scoped>
 .chat-input {
   padding: 16px 24px;
-  border-top: 1px solid #2d2d44;
+  border-top: 1px solid var(--color-divider);
 }
 
 .textarea-wrapper {
@@ -55,9 +55,9 @@ function handleSend() {
   width: 100%;
   padding: 14px 80px 14px 20px;
   border-radius: 16px;
-  border: 1px solid #3d3d5c;
-  background: #1f2937;
-  color: #fff;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--input-text);
   font-size: 15px;
   outline: none;
   resize: none;
@@ -68,11 +68,11 @@ function handleSend() {
 }
 
 .textarea-wrapper textarea::placeholder {
-  color: #888;
+  color: var(--input-placeholder);
 }
 
 .textarea-wrapper textarea:focus {
-  border-color: #3b82f6;
+  border-color: var(--input-border-focus);
 }
 
 .textarea-wrapper textarea:disabled {
@@ -87,8 +87,8 @@ function handleSend() {
   padding: 8px 16px;
   border-radius: 16px;
   border: none;
-  background: #3b82f6;
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;

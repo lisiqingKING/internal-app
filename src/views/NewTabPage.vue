@@ -47,7 +47,7 @@ const openSite = (url: string) => {
     <div class="search-container">
       <form class="search-form" @submit.prevent="handleSearch">
         <div class="search-input-wrapper">
-          <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20" fill="#80868b">
+          <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20">
             <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
           </svg>
           <input
@@ -85,7 +85,7 @@ const openSite = (url: string) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #1a1a2e;
+  background: var(--color-bg-primary);
   margin: 0;
   padding: 0;
 }
@@ -116,6 +116,7 @@ const openSite = (url: string) => {
   left: 18px;
   pointer-events: none;
   flex-shrink: 0;
+  color: var(--color-text-tertiary);
 }
 
 .search-input {
@@ -123,27 +124,27 @@ const openSite = (url: string) => {
   height: 52px;
   border: none;
   border-radius: 26px;
-  background: #2a2a3e;
-  color: #e8eaed;
+  background: var(--input-bg);
+  color: var(--color-text-primary);
   font-size: 16px;
   padding: 0 24px 0 50px;
   outline: none;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--input-border);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   box-sizing: border-box;
 }
 
 .search-input:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--color-border);
 }
 
 .search-input:focus {
-  border-color: #8ab4f8;
+  border-color: var(--input-border-focus);
   box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.2);
 }
 
 .search-input::placeholder {
-  color: #80868b;
+  color: var(--input-placeholder);
 }
 
 /* ── 快捷方式 ── */
@@ -168,7 +169,7 @@ const openSite = (url: string) => {
 }
 
 .shortcut:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--card-hover-bg);
 }
 
 .shortcut-icon {
@@ -182,12 +183,12 @@ const openSite = (url: string) => {
 }
 
 .shortcut-name {
-  color: #9aa0a6;
+  color: var(--color-text-secondary);
   font-size: 12px;
   white-space: nowrap;
 }
 
 .shortcut:hover .shortcut-name {
-  color: #e8eaed;
+  color: var(--color-text-primary);
 }
 </style>

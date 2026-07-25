@@ -58,8 +58,8 @@ const currentConcept = computed(() => props.concepts[activeIndex.value] || null)
   right: 0;
   width: 400px;
   height: 100vh;
-  background: #1a1a2e;
-  border-left: 1px solid #2d2d44;
+  background: var(--color-bg-primary);
+  border-left: 1px solid var(--color-divider);
   transform: translateX(100%);
   transition: transform 0.3s ease;
   display: flex;
@@ -76,13 +76,13 @@ const currentConcept = computed(() => props.concepts[activeIndex.value] || null)
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid #2d2d44;
+  border-bottom: 1px solid var(--color-divider);
 }
 
 .drawer-header h3 {
   font-size: 16px;
   font-weight: 600;
-  color: #fff;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
@@ -91,16 +91,16 @@ const currentConcept = computed(() => props.concepts[activeIndex.value] || null)
   height: 28px;
   border-radius: 50%;
   border: none;
-  background: #2d2d44;
-  color: #888;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
   font-size: 18px;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .close-btn:hover {
-  background: #ff4757;
-  color: #fff;
+  background: var(--color-status-error);
+  color: var(--color-text-inverse);
 }
 
 .concept-tabs {
@@ -108,29 +108,29 @@ const currentConcept = computed(() => props.concepts[activeIndex.value] || null)
   flex-wrap: wrap;
   gap: 8px;
   padding: 16px 20px;
-  border-bottom: 1px solid #2d2d44;
+  border-bottom: 1px solid var(--color-divider);
 }
 
 .concept-tab {
   padding: 6px 14px;
   border-radius: 16px;
-  border: 1px solid #3d3d5c;
+  border: 1px solid var(--input-border);
   background: transparent;
-  color: #888;
+  color: var(--color-text-secondary);
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .concept-tab:hover {
-  border-color: #667eea;
-  color: #fff;
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
 }
 
 .concept-tab.active {
-  background: #667eea;
-  border-color: #667eea;
-  color: #fff;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-text-inverse);
 }
 
 .concept-content {
@@ -142,16 +142,16 @@ const currentConcept = computed(() => props.concepts[activeIndex.value] || null)
 .concept-content h4 {
   font-size: 18px;
   font-weight: 600;
-  color: #fff;
+  color: var(--color-text-primary);
   margin: 0 0 12px 0;
 }
 
 .summary {
   font-size: 14px;
-  color: #667eea;
+  color: var(--color-accent);
   margin: 0 0 20px 0;
   padding: 10px 14px;
-  background: #2d2d44;
+  background: var(--color-surface);
   border-radius: 8px;
 }
 
@@ -162,13 +162,13 @@ const currentConcept = computed(() => props.concepts[activeIndex.value] || null)
 .details strong {
   display: block;
   font-size: 14px;
-  color: #888;
+  color: var(--color-text-secondary);
   margin-bottom: 8px;
 }
 
 .details p {
   font-size: 14px;
-  color: #fff;
+  color: var(--color-text-primary);
   line-height: 1.7;
   margin: 0;
 }
@@ -180,12 +180,12 @@ const currentConcept = computed(() => props.concepts[activeIndex.value] || null)
 .code-section strong {
   display: block;
   font-size: 14px;
-  color: #888;
+  color: var(--color-text-secondary);
   margin-bottom: 8px;
 }
 
 .code-section pre {
-  background: #111827;
+  background: var(--color-code-bg);
   padding: 14px;
   border-radius: 8px;
   overflow-x: auto;
@@ -193,7 +193,7 @@ const currentConcept = computed(() => props.concepts[activeIndex.value] || null)
 
 .code-section code {
   font-size: 13px;
-  color: #a5d6ff;
+  color: var(--color-accent);
   font-family: 'Monaco', 'Menlo', monospace;
 }
 
@@ -205,7 +205,7 @@ const currentConcept = computed(() => props.concepts[activeIndex.value] || null)
 }
 
 .empty-state p {
-  color: #888;
+  color: var(--color-text-secondary);
   font-size: 14px;
 }
 </style>

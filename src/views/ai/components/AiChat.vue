@@ -157,7 +157,7 @@ await service.sendMessage(msg)
 .ai-chat {
   display: flex;
   height: 100vh;
-  background: #111827;
+  background: var(--color-bg-primary);
 }
 
 .main-content {
@@ -171,13 +171,13 @@ await service.sendMessage(msg)
 
 .chat-header {
   padding: 16px 24px;
-  border-bottom: 1px solid #2d2d44;
+  border-bottom: 1px solid var(--color-divider);
 }
 
 .chat-header h1 {
   font-size: 18px;
   font-weight: 600;
-  color: #fff;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
@@ -187,7 +187,7 @@ await service.sendMessage(msg)
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--color-text-primary);
   text-align: center;
   padding: 40px;
 }
@@ -204,14 +204,14 @@ await service.sendMessage(msg)
 }
 
 .empty-state p {
-  color: #888;
+  color: var(--color-text-secondary);
   margin: 0 0 24px;
 }
 
 .start-btn {
   padding: 12px 24px;
-  background: #3b82f6;
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
   border: none;
   border-radius: 8px;
   font-size: 16px;
@@ -220,6 +220,6 @@ await service.sendMessage(msg)
 }
 
 .start-btn:hover {
-  background: #2563eb;
+  background: var(--color-accent-hover);
 }
 </style>

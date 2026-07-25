@@ -147,19 +147,19 @@ onUnmounted(() => {
 .header h1 {
   font-size: 2rem;
   font-weight: 600;
-  color: #f1f5f9;
+  color: var(--header-title);
   margin-bottom: 8px;
 }
 
 .header p {
-  color: #64748b;
+  color: var(--header-subtitle);
   font-size: 0.9rem;
 }
 
 .clear-btn {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #ef4444;
+  background: var(--btn-danger-bg);
+  border: 1px solid var(--btn-danger-border);
+  color: var(--btn-danger-text);
   padding: 8px 16px;
   border-radius: 8px;
   cursor: pointer;
@@ -187,7 +187,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--card-bg);
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s ease;
@@ -195,7 +195,7 @@ onUnmounted(() => {
 }
 
 .history-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--card-hover-bg);
 }
 
 .history-item:hover .delete-btn {
@@ -213,7 +213,7 @@ onUnmounted(() => {
 .history-item-title {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #f1f5f9;
+  color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -221,7 +221,7 @@ onUnmounted(() => {
 
 .history-item-url {
   font-size: 0.75rem;
-  color: #6366f1;
+  color: var(--color-accent);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -229,7 +229,7 @@ onUnmounted(() => {
 
 .history-item-time {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--color-text-secondary);
   white-space: nowrap;
 }
 
@@ -238,8 +238,8 @@ onUnmounted(() => {
   height: 24px;
   border: none;
   border-radius: 4px;
-  background: rgba(239, 68, 68, 0.8);
-  color: white;
+  background: var(--btn-danger-bg);
+  color: var(--btn-danger-text);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -251,19 +251,20 @@ onUnmounted(() => {
 
 .delete-btn:hover {
   background: rgba(239, 68, 68, 1);
+  color: white;
 }
 
 .empty {
   text-align: center;
   padding: 60px 20px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
 }
 
 .loading {
   text-align: center;
   padding: 60px 20px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
 }
 
@@ -273,7 +274,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--modal-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -281,8 +282,8 @@ onUnmounted(() => {
 }
 
 .modal {
-  background: #2d2d2d;
-  border: 1px solid #444;
+  background: var(--modal-bg);
+  border: 1px solid var(--modal-border);
   border-radius: 16px;
   padding: 24px;
   min-width: 320px;
@@ -292,13 +293,13 @@ onUnmounted(() => {
 .modal-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #f1f5f9;
+  color: var(--modal-title);
   margin-bottom: 12px;
 }
 
 .modal-message {
   font-size: 0.95rem;
-  color: #94a3b8;
+  color: var(--modal-message);
   margin-bottom: 24px;
   line-height: 1.5;
 }
@@ -320,21 +321,21 @@ onUnmounted(() => {
 
 .modal-btn-cancel {
   background: transparent;
-  border: 1px solid #444;
-  color: #94a3b8;
+  border: 1px solid var(--input-border);
+  color: var(--color-text-secondary);
 }
 
 .modal-btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #e8eaed;
+  background: var(--card-hover-bg);
+  color: var(--color-text-primary);
 }
 
 .modal-btn-confirm {
-  background: #ef4444;
+  background: var(--btn-danger-text);
   color: white;
 }
 
 .modal-btn-confirm:hover {
-  background: #dc2626;
+  background: var(--color-status-error);
 }
 </style>

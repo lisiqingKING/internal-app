@@ -45,8 +45,8 @@ defineEmits<{
 <style scoped>
 .sidebar {
   width: 260px;
-  background: #1a1a2e;
-  border-right: 1px solid #2d2d44;
+  background: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-divider);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -60,9 +60,9 @@ defineEmits<{
   width: 100%;
   padding: 12px 16px;
   border-radius: 8px;
-  border: 1px dashed #4d4d6a;
+  border: 1px dashed var(--color-border);
   background: transparent;
-  color: #fff;
+  color: var(--color-text-primary);
   font-size: 14px;
   cursor: pointer;
   display: flex;
@@ -73,8 +73,8 @@ defineEmits<{
 }
 
 .new-chat-btn:hover {
-  background: #2d2d44;
-  border-color: #667eea;
+  background: var(--color-surface);
+  border-color: var(--color-accent);
 }
 
 .new-chat-btn span {
@@ -85,7 +85,7 @@ defineEmits<{
 .sidebar-title {
   padding: 8px 16px;
   font-size: 12px;
-  color: #888;
+  color: var(--color-text-secondary);
   text-transform: uppercase;
 }
 
@@ -106,17 +106,17 @@ defineEmits<{
 }
 
 .session-item:hover {
-  background: #2d2d44;
+  background: var(--color-surface);
 }
 
 .session-item.active {
-  background: #3b82f6;
+  background: var(--color-accent);
 }
 
 .session-title {
   flex: 1;
   font-size: 14px;
-  color: #fff;
+  color: var(--color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -126,7 +126,7 @@ defineEmits<{
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: var(--color-accent);
   animation: bounce 1.4s infinite ease-in-out both;
   flex-shrink: 0;
 }
@@ -144,7 +144,7 @@ defineEmits<{
   border-radius: 50%;
   border: none;
   background: transparent;
-  color: #888;
+  color: var(--color-text-secondary);
   font-size: 16px;
   cursor: pointer;
   opacity: 0;
@@ -156,7 +156,7 @@ defineEmits<{
 }
 
 .delete-btn:hover {
-  background: #ff4757;
-  color: #fff;
+  background: var(--color-status-error);
+  color: var(--color-text-inverse);
 }
 </style>

@@ -1,0 +1,72 @@
+/* Light Theme — 白天主题 */
+:root {
+  /* Semantic */
+  --color-bg-primary: var(--color-slate-50);
+  --color-bg-secondary: var(--color-slate-100);
+  --color-bg-tertiary: #ffffff;
+  --color-text-primary: var(--color-slate-900);
+  --color-text-secondary: var(--color-slate-600);
+  --color-text-tertiary: var(--color-slate-400);
+  --color-accent: var(--color-indigo-500);
+  --color-accent-hover: var(--color-indigo-600);
+  --color-border: var(--color-slate-200);
+  --color-divider: var(--color-slate-100);
+
+  /* Component — Page */
+  --page-bg: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 50%, #f0f4ff 100%);
+  --page-text: var(--color-text-primary);
+
+  /* Component — Card */
+  --card-bg: rgba(255, 255, 255, 0.8);
+  --card-border: var(--color-border);
+  --card-hover-bg: rgba(255, 255, 255, 0.95);
+
+  /* Component — Header */
+  --header-title: var(--color-text-primary);
+  --header-subtitle: var(--color-text-secondary);
+
+  /* Component — Button */
+  --btn-primary-bg: var(--color-accent);
+  --btn-primary-text: #ffffff;
+  --btn-danger-bg: rgba(239, 68, 68, 0.1);
+  --btn-danger-border: rgba(239, 68, 68, 0.3);
+  --btn-danger-text: var(--color-red-500);
+
+  /* Component — Input */
+  --input-bg: var(--color-bg-tertiary);
+  --input-border: var(--color-border);
+  --input-border-focus: var(--color-accent);
+  --input-text: var(--color-text-primary);
+  --input-placeholder: var(--color-text-tertiary);
+
+  /* Component — Modal */
+  --modal-bg: var(--color-bg-tertiary);
+  --modal-border: var(--color-border);
+  --modal-overlay: rgba(0, 0, 0, 0.5);
+  --modal-title: var(--color-text-primary);
+  --modal-message: var(--color-text-secondary);
+
+  /* Component — Surface (elevated cards, list items) */
+  --color-surface: rgba(255, 255, 255, 0.8);
+  --color-surface-hover: rgba(255, 255, 255, 0.95);
+
+  /* Component — Text inverse (white text on colored bg) */
+  --color-text-inverse: #ffffff;
+
+  /* Component — Accent muted (bg for accent buttons/tags) */
+  --color-accent-muted: rgba(99, 102, 241, 0.1);
+
+  /* Status */
+  --color-status-error: var(--color-red-500);
+  --color-status-error-muted: rgba(239, 68, 68, 0.1);
+  --color-status-warning: #d97706;
+  --color-status-warning-muted: rgba(217, 119, 6, 0.1);
+  --color-status-success: #059669;
+  --color-status-success-muted: rgba(5, 150, 105, 0.1);
+  --color-status-info: var(--color-slate-500);
+
+  /* Component — Code block */
+  --color-code-bg: var(--color-slate-50);
+  --color-code-border: var(--color-slate-200);
+  --color-code-text: var(--color-slate-700);
+}

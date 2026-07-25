@@ -75,15 +75,15 @@ watch(() => [props.messages.length, props.loading, props.currentText], () => {
   max-width: 70%;
   padding: 12px 16px;
   border-radius: 12px;
-  background: #2d2d44;
+  background: var(--color-surface);
 }
 
 .message-row.user .message-bubble {
-  background: #3b82f6;
+  background: var(--color-accent);
 }
 
 .message-content {
-  color: #fff;
+  color: var(--color-text-inverse);
   font-size: 15px;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -95,7 +95,7 @@ watch(() => [props.messages.length, props.loading, props.currentText], () => {
   display: inline-block;
   width: 2px;
   height: 14px;
-  background: #fff;
+  background: var(--color-text-inverse);
   margin-left: 2px;
   vertical-align: middle;
   animation: blink 1s infinite;
@@ -117,7 +117,7 @@ watch(() => [props.messages.length, props.loading, props.currentText], () => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: var(--color-accent);
   animation: bounce 1.4s infinite ease-in-out both;
 }
 
