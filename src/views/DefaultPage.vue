@@ -7,22 +7,30 @@ import logsSvg from '../assets/icons/logs.svg?raw'
 
 document.title = '首页'
 
+const isDev = window.location.hostname === 'localhost'
+
+function getInternalUrl(route: string): string {
+  if (isDev) return `http://localhost:5273/#/${route}`
+  return `lsqapp://internal-app/${route}`
+}
+
 interface QuickLink {
   name: string
-  url: string
+  route: string
   icon: string
   color: string
 }
 
 const quickLinks: QuickLink[] = [
-  { name: 'AI 助手', url: 'lsqapp://internal-app/ai', color: '#8ab4f8', icon: aiSvg },
-  { name: '历史记录', url: 'lsqapp://internal-app/history', color: '#f9ab00', icon: historySvg },
-  { name: '下载管理', url: 'lsqapp://internal-app/downloads', color: '#34a853', icon: downloadsSvg },
-  { name: '日志查看', url: 'lsqapp://internal-app/logs', color: '#ea4335', icon: logsSvg },
+  { name: 'AI 助手', route: 'ai', color: '#8ab4f8', icon: aiSvg },
+  { name: '历史记录', route: 'history', color: '#f9ab00', icon: historySvg },
+  { name: '下载管理', route: 'downloads', color: '#34a853', icon: downloadsSvg },
+  { name: '日志查看', route: 'logs', color: '#ea4335', icon: logsSvg },
 ]
 
-const openLink = (url: string) => {
-  window.bridge.getModules(['tabs']).tabs.updateUrl(url)
+const openLink = (route: string) => {
+  const url = getInternalUrl(route)
+  window.bridge.getModules(['tabs']).tabs.create({ title: '', url })
 }
 </script>
 
@@ -52,7 +60,7 @@ const openLink = (url: string) => {
           v-for="link in quickLinks"
           :key="link.name"
           class="quick-link"
-          @click="openLink(link.url)"
+          @click="openLink(link.route)"
         >
           <div class="quick-link-icon" :style="{ color: link.color }">
             <span v-html="link.icon" />
@@ -70,7 +78,7 @@ const openLink = (url: string) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1a1a2e;
+  background: var(--page-bg);
   margin: 0;
   padding: 0;
 }
@@ -96,15 +104,15 @@ const openLink = (url: string) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(138, 180, 248, 0.08);
+  background: var(--card-bg);
   border-radius: 20px;
-  border: 1px solid rgba(138, 180, 248, 0.15);
+  border: 1px solid var(--card-border);
 }
 
 .brand-title {
   font-size: 2rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #e8eaed, #8ab4f8);
+  background: linear-gradient(135deg, var(--color-text-primary), var(--color-accent));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -112,7 +120,7 @@ const openLink = (url: string) => {
 }
 
 .brand-subtitle {
-  color: #80868b;
+  color: var(--color-text-secondary);
   font-size: 14px;
   margin: 0;
 }
@@ -131,14 +139,14 @@ const openLink = (url: string) => {
   padding: 20px 24px;
   border: none;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--card-bg);
   cursor: pointer;
   transition: background 0.2s ease, transform 0.15s ease;
   min-width: 100px;
 }
 
 .quick-link:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--card-hover-bg);
   transform: translateY(-4px);
 }
 
@@ -152,22 +160,22 @@ const openLink = (url: string) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--card-hover-bg);
   border-radius: 14px;
   transition: background 0.2s ease;
 }
 
 .quick-link:hover .quick-link-icon {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--card-hover-bg);
 }
 
 .quick-link-name {
-  color: #9aa0a6;
+  color: var(--color-text-secondary);
   font-size: 13px;
   transition: color 0.2s ease;
 }
 
 .quick-link:hover .quick-link-name {
-  color: #e8eaed;
+  color: var(--color-text-primary);
 }
 </style>
