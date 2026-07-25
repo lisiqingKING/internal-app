@@ -45,6 +45,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 
+document.title = '历史记录'
+
 interface HistoryItem {
   id: number
   title: string

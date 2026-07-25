@@ -93,6 +93,8 @@
 <script setup lang="ts">
 import { useDownloads, type DownloadTask, type DownloadStatus } from '../composables/useDownloads'
 
+document.title = '下载管理'
+
 const {
   tasks,
   progressMap,

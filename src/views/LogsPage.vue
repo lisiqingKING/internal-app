@@ -54,6 +54,8 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from 'vue'
 
+document.title = '日志查看'
+
 const logs = window.bridge.getModules(['logs']).logs
 
 const files = ref<string[]>([])
