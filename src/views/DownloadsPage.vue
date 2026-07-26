@@ -206,23 +206,24 @@ function fileExt(task: DownloadTask): string {
 
 <style scoped>
 .header {
-  flex-shrink: 0;
-  padding: 40px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 24px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .header-left h1 {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  color: var(--header-title);
-  margin: 0 0 8px 0;
+  color: var(--color-text-primary);
+  margin: 0 0 4px 0;
 }
 
 .header-left p {
-  color: var(--header-subtitle);
-  font-size: 0.9rem;
+  color: var(--color-text-tertiary);
+  font-size: 0.85rem;
   margin: 0;
 }
 
@@ -233,19 +234,17 @@ function fileExt(task: DownloadTask): string {
 }
 
 .clear-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
   background: transparent;
-  border: 1px solid var(--color-border);
   color: var(--color-text-secondary);
-  padding: 10px 16px;
-  border-radius: 8px;
+  font-size: 0.85rem;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .clear-btn:hover:not(:disabled) {
-  background: var(--btn-danger-bg);
-  border-color: var(--color-status-error);
   color: var(--color-status-error);
 }
 
@@ -255,51 +254,30 @@ function fileExt(task: DownloadTask): string {
 }
 
 .downloads-scroll {
-  flex: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  max-height: calc(100vh - 140px);
   overflow-y: auto;
-  padding: 0 40px 40px;
+  padding: 0 24px 24px;
 }
 
 .downloads-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
 }
 
 .download-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background: var(--color-surface);
-  border-radius: 8px;
-  border-left: 3px solid var(--color-border);
-  transition: background 0.2s ease;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 6px;
+  transition: background 0.15s ease;
 }
 
 .download-item:hover {
-  background: var(--color-surface-hover);
-}
-
-.download-item.status-downloading {
-  border-left-color: var(--color-accent);
-}
-
-.download-item.status-completed {
-  border-left-color: var(--color-status-success);
-}
-
-.download-item.status-failed {
-  border-left-color: var(--color-status-error);
-}
-
-.download-item.status-paused {
-  border-left-color: var(--color-status-warning);
-}
-
-.download-item.status-canceled {
-  border-left-color: var(--color-text-secondary);
-  opacity: 0.7;
+  background: var(--card-hover-bg);
 }
 
 .download-main {
@@ -307,13 +285,13 @@ function fileExt(task: DownloadTask): string {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .download-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -339,8 +317,7 @@ function fileExt(task: DownloadTask): string {
 .download-filename {
   flex: 1;
   min-width: 0;
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 0.9rem;
   color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -350,13 +327,13 @@ function fileExt(task: DownloadTask): string {
 .download-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-size: 0.75rem;
-  color: var(--color-text-secondary);
+  color: var(--color-text-tertiary);
 }
 
 .status-label {
-  color: var(--color-text-secondary);
+  color: var(--color-text-tertiary);
 }
 
 .error-text {
@@ -364,7 +341,7 @@ function fileExt(task: DownloadTask): string {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 240px;
+  max-width: 200px;
 }
 
 .download-progress {
@@ -375,7 +352,7 @@ function fileExt(task: DownloadTask): string {
 
 .bar {
   width: 100%;
-  height: 4px;
+  height: 3px;
   background: var(--input-border);
   border-radius: 2px;
   overflow: hidden;
@@ -400,49 +377,53 @@ function fileExt(task: DownloadTask): string {
 }
 
 .status-canceled .fill {
-  background: var(--color-text-secondary);
+  background: var(--color-text-tertiary);
 }
 
 .progress-text {
   display: flex;
-  gap: 8px;
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--color-text-tertiary);
 }
 
 .download-actions {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.download-item:hover .download-actions {
+  opacity: 1;
 }
 
 .action-btn {
-  background: var(--color-surface);
-  border: 1px solid var(--input-border);
-  color: var(--color-text-primary);
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
   cursor: pointer;
-  font-size: 0.8rem;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .action-btn:hover {
-  background: var(--color-surface-hover);
+  background: var(--card-hover-bg);
   color: var(--color-text-primary);
 }
 
 .action-btn.danger:hover {
-  background: var(--color-status-error-muted);
   color: var(--color-status-error);
-  border-color: var(--color-status-error);
 }
 
 .empty,
 .loading {
   text-align: center;
-  padding: 60px 20px;
-  color: var(--color-text-secondary);
+  padding: 48px 20px;
+  color: var(--color-text-tertiary);
   font-size: 0.9rem;
 }
 </style>
