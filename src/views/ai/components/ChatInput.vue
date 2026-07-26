@@ -10,10 +10,15 @@
         rows="3"
       ></textarea>
       <button
+        :class="['send-btn', { loading }]"
         :disabled="loading ? false : (disabled || !modelValue.trim())"
         @click="handleSend"
       >
-        {{ loading ? '停止' : '发送' }}
+        <template v-if="loading">
+          <span class="spinner"></span>
+          <span>thinking</span>
+        </template>
+        <span v-else>发送</span>
       </button>
     </div>
   </div>
@@ -80,7 +85,7 @@ function handleSend() {
   cursor: not-allowed;
 }
 
-.textarea-wrapper button {
+.textarea-wrapper .send-btn {
   position: absolute;
   right: 12px;
   bottom: 12px;
@@ -93,10 +98,30 @@ function handleSend() {
   font-weight: 500;
   cursor: pointer;
   transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.textarea-wrapper button:disabled {
+.textarea-wrapper .send-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.textarea-wrapper .send-btn.loading {
+  background: var(--color-accent);
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

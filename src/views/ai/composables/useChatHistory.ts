@@ -1,12 +1,14 @@
 import { ref } from 'vue'
 import type { Message, ChatSession } from '../types'
-import { electronStorageAdapter, initElectronStorage } from './storageElectron'
+import { electronStorageAdapter, initElectronStorage, loadNextPage, PAGE_SIZE } from './storageElectron'
 
 export { initElectronStorage }
 
 export function useChatHistory() {
   const sessions = ref<ChatSession[]>([])
   const currentSessionId = ref<string | null>(null)
+  const loadingMore = ref(false)
+  const hasMore = ref(true)
 
   // 初始化加载数据
   async function init() {
@@ -14,6 +16,17 @@ export function useChatHistory() {
     const data = await electronStorageAdapter.readAll()
     sessions.value = data
     currentSessionId.value = null
+    hasMore.value = data.length >= PAGE_SIZE
+  }
+
+  // 加载更多会话
+  async function loadMore() {
+    if (loadingMore.value || !hasMore.value) return
+    loadingMore.value = true
+    const moreSessions = await loadNextPage()
+    sessions.value.push(...moreSessions)
+    hasMore.value = moreSessions.length >= PAGE_SIZE
+    loadingMore.value = false
   }
 
   // 创建新对话
@@ -76,6 +89,21 @@ export function useChatHistory() {
     }
   }
 
+  // 置顶/取消置顶
+  async function togglePin(convId: string) {
+    const session = sessions.value.find(s => s.convId === convId)
+    if (session) {
+      const newPinned = session.pinned ? 0 : 1
+      session.pinned = newPinned
+      await electronStorageAdapter.updatePinned(convId, newPinned)
+      // 重新排序：置顶优先
+      sessions.value.sort((a, b) => {
+        if (a.pinned !== b.pinned) return (b.pinned || 0) - (a.pinned || 0)
+        return b.updatedAt - a.updatedAt
+      })
+    }
+  }
+
   // 获取当前对话的消息
   function getCurrentMessages(): Message[] {
     const session = getCurrentSession()
@@ -85,13 +113,17 @@ export function useChatHistory() {
   return {
     sessions,
     currentSessionId,
+    loadingMore,
+    hasMore,
     init,
+    loadMore,
     createSession,
     getCurrentSession,
     switchSession,
     deleteSession,
     updateCurrentMessages,
     updateSessionTitle,
+    togglePin,
     getCurrentMessages
   }
 }

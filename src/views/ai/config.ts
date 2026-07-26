@@ -1,9 +1,8 @@
 import type { AIConfig, ToolDefinition } from './types'
 
 export const aiConfig: AIConfig = {
-  apiKey: 'sk-cp-5fuYIxNg_6UoBZ3cx0rP_Yd-uvajc6z_0rGVjQAFR9WehzkkYEGgwa1aamENrmdn4oh1cyTi8yby1pufIjFosnZwrxPfM1LdREiXZbjKYd-QZkeJSaRcoIQ',
-  apiUrl: 'https://api.minimax.chat/v1/text/chatcompletion_v2',
-  model: 'MiniMax-M2.7-highspeed'
+  apiUrl: '/proxy/ai/chat/completions',
+  model: 'mimo-v2.5-pro'
 }
 
 export const systemPrompt = `你是一位友好的 AI 助手，可以回答各种问题。请直接回答用户的问题，不需要额外说明格式。`

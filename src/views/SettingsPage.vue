@@ -94,6 +94,32 @@
         </div>
       </template>
 
+      <!-- AI 配置 -->
+      <template v-if="activeMenu === 'ai'">
+        <div class="content-header">
+          <h2>AI 配置</h2>
+          <p>配置大模型接口</p>
+        </div>
+
+        <div class="form-section">
+          <div class="form-item">
+            <label>API Key</label>
+            <input v-model="aiForm.apiKey" type="password" placeholder="请输入你的 API Key" />
+          </div>
+          <div class="form-item">
+            <label>API URL</label>
+            <input v-model="aiForm.apiUrl" placeholder="https://token-plan-cn.xiaomimimo.com/v1" />
+          </div>
+          <div class="form-item">
+            <label>Model</label>
+            <input v-model="aiForm.model" placeholder="mimo-v2.5-pro" />
+          </div>
+          <button class="save-btn" @click="saveAiConfig">
+            {{ aiSaved ? '已保存' : '保存' }}
+          </button>
+        </div>
+      </template>
+
       <!-- 关于 -->
       <template v-if="activeMenu === 'about'">
         <div class="content-header">
@@ -134,11 +160,24 @@ const settings = window.bridge.getModules(['settings']).settings
 const theme = ref<'light' | 'dark'>('dark')
 const activeMenu = ref('appearance')
 
+// AI 配置表单
+const aiForm = ref({
+  apiKey: '',
+  apiUrl: '',
+  model: ''
+})
+const aiSaved = ref(false)
+
 const menuItems = [
   {
     id: 'appearance',
     label: '外观',
     icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>'
+  },
+  {
+    id: 'ai',
+    label: 'AI 配置',
+    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>'
   },
   {
     id: 'about',
@@ -153,6 +192,11 @@ onMounted(async () => {
     theme.value = savedTheme
     applyTheme(savedTheme)
   }
+
+  // 加载 AI 配置（带默认值）
+  aiForm.value.apiKey = await settings.get('ai_api_key') || 'tp-c2c397g9aktqbph1cpe4n9ejroyi6oaqjmeeowaflb22572n'
+  aiForm.value.apiUrl = await settings.get('ai_api_url') || 'https://token-plan-cn.xiaomimimo.com/v1'
+  aiForm.value.model = await settings.get('ai_model') || 'mimo-v2.5-pro'
 })
 
 async function setTheme(newTheme: 'light' | 'dark') {
@@ -167,6 +211,14 @@ function applyTheme(newTheme: 'light' | 'dark') {
   } else {
     document.documentElement.classList.remove('dark')
   }
+}
+
+async function saveAiConfig() {
+  await settings.set('ai_api_key', aiForm.value.apiKey)
+  await settings.set('ai_api_url', aiForm.value.apiUrl)
+  await settings.set('ai_model', aiForm.value.model)
+  aiSaved.value = true
+  setTimeout(() => aiSaved.value = false, 2000)
 }
 </script>
 
@@ -426,6 +478,62 @@ function applyTheme(newTheme: 'light' | 'dark') {
 @keyframes scaleIn {
   from { transform: scale(0); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+/* ── AI 配置 ── */
+.form-section {
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-item label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.form-item input {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--input-text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-item input:focus {
+  border-color: var(--color-accent);
+}
+
+.form-item input::placeholder {
+  color: var(--input-placeholder);
+}
+
+.save-btn {
+  align-self: flex-start;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.save-btn:hover {
+  opacity: 0.9;
 }
 
 /* ── 关于 ── */

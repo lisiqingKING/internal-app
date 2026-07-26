@@ -1,6 +1,5 @@
 // AI 模块配置
 export interface AIConfig {
-  apiKey: string
   apiUrl: string
   model: string
 }
@@ -10,6 +9,7 @@ export interface Message {
   msgId: string
   role: 'user' | 'assistant'
   content: string
+  reasoning?: string
 }
 
 // 工具定义
@@ -62,6 +62,7 @@ export interface ChatSession {
   messages: Message[]
   createdAt: number
   updatedAt: number
+  pinned?: number
   isLoading?: boolean
   abortController?: AbortController
 }
@@ -73,3 +74,7 @@ export interface Concept {
   details: string
   codeExample?: string
 }
+
+// 校验常量
+export const ILLEGAL_CHARS = /[\\/:*?"<>|]/
+export const MAX_TITLE_LENGTH = 50

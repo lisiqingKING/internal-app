@@ -3,11 +3,29 @@ import { aiConfig, systemPrompt } from '../config'
 import { useStream } from './useStream'
 import type { Message, ChatSession } from '../types'
 
+// 从主进程获取最新 model 配置（带 fallback）
+async function getModelFromSettings(): Promise<string> {
+  try {
+    const ai = window.bridge.getModules(['ai']).ai
+    const model = await ai.getModel()
+    return model || aiConfig.model
+  } catch {
+    return aiConfig.model
+  }
+}
+
+// 生成唯一 msgId
+function createMsgId(): string {
+  return `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
 interface SessionState {
   chatHistory: Message[]
   currentText: string
+  currentReasoning: string
   loading: boolean
   abortController: AbortController | null
+  error: string | null
 }
 
 // 为每个 session 创建独立的服务实例
@@ -17,8 +35,10 @@ export function createChatService(session: ChatSession) {
   const state = reactive<SessionState>({
     chatHistory: [...session.messages],
     currentText: '',
+    currentReasoning: '',
     loading: false,
-    abortController: null
+    abortController: null,
+    error: null
   })
 
   // 同步状态到 session
@@ -40,10 +60,14 @@ export function createChatService(session: ChatSession) {
 
     state.loading = true
     state.currentText = ''
+    state.currentReasoning = ''
 
     // 添加用户消息
-    const userMsg: Message = { msgId: `msg-${Date.now()}`, role: 'user', content }
+    const userMsg: Message = { msgId: createMsgId(), role: 'user', content }
     state.chatHistory.push(userMsg)
+
+    // 从主进程获取最新 model
+    const model = await getModelFromSettings()
 
     // 准备 API 请求
     const requestMessages = [
@@ -53,20 +77,25 @@ export function createChatService(session: ChatSession) {
     ]
 
     let fullText = ''
+    let fullReasoning = ''
     try {
       const response = await fetch(aiConfig.apiUrl, {
         method: 'POST',
         signal: abortController.signal,
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + aiConfig.apiKey
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: aiConfig.model,
+          model,
           messages: requestMessages,
           stream: true
         })
       })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error?.message || `请求失败 (${response.status})`)
+      }
 
       for await (const data of parseSSE(response)) {
         const choice = data.choices?.[0]
@@ -74,37 +103,56 @@ export function createChatService(session: ChatSession) {
 
         const content = choice.delta?.content || ''
         const reasoning = choice.delta?.reasoning_content || ''
-        const text = content || reasoning
 
-        if (text) {
-          fullText += text
+        if (content) {
+          fullText += content
           state.currentText = fullText
+        }
+        if (reasoning) {
+          fullReasoning += reasoning
+          state.currentReasoning = fullReasoning
         }
       }
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
         // 取消请求时，保存已拿到的数据
-        if (fullText) {
-          syncState()
-          const assistantMsg: Message = { msgId: `msg-${Date.now()}`, role: 'assistant', content: fullText }
+        if (fullText || fullReasoning) {
+          const assistantMsg: Message = {
+            msgId: createMsgId(),
+            role: 'assistant',
+            content: fullText,
+            reasoning: fullReasoning || undefined
+          }
           state.chatHistory.push(assistantMsg)
+          syncState()
           state.currentText = ''
+          state.currentReasoning = ''
         }
         state.loading = false
         state.abortController = null
         return
       }
-      throw err
+      state.error = (err as Error).message || '请求失败，请检查网络或 API 配置'
+      state.loading = false
+      state.abortController = null
+      state.currentText = ''
+      return
     }
 
     // 写入响应
-    syncState()
-    const assistantMsg: Message = { msgId: `msg-${Date.now()}`, role: 'assistant', content: fullText }
+    const assistantMsg: Message = {
+      msgId: createMsgId(),
+      role: 'assistant',
+      content: fullText,
+      reasoning: fullReasoning || undefined
+    }
     state.chatHistory.push(assistantMsg)
+    syncState()
     session.updatedAt = Date.now()
     state.loading = false
     state.abortController = null
     state.currentText = ''
+    state.currentReasoning = ''
   }
 
   // 取消请求
@@ -112,6 +160,11 @@ export function createChatService(session: ChatSession) {
     if (state.abortController) {
       state.abortController.abort()
     }
+  }
+
+  // 清除错误
+  function clearError() {
+    state.error = null
   }
 
   // 更新 chatHistory（当切换回该 session 时调用）
@@ -123,6 +176,7 @@ export function createChatService(session: ChatSession) {
     state,
     sendMessage,
     cancelRequest,
+    clearError,
     syncFromSession,
     syncState
   }
