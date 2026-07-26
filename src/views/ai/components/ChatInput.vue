@@ -40,9 +40,10 @@ const emit = defineEmits<{
 function handleSend() {
   if (props.loading) {
     emit('cancel')
-  } else {
-    emit('send')
+    return
   }
+  if (props.disabled || !props.modelValue.trim()) return
+  emit('send')
 }
 </script>
 

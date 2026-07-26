@@ -39,6 +39,18 @@
       </div>
     </div>
 
+    <!-- 底部工具栏 -->
+    <div class="sidebar-footer">
+      <button class="footer-btn" @click="handleOpenSaveDir">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        查看保存记录
+      </button>
+    </div>
+
     <!-- 下拉菜单（Teleport 到 body 避免被 overflow 裁剪） -->
     <Teleport to="body">
       <div v-if="menuSession" ref="dropdownRef" class="dropdown-menu" :style="menuStyle">
@@ -114,6 +126,13 @@ const emit = defineEmits<{
   'pin-session': [id: string]
   'rename-session': [id: string, title: string]
 }>()
+
+function handleOpenSaveDir() {
+  const tabs = window.bridge.getModules(['tabs']).tabs
+  if (tabs?.createAiSaves) {
+    tabs.createAiSaves()
+  }
+}
 
 const sortedSessions = computed(() => {
   return [...props.sessions].sort((a, b) => {
@@ -366,5 +385,31 @@ onUnmounted(() => {
 .no-more {
   font-size: 12px;
   color: var(--color-text-secondary);
+}
+
+/* 底部工具栏 */
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-divider);
+}
+
+.footer-btn {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.footer-btn:hover {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
 }
 </style>

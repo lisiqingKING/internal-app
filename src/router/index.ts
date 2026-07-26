@@ -3,6 +3,7 @@ import DefaultPage from '../views/DefaultPage.vue'
 import NewTabPage from '../views/NewTabPage.vue'
 import HistoryPage from '../views/HistoryPage.vue'
 import AiPage from '../views/AiPage.vue'
+import AiSavesPage from '../views/AiSavesPage.vue'
 import DownloadsPage from '../views/DownloadsPage.vue'
 import LogsPage from '../views/LogsPage.vue'
 import SettingsPage from '../views/SettingsPage.vue'
@@ -38,6 +39,12 @@ const router = createRouter({
       name: 'ai',
       component: AiPage,
       meta: { title: 'AI 助手' }
+    },
+    {
+      path: '/ai-saves',
+      name: 'ai-saves',
+      component: AiSavesPage,
+      meta: { title: 'AI 保存记录' }
     },
     {
       path: '/downloads',
