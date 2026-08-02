@@ -51,9 +51,6 @@ function retry() {
   window.bridge.getModules(['tabs']).tabs.refresh()
 }
 
-function goHome() {
-  window.bridge.getModules(['tabs']).tabs.create({ title: '首页', url: 'lsqapp://internal-app' })
-}
 </script>
 
 <style scoped>

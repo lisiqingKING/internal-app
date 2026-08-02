@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import aiSvg from '../assets/icons/ai.svg?raw'
 import historySvg from '../assets/icons/history.svg?raw'
 import downloadsSvg from '../assets/icons/downloads.svg?raw'

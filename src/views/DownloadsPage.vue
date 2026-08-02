@@ -145,7 +145,7 @@ async function onReveal(id: string) {
 }
 
 async function onClearAll() {
-  if (!confirm(`确定清空全部 ${tasks.length} 个下载任务和文件?`)) return
+  if (!confirm(`确定清空全部 ${tasks.value.length} 个下载任务和文件?`)) return
   try {
     await clearAll()
   } catch (err) {

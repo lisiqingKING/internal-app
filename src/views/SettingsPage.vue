@@ -145,6 +145,13 @@
             <span class="about-version">版本 1.0.0</span>
           </div>
         </div>
+
+        <div class="update-section">
+          <div class="update-status" v-if="updateStatus">{{ updateStatus }}</div>
+          <button class="update-btn" @click="checkForUpdates" :disabled="checking">
+            {{ checking ? '检查中...' : '检查更新' }}
+          </button>
+        </div>
       </template>
     </main>
   </div>
@@ -167,6 +174,33 @@ const aiForm = ref({
   model: ''
 })
 const aiSaved = ref(false)
+
+// 检查更新
+const updater = window.bridge.getModules(['updater']).updater
+const checking = ref(false)
+const updateStatus = ref('')
+
+function checkForUpdates() {
+  checking.value = true
+  updateStatus.value = ''
+  updater.checkForUpdates()
+}
+
+// 监听更新事件
+window.bridge.on('updater.updateAvailable', (_event: any, data: { version: string }) => {
+  checking.value = false
+  updateStatus.value = `发现新版本: ${data.version}`
+})
+
+window.bridge.on('updater.updateNotAvailable', () => {
+  checking.value = false
+  updateStatus.value = '已是最新版本'
+})
+
+window.bridge.on('updater.updateError', (_event: any, data: { error: string }) => {
+  checking.value = false
+  updateStatus.value = `检查失败: ${data.error}`
+})
 
 const menuItems = [
   {
@@ -223,6 +257,46 @@ async function saveAiConfig() {
 </script>
 
 <style scoped>
+/* ── 更新区域 ── */
+.update-section {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  max-width: 400px;
+}
+
+.update-status {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.update-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.update-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.update-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .settings-container {
   display: flex;
   height: 100vh;
