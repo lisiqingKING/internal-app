@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import DefaultPage from '../views/DefaultPage.vue'
 import NewTabPage from '../views/NewTabPage.vue'
 import HistoryPage from '../views/HistoryPage.vue'
+import FavoritesPage from '../views/FavoritesPage.vue'
 import AiPage from '../views/AiPage.vue'
 import AiSavesPage from '../views/AiSavesPage.vue'
 import DownloadsPage from '../views/DownloadsPage.vue'
@@ -33,6 +34,12 @@ const router = createRouter({
       name: 'history',
       component: HistoryPage,
       meta: { title: '历史记录' }
+    },
+    {
+      path: '/favorites',
+      name: 'favorites',
+      component: FavoritesPage,
+      meta: { title: '收藏夹' }
     },
     {
       path: '/ai',

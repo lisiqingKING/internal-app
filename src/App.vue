@@ -10,7 +10,7 @@ function applyTheme(theme: string) {
 }
 
 function initBridge() {
-  const electronApis = window.bridge.getModules(['history', 'ai', 'logs', 'settings'])
+  const electronApis = window.bridge.getModules(['history', 'ai', 'logs', 'settings', 'favorites'])
   window.electronApis = electronApis
 
   electronApis.settings.get('theme').then((theme: string) => {
