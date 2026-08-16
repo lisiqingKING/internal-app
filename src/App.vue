@@ -18,15 +18,19 @@ function initBridge() {
   }).catch(() => applyTheme('dark'))
 
   window.bridge.on('settings:theme-changed', (_event: any, theme: string) => {
+    console.log('[theme] received theme-changed:', theme, 'html has .dark?', document.documentElement.classList.contains('dark'))
     applyTheme(theme)
   })
 }
 
+// bridge 在 preload 阶段就已注入，script setup 同步执行时通常已就绪
+// 先尝试直接初始化，失败则等 onMounted 后再试
+if (window?.bridge) {
+  initBridge()
+}
+
 onMounted(() => {
-  if (window?.bridge) {
-    initBridge()
-  } else {
-    // bridge 可能还没就绪，轮询等待
+  if (!window?.bridge) {
     const timer = setInterval(() => {
       if (window?.bridge) {
         clearInterval(timer)

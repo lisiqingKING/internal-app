@@ -333,14 +333,14 @@ defineExpose({ copiedIndex })
 }
 
 .markdown-body :deep(code) {
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--color-code-bg);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 0.9em;
 }
 
 .markdown-body :deep(pre) {
-  background: #1e1e2e;
+  background: var(--color-code-bg);
   border-radius: 8px;
   padding: 16px;
   overflow-x: auto;
@@ -350,7 +350,7 @@ defineExpose({ copiedIndex })
 .markdown-body :deep(pre code) {
   background: transparent;
   padding: 0;
-  color: #e0e0e0;
+  color: var(--color-code-text);
   font-size: 0.85em;
 }
 
