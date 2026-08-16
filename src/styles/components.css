@@ -167,3 +167,52 @@
   background: var(--color-divider);
   margin: 4px 8px;
 }
+
+/* 右键菜单 - 使用库提供的 flat 主题 + CSS 变量覆盖颜色 */
+.mx-context-menu {
+  --mx-menu-backgroud: var(--input-bg);
+  --mx-menu-hover-backgroud: rgba(0, 0, 0, 0.06);
+  --mx-menu-active-backgroud: rgba(0, 0, 0, 0.08);
+  --mx-menu-divider: var(--color-divider);
+  --mx-menu-text: var(--color-text-primary);
+  --mx-menu-hover-text: var(--color-text-primary);
+  --mx-menu-active-text: var(--color-text-primary);
+  --mx-menu-disabled-text: var(--color-text-tertiary);
+  --mx-menu-shadow-color: rgba(0, 0, 0, 0.15);
+  --mx-menu-icon-size: 18px;
+  border-radius: 8px !important;
+  padding: 4px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+}
+
+.mx-context-menu.flat {
+  border-radius: 8px !important;
+}
+
+.mx-context-menu-item {
+  font-size: 0.85rem !important;
+  padding: 8px 12px !important;
+  border-radius: 4px !important;
+}
+
+.mx-context-menu-item .icon {
+  font-size: 16px !important;
+  margin-right: 8px !important;
+}
+
+.mx-context-menu-item-separator:after {
+  background-color: var(--color-divider) !important;
+}
+
+.mx-context-menu.dark {
+  --mx-menu-hover-backgroud: rgba(255, 255, 255, 0.1);
+  --mx-menu-active-backgroud: rgba(255, 255, 255, 0.15);
+}
+
+.mx-context-menu.history-context-menu .mx-context-menu-item .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}

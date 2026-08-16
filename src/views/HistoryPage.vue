@@ -35,6 +35,7 @@
             :key="item.id"
             class="history-item"
             @click="openHistory(item)"
+            @contextmenu.prevent="showContextMenu($event, item)"
           >
             <div class="history-item-icon">
               <img
@@ -74,7 +75,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, h } from 'vue'
+import ContextMenu from '@imengyu/vue3-context-menu'
 import { groupByTime, searchHistory, filterByTime, type HistoryItem, type HistoryGroup } from '../composables/historyUtils'
 
 document.title = '历史记录'
@@ -134,6 +136,39 @@ async function confirmClear() {
 
 function openHistory(item: HistoryItem) {
   window.bridge.getModules(['tabs']).tabs.create({ title: '加载中...', url: item.url })
+}
+
+function showContextMenu(e: MouseEvent, item: HistoryItem) {
+  const iconStyle = 'width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center'
+  ContextMenu.showContextMenu({
+    x: e.clientX,
+    y: e.clientY,
+    theme: 'flat',
+    customClass: 'history-context-menu',
+    items: [
+      {
+        label: '打开',
+        icon: h('svg', { style: iconStyle, viewBox: '0 0 24 24', fill: 'currentColor' }, [
+          h('path', { d: 'M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z' })
+        ]),
+        onClick: () => openHistory(item)
+      },
+      {
+        label: '复制链接',
+        icon: h('svg', { style: iconStyle, viewBox: '0 0 24 24', fill: 'currentColor' }, [
+          h('path', { d: 'M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z' })
+        ]),
+        onClick: () => { navigator.clipboard.writeText(item.url) }
+      },
+      {
+        label: '移除',
+        icon: h('svg', { style: iconStyle, viewBox: '0 0 24 24', fill: 'currentColor' }, [
+          h('path', { d: 'M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z' })
+        ]),
+        onClick: () => { deleteHistory(item.id) }
+      }
+    ]
+  })
 }
 
 function onFaviconError(url: string) {
