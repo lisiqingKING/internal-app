@@ -6,7 +6,7 @@
   --color-bg-tertiary: var(--color-gray-850);
   --color-text-primary: var(--color-slate-100);
   --color-text-secondary: var(--color-slate-500);
-  --color-text-tertiary: var(--color-slate-600);
+  --color-text-tertiary: var(--color-slate-400);
   --color-accent: var(--color-indigo-400);
   --color-accent-hover: var(--color-indigo-300);
   --color-border: var(--color-slate-700);
@@ -54,7 +54,7 @@
   --color-text-inverse: #ffffff;
 
   /* Component — Accent muted (bg for accent buttons/tags) */
-  --color-accent-muted: rgba(99, 102, 241, 0.15);
+  --color-accent-muted: rgba(99, 102, 241, 0.25);
 
   /* Status */
   --color-status-error: var(--color-red-400);

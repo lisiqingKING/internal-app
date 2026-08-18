@@ -50,6 +50,7 @@ interface DownloadsAPI {
   cancel(id: string): Promise<boolean>
   remove(id: string): Promise<boolean>
   reveal(id: string): Promise<void>
+  openFile(id: string): Promise<void>
   clear(): Promise<number>
 }
 
@@ -140,6 +141,10 @@ export function useDownloads() {
     return await downloads.reveal(id)
   }
 
+  async function openFile(id: string) {
+    return await downloads.openFile(id)
+  }
+
   async function clearAll() {
     return await downloads.clear()
   }
@@ -155,6 +160,7 @@ export function useDownloads() {
     cancel,
     remove,
     reveal,
+    openFile,
     clearAll,
   }
 }
