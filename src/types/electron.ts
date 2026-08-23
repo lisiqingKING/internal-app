@@ -34,6 +34,9 @@ export interface ElectronTabsModule {
 export interface BridgeModule {
   getModules(names?: string[]): Record<string, Record<string, Function>>
   getModuleNames(): string[]
+  getUtils(): {
+    getInternalIconFromUrl: (url: string) => string | null
+  }
   on(channel: string, listener: (event: any, ...args: any[]) => void): void
   off(channel: string, listener: (...args: any[]) => void): void
 }
