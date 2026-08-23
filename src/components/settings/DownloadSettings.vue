@@ -58,13 +58,13 @@ const downloadAskSaveDir = ref(false)
 const downloadNotifyOnComplete = ref(false)
 
 onMounted(async () => {
-  downloadDir.value = await window.ipcRenderer.invoke('window:getDownloadDir')
+  downloadDir.value = await window.ipcRenderer.invoke('window:getDownloadDir') as string
   downloadAskSaveDir.value = await settings.get('download_ask_save_dir') === 'true'
   downloadNotifyOnComplete.value = await settings.get('download_notify_on_complete') === 'true'
 })
 
 async function selectDownloadDir() {
-  const selected = await window.ipcRenderer.invoke('window:selectDownloadDir', downloadDir.value || undefined)
+  const selected = await window.ipcRenderer.invoke('window:selectDownloadDir', downloadDir.value || undefined) as string | null
   if (selected) {
     downloadDir.value = selected
     await settings.set('download_save_dir', selected)

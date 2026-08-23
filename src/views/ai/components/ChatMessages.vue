@@ -249,8 +249,9 @@ defineExpose({ copiedIndex })
 
 .message-bubble {
   padding: 12px 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .message-row.user .message-bubble {
@@ -335,13 +336,13 @@ defineExpose({ copiedIndex })
 .markdown-body :deep(code) {
   background: var(--color-code-bg);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: 0.9em;
 }
 
 .markdown-body :deep(pre) {
   background: var(--color-code-bg);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 16px;
   overflow-x: auto;
   margin: 12px 0;
@@ -365,16 +366,17 @@ defineExpose({ copiedIndex })
   gap: 6px;
   padding: 5px 10px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text-secondary);
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .thinking-toggle:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
 }
 
 .chevron {
@@ -395,9 +397,9 @@ defineExpose({ copiedIndex })
   font-size: 13px;
   line-height: 1.7;
   color: var(--color-text-secondary);
-  background: rgba(0, 0, 0, 0.03);
-  border-left: 2px solid var(--color-divider);
-  border-radius: 0 6px 6px 0;
+  background: var(--color-surface);
+  border-left: 2px solid var(--color-accent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -438,13 +440,13 @@ defineExpose({ copiedIndex })
 /* 右键菜单 */
 .context-menu {
   min-width: 140px;
-  background: var(--input-bg);
+  background: var(--modal-bg);
   border: 1px solid var(--color-divider);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 4px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-lg);
   z-index: 10000;
-  animation: contextMenuFadeIn 0.12s ease;
+  animation: contextMenuFadeIn 0.15s ease;
 }
 
 @keyframes contextMenuFadeIn {
@@ -459,17 +461,17 @@ defineExpose({ copiedIndex })
   width: 100%;
   padding: 8px 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text-primary);
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: background 0.2s ease;
   text-align: left;
 }
 
 .context-menu-item:hover {
-  background: var(--color-surface);
+  background: var(--color-surface-hover);
 }
 
 .context-menu-item.danger {

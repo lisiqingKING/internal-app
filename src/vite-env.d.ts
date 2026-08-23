@@ -8,6 +8,9 @@ declare global {
       [key: string]: any
     }
     bridge: import('./types/electron').BridgeModule
+    ipcRenderer: {
+      invoke: (channel: string, ...args: unknown[]) => Promise<unknown>
+    }
   }
 }
 

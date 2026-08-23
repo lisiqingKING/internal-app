@@ -1,72 +1,72 @@
 /* Dark Theme — 黑夜主题 */
 .dark {
   /* Semantic */
-  --color-bg-primary: var(--color-gray-950);
-  --color-bg-secondary: var(--color-gray-900);
-  --color-bg-tertiary: var(--color-gray-850);
-  --color-text-primary: var(--color-slate-100);
-  --color-text-secondary: var(--color-slate-500);
-  --color-text-tertiary: var(--color-slate-400);
-  --color-accent: var(--color-indigo-400);
-  --color-accent-hover: var(--color-indigo-300);
-  --color-border: var(--color-slate-700);
+  --color-bg-primary: var(--color-neutral-950);
+  --color-bg-secondary: var(--color-neutral-900);
+  --color-bg-tertiary: var(--color-neutral-850);
+  --color-text-primary: var(--color-neutral-100);
+  --color-text-secondary: var(--color-neutral-400);
+  --color-text-tertiary: var(--color-neutral-500);
+  --color-accent: var(--color-emerald-400);
+  --color-accent-hover: var(--color-emerald-300);
+  --color-border: var(--color-neutral-700);
   --color-divider: rgba(255, 255, 255, 0.06);
 
   /* Component — Page */
-  --page-bg: linear-gradient(135deg, #0f0f1a 0%, #1a1b2e 50%, #16213e 100%);
+  --page-bg: linear-gradient(135deg, #0a0a0b 0%, #18181b 50%, #0a0a0b 100%);
   --page-text: var(--color-text-primary);
 
   /* Component — Card */
   --card-bg: rgba(255, 255, 255, 0.03);
-  --card-border: transparent;
+  --card-border: rgba(255, 255, 255, 0.06);
   --card-hover-bg: rgba(255, 255, 255, 0.06);
 
   /* Component — Header */
-  --header-title: var(--color-slate-100);
-  --header-subtitle: var(--color-slate-500);
+  --header-title: var(--color-neutral-100);
+  --header-subtitle: var(--color-neutral-400);
 
   /* Component — Button */
   --btn-primary-bg: var(--color-accent);
-  --btn-primary-text: #ffffff;
+  --btn-primary-text: #0a0a0b;
   --btn-danger-bg: rgba(239, 68, 68, 0.1);
   --btn-danger-border: rgba(239, 68, 68, 0.3);
   --btn-danger-text: var(--color-red-400);
 
   /* Component — Input */
-  --input-bg: var(--color-gray-850);
-  --input-border: var(--color-slate-700);
-  --input-border-focus: var(--color-accent);
+  --input-bg: var(--color-neutral-900);
+  --input-border: var(--color-neutral-700);
+  --input-border-focus: var(--color-emerald-500);
   --input-text: var(--color-text-primary);
   --input-placeholder: var(--color-text-tertiary);
 
   /* Component — Modal */
-  --modal-bg: var(--color-gray-850);
-  --modal-border: var(--color-slate-700);
+  --modal-bg: var(--color-neutral-850);
+  --modal-border: var(--color-neutral-700);
   --modal-overlay: rgba(0, 0, 0, 0.7);
-  --modal-title: var(--color-slate-100);
-  --modal-message: var(--color-slate-400);
+  --modal-title: var(--color-neutral-100);
+  --modal-message: var(--color-neutral-400);
 
   /* Component — Surface (elevated cards, list items) */
   --color-surface: rgba(255, 255, 255, 0.03);
   --color-surface-hover: rgba(255, 255, 255, 0.06);
 
   /* Component — Text inverse (white text on colored bg) */
-  --color-text-inverse: #ffffff;
+  --color-text-inverse: #0a0a0b;
 
   /* Component — Accent muted (bg for accent buttons/tags) */
-  --color-accent-muted: rgba(99, 102, 241, 0.25);
+  --color-accent-muted: rgba(16, 185, 129, 0.2);
 
   /* Status */
   --color-status-error: var(--color-red-400);
   --color-status-error-muted: rgba(248, 81, 73, 0.08);
-  --color-status-warning: #d29922;
-  --color-status-warning-muted: rgba(210, 153, 34, 0.08);
-  --color-status-success: #10b981;
+  --color-status-warning: var(--color-yellow-400);
+  --color-status-warning-muted: rgba(250, 204, 21, 0.08);
+  --color-status-success: var(--color-emerald-400);
   --color-status-success-muted: rgba(16, 185, 129, 0.08);
-  --color-status-info: var(--color-slate-500);
+  --color-status-info: var(--color-neutral-500);
 
   /* Component — Code block */
-  --color-code-bg: #0d1117;
-  --color-code-border: #21262d;
-  --color-code-text: #8b949e;
+  --color-code-bg: var(--color-neutral-950);
+  --color-code-border: var(--color-neutral-800);
+  --color-code-text: var(--color-neutral-300);
 }

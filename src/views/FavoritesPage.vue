@@ -21,21 +21,24 @@
     <div v-else-if="filteredList.length === 0" class="empty">无匹配结果</div>
     <div v-else class="favorites-list">
       <div
-        v-for="item in filteredList"
+        v-for="item in itemsWithIcons"
         :key="item.id"
         class="favorite-item"
         @click="openFavorite(item)"
       >
         <div class="favorite-item-icon">
+          <svg v-if="item.icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <path :d="item.icon" />
+          </svg>
           <img
-            v-if="item.favicon && !failedFavicons.has(item.favicon)"
+            v-else-if="item.favicon && !failedFavicons.has(item.favicon)"
             :src="item.favicon"
             class="favicon-img"
             @error="onFaviconError(item.favicon)"
             @load="onFaviconLoad(item.favicon)"
           />
-          <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="#facc15">
-            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+          <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
           </svg>
         </div>
         <div class="favorite-item-content">
@@ -68,6 +71,7 @@ document.title = '收藏夹'
 
 // 获取 favorites 模块
 const favorites = window.bridge.getModules(['favorites']).favorites
+const { getInternalIconFromUrl } = window.bridge.getUtils()
 
 interface FavoriteItem {
   id: number
@@ -99,6 +103,13 @@ const filteredList = computed<FavoriteItem[]>(() => {
     item.title.toLowerCase().includes(kw)
   )
 })
+
+const itemsWithIcons = computed(() =>
+  filteredList.value.map(item => ({
+    ...item,
+    icon: getInternalIconFromUrl(item.url),
+  }))
+)
 
 async function loadFavorites() {
   try {
@@ -164,7 +175,7 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .header {
   max-width: 720px;
   margin: 0 auto;
@@ -182,22 +193,22 @@ onUnmounted(() => {
 
 .clear-btn {
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-md, 6px);
   border: none;
   background: transparent;
   color: var(--color-text-secondary);
   font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.15s ease;
-}
+  transition: all 0.2s ease;
 
-.clear-btn:hover:not(:disabled) {
-  color: var(--color-status-error);
-}
+  &:hover:not(:disabled) {
+    color: var(--color-status-error);
+  }
 
-.clear-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }
 
 .search-bar {
@@ -212,20 +223,20 @@ onUnmounted(() => {
   flex: 1;
   padding: 8px 12px;
   border: 1px solid var(--input-border);
-  border-radius: 6px;
+  border-radius: var(--radius-md, 6px);
   background: var(--input-bg);
   color: var(--color-text-primary);
   font-size: 0.9rem;
   outline: none;
-  transition: border-color 0.15s ease;
-}
+  transition: border-color 0.2s ease;
 
-.search-input:focus {
-  border-color: var(--color-accent);
-}
+  &:focus {
+    border-color: var(--color-accent);
+  }
 
-.search-input::placeholder {
-  color: var(--color-text-tertiary);
+  &::placeholder {
+    color: var(--color-text-tertiary);
+  }
 }
 
 .favorites-scroll {
@@ -246,18 +257,18 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   padding: 10px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-md, 6px);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.2s ease;
   gap: 10px;
-}
 
-.favorite-item:hover {
-  background: var(--card-hover-bg);
-}
+  &:hover {
+    background: var(--card-hover-bg);
 
-.favorite-item:hover .delete-btn {
-  opacity: 1;
+    .delete-btn {
+      opacity: 1;
+    }
+  }
 }
 
 .favorite-item-icon {
@@ -267,6 +278,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--color-accent);
 }
 
 .favicon-img {
@@ -306,7 +318,7 @@ onUnmounted(() => {
   width: 20px;
   height: 20px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px);
   background: transparent;
   color: var(--color-text-tertiary);
   cursor: pointer;
@@ -314,16 +326,17 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.2s ease, color 0.2s ease;
   flex-shrink: 0;
   font-size: 1.1rem;
+
+  &:hover {
+    color: var(--color-status-error);
+  }
 }
 
-.delete-btn:hover {
-  color: var(--color-status-error);
-}
-
-.empty, .loading {
+.empty,
+.loading {
   text-align: center;
   padding: 48px 20px;
   color: var(--color-text-tertiary);
@@ -342,7 +355,7 @@ onUnmounted(() => {
 
 .modal {
   background: var(--modal-bg);
-  border-radius: 12px;
+  border-radius: var(--radius-lg, 12px);
   padding: 20px;
   width: 320px;
 }
@@ -369,27 +382,28 @@ onUnmounted(() => {
 
 .modal-btn {
   padding: 6px 16px;
-  border-radius: 6px;
+  border-radius: var(--radius-md, 6px);
   font-size: 0.85rem;
   cursor: pointer;
   border: none;
+  transition: opacity 0.2s ease;
 }
 
 .modal-btn-cancel {
   background: transparent;
   color: var(--color-text-secondary);
-}
 
-.modal-btn-cancel:hover {
-  background: var(--card-hover-bg);
+  &:hover {
+    background: var(--card-hover-bg);
+  }
 }
 
 .modal-btn-confirm {
   background: var(--color-status-error);
   color: white;
-}
 
-.modal-btn-confirm:hover {
-  opacity: 0.9;
+  &:hover {
+    opacity: 0.9;
+  }
 }
 </style>
