@@ -1,53 +1,81 @@
 <template>
-  <div class="chat-messages" ref="messagesRef">
+  <div class="chat-messages" ref="messagesRef" @scroll="handleScroll">
     <div
       v-for="(msg, index) in messages"
       :key="index"
       class="message-row"
       :class="msg.role"
+      @mouseenter="hoveredIndex = index"
+      @mouseleave="hoveredIndex = null"
     >
-      <div class="message-wrapper" @contextmenu.prevent="showContextMenu(index, $event)">
-        <div class="message-bubble">
-          <template v-if="msg.role === 'user'">
-            <div class="message-content">{{ msg.content }}</div>
-          </template>
-          <template v-else>
-            <!-- 已完成消息的思考块 -->
-            <div v-if="msg.reasoning" class="thinking-block">
-              <button class="thinking-toggle" @click="toggleThinking(index)">
-                <svg :class="['chevron', { open: expandedSet.has(index) }]" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 18l6-6-6-6"/>
-                </svg>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" class="brain-icon">
-                  <path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6 .5.5 1 1.2 1 2v1a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-1c0-.8.5-1.5 1-2 1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"/>
-                  <path d="M9 22h6"/>
-                </svg>
-                <span>思考过程</span>
-              </button>
-              <div v-show="expandedSet.has(index)" class="thinking-content">
-                {{ msg.reasoning }}
+      <div class="message-column">
+        <div class="message-wrapper" @contextmenu.prevent="showContextMenu(index, $event)">
+          <div class="message-bubble">
+            <template v-if="msg.role === 'user'">
+              <div class="message-content">{{ msg.content }}</div>
+            </template>
+            <template v-else>
+              <!-- 思考块 -->
+              <div v-if="msg.reasoning" class="thinking-block">
+                <button class="thinking-toggle" @click="toggleThinking(index)">
+                  <svg :class="['chevron', { open: expandedSet.has(index) }]" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" class="brain-icon">
+                    <path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6 .5.5 1 1.2 1 2v1a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-1c0-.8.5-1.5 1-2 1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"/>
+                    <path d="M9 22h6"/>
+                  </svg>
+                  <span>思考过程</span>
+                </button>
+                <div v-show="expandedSet.has(index)" class="thinking-content">
+                  {{ msg.reasoning }}
+                </div>
               </div>
+              <div class="message-content markdown-body" v-html="renderMarkdown(msg.content)"></div>
+            </template>
+          </div>
+
+          <!-- hover 操作按钮 -->
+          <Transition name="fade">
+            <div v-if="hoveredIndex === index" class="hover-actions">
+              <button class="hover-btn" title="复制" @click.stop="handleCopyMessage(msg.content)">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+              <button class="hover-btn danger" title="删除" @click.stop="emit('delete', index)">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18"/>
+                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                </svg>
+              </button>
             </div>
-            <div class="message-content markdown-body" v-html="renderMarkdown(msg.content)"></div>
-          </template>
+          </Transition>
         </div>
+
       </div>
     </div>
 
     <!-- 正在输入的助手消息 -->
     <div v-if="loading && currentText" class="message-row assistant">
-      <div class="message-bubble">
-        <div class="message-content markdown-body" v-html="renderMarkdown(currentText)"></div>
-        <span class="cursor"></span>
+      <div class="message-column">
+        <div class="message-bubble">
+          <div class="message-content markdown-body" v-html="renderMarkdown(currentText)"></div>
+          <span class="cursor"></span>
+        </div>
       </div>
     </div>
 
-    <!-- 纯等待（无任何输出） -->
+    <!-- 纯等待 -->
     <div v-if="loading && !currentText && !currentReasoning" class="message-row assistant">
-      <div class="message-bubble thinking-bubble">
-        <div class="thinking-dot"></div>
-        <div class="thinking-dot"></div>
-        <div class="thinking-dot"></div>
+      <div class="message-column">
+        <div class="message-bubble thinking-bubble">
+          <div class="thinking-dot"></div>
+          <div class="thinking-dot"></div>
+          <div class="thinking-dot"></div>
+        </div>
       </div>
     </div>
 
@@ -87,8 +115,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { onClickOutside } from '@vueuse/core'
+import { ref, watch, nextTick } from 'vue'
+import { onClickOutside, useEventListener } from '@vueuse/core'
 import { marked } from 'marked'
 import hljs from 'highlight.js'
 import type { Message } from '../types'
@@ -100,15 +128,26 @@ marked.setOptions({
 })
 
 const renderer = new marked.Renderer()
-renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
+renderer.code = function({ text, lang }: { text: string; lang?: string }) {
   const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext'
   const highlighted = hljs.highlight(text, { language }).value
-  return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`
+  const langLabel = lang || 'text'
+  return `<pre class="code-block" data-lang="${langLabel}"><code class="hljs language-${language}">${highlighted}</code></pre>`
 }
 marked.use({ renderer })
 
 function renderMarkdown(content: string): string {
   return marked.parse(content) as string
+}
+
+// 一键复制
+async function handleCopyMessage(content: string) {
+  try {
+    await navigator.clipboard.writeText(content)
+    showToast('已复制')
+  } catch {
+    showToast('复制失败')
+  }
 }
 
 const props = defineProps<{
@@ -127,6 +166,7 @@ const messagesRef = ref<HTMLElement>()
 const expandedSet = ref(new Set<number>())
 const copiedIndex = ref<number | null>(null)
 const toast = ref('')
+const hoveredIndex = ref<number | null>(null)
 
 // 右键菜单
 const contextMenu = ref<{ index: number } | null>(null)
@@ -141,13 +181,7 @@ function closeContextMenu() {
   contextMenu.value = null
 }
 
-onMounted(() => {
-  window.addEventListener('resize', closeContextMenu)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', closeContextMenu)
-})
+useEventListener(window, 'resize', closeContextMenu)
 
 function showContextMenu(index: number, event: MouseEvent) {
   contextMenu.value = { index }
@@ -167,7 +201,7 @@ function handleContextCopy() {
 
 function showToast(msg: string) {
   toast.value = msg
-  setTimeout(() => { toast.value = '' }, 3000)
+  setTimeout(() => { toast.value = '' }, 2000)
 }
 
 async function handleContextSaveFile() {
@@ -205,12 +239,31 @@ function toggleThinking(index: number) {
   }
 }
 
-// 滚动到底部
+function isNearBottom(): boolean {
+  const el = messagesRef.value
+  if (!el) return true
+  const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+  return distanceFromBottom < 100
+}
+
+// 滚动到底部（仅在用户在看底部时触发）
 async function scrollToBottom() {
+  await nextTick()
+  if (messagesRef.value && isNearBottom()) {
+    messagesRef.value.scrollTop = messagesRef.value.scrollHeight
+  }
+}
+
+// 强制滚动到底部（切换会话时使用，忽略用户是否在看底部）
+async function forceScrollToBottom() {
   await nextTick()
   if (messagesRef.value) {
     messagesRef.value.scrollTop = messagesRef.value.scrollHeight
   }
+}
+
+function handleScroll() {
+  // 每次滚动时实时判断是否在看底部，不存状态
 }
 
 // 监听消息变化和加载状态变化时滚动
@@ -218,8 +271,8 @@ watch(() => [props.messages.length, props.loading, props.currentText, props.curr
   scrollToBottom()
 }, { flush: 'post' })
 
-// 暴露 copiedIndex 供父组件设置
-defineExpose({ copiedIndex })
+// 暴露 copiedIndex 和滚动方法供父组件调用
+defineExpose({ copiedIndex, scrollToBottom, forceScrollToBottom })
 </script>
 
 <style scoped>
@@ -227,35 +280,49 @@ defineExpose({ copiedIndex })
   flex: 1;
   overflow-y: auto;
   padding: 20px 24px;
+  scroll-behavior: smooth;
 }
 
 .message-row {
   display: flex;
+  align-items: flex-end;
+  gap: 8px;
   margin-bottom: 16px;
 }
 
 .message-row.user {
-  justify-content: flex-end;
+  flex-direction: row-reverse;
+}
+
+.message-column {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 70%;
+}
+
+.message-row.user .message-column {
+  align-items: flex-end;
 }
 
 .message-wrapper {
-  max-width: 70%;
   position: relative;
-}
-
-.message-row.user .message-wrapper {
-  margin-left: auto;
 }
 
 .message-bubble {
   padding: 12px 16px;
-  border-radius: var(--radius-xl);
+  border-radius: 18px;
   background: var(--color-surface);
   box-shadow: var(--shadow-sm);
 }
 
 .message-row.user .message-bubble {
   background: var(--color-accent);
+  border-bottom-right-radius: 4px;
+}
+
+.message-row.assistant .message-bubble {
+  border-bottom-left-radius: 4px;
 }
 
 .message-content {
@@ -343,9 +410,26 @@ defineExpose({ copiedIndex })
 .markdown-body :deep(pre) {
   background: var(--color-code-bg);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 0;
   overflow-x: auto;
   margin: 12px 0;
+  position: relative;
+}
+
+.markdown-body :deep(pre.code-block) {
+  padding: 12px 16px;
+}
+
+.markdown-body :deep(pre)::before {
+  content: attr(data-lang);
+  display: block;
+  padding: 6px 14px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .markdown-body :deep(pre code) {
@@ -404,8 +488,6 @@ defineExpose({ copiedIndex })
   word-break: break-word;
 }
 
-/* 流式思考中 */
-
 .markdown-body :deep(strong) {
   font-weight: 600;
 }
@@ -435,6 +517,60 @@ defineExpose({ copiedIndex })
 .markdown-body :deep(th) {
   background: var(--color-surface);
   font-weight: 600;
+}
+
+/* hover 操作按钮 */
+.hover-actions {
+  position: absolute;
+  top: -32px;
+  right: 0;
+  display: flex;
+  gap: 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  box-shadow: var(--shadow-sm);
+}
+
+.message-row.user .hover-actions {
+  right: auto;
+  left: 0;
+}
+
+.hover-btn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.hover-btn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.hover-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+/* fade 过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 /* 右键菜单 */
