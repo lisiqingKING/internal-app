@@ -1,16 +1,40 @@
 import { reactive } from 'vue'
-import { aiConfig, systemPrompt } from '../config'
-import { useStream } from './useStream'
+import { aiConfig } from '../config'
 import type { Message, ChatSession } from '../types'
 
-// 从主进程获取最新 model 配置（带 fallback）
-async function getModelFromSettings(): Promise<string> {
-  try {
-    const ai = window.bridge.getModules(['ai']).ai
-    const model = await ai.getModel()
-    return model || aiConfig.model
-  } catch {
-    return aiConfig.model
+// 从主进程获取当前激活的完整配置
+async function getActiveProfile(): Promise<{
+  apiUrl: string
+  providerType: string
+  model: string
+  systemPrompt: string
+}> {
+  const ai = window.bridge.getModules(['ai']).ai
+  const profile = await ai.getActiveProfile()
+  if (!profile) {
+    return {
+      apiUrl: aiConfig.apiUrl,
+      providerType: 'openai',
+      model: aiConfig.model,
+      systemPrompt: '',
+    }
+  }
+  const ids = profile.systemPromptIds || []
+  let systemPrompt = ''
+  if (ids.length > 0) {
+    const prompts = await ai.getSystemPromptsByIds(ids)
+    const foundIds = prompts.map((p: any) => p.id)
+    const missing = ids.filter((id: string) => !foundIds.includes(id))
+    if (missing.length > 0) {
+      console.warn(`[useChatService] prompts not found: ${missing.join(', ')}`)
+    }
+    systemPrompt = prompts.map((p: any) => p.content).join('\n\n')
+  }
+  return {
+    apiUrl: profile.apiUrl || aiConfig.apiUrl,
+    providerType: profile.providerType || 'openai',
+    model: profile.model || aiConfig.model,
+    systemPrompt,
   }
 }
 
@@ -30,8 +54,6 @@ interface SessionState {
 
 // 为每个 session 创建独立的服务实例
 export function createChatService(session: ChatSession) {
-  const { parseSSE } = useStream()
-
   const state = reactive<SessionState>({
     chatHistory: [...session.messages],
     currentText: '',
@@ -40,6 +62,57 @@ export function createChatService(session: ChatSession) {
     abortController: null,
     error: null
   })
+
+  const ai = window.bridge.getModules(['ai']).ai
+  let currentMsgId: string | null = null
+  let fullText = ''
+  let fullReasoning = ''
+
+  // 监听主进程推送的流式事件
+  function handleStream(payload: any) {
+    if (payload.messageId !== currentMsgId) return
+    if (payload.type === 'start') {
+      // 流开始
+    } else if (payload.type === 'chunk') {
+      fullText += payload.content || ''
+      fullReasoning += payload.reasoning || ''
+      state.currentText = fullText
+      state.currentReasoning = fullReasoning
+    } else if (payload.type === 'complete') {
+      // 写入响应
+      const assistantMsg: Message = {
+        msgId: createMsgId(),
+        role: 'assistant',
+        content: fullText,
+        reasoning: fullReasoning || undefined
+      }
+      state.chatHistory.push(assistantMsg)
+      session.updatedAt = Date.now()
+      state.loading = false
+      state.currentText = ''
+      state.currentReasoning = ''
+      state.abortController = null
+    } else if (payload.type === 'halted' || payload.type === 'error') {
+      if (fullText || fullReasoning) {
+        const assistantMsg: Message = {
+          msgId: createMsgId(),
+          role: 'assistant',
+          content: fullText,
+          reasoning: fullReasoning || undefined
+        }
+        state.chatHistory.push(assistantMsg)
+        syncState()
+      }
+      state.error = payload.type === 'error' ? (payload.content || '请求失败') : null
+      state.loading = false
+      state.currentText = ''
+      state.currentReasoning = ''
+      state.abortController = null
+    }
+  }
+
+  // 订阅流式事件
+  ai.onStream(handleStream)
 
   // 同步状态到 session
   function syncState() {
@@ -55,110 +128,52 @@ export function createChatService(session: ChatSession) {
 
   // 发送消息
   async function sendMessage(content: string) {
-    const abortController = new AbortController()
-    state.abortController = abortController
-
+    state.abortController = new AbortController()
     state.loading = true
     state.currentText = ''
     state.currentReasoning = ''
+    fullText = ''
+    fullReasoning = ''
+    state.error = null
 
     // 添加用户消息
     const userMsg: Message = { msgId: createMsgId(), role: 'user', content }
     state.chatHistory.push(userMsg)
 
-    // 从主进程获取最新 model
-    const model = await getModelFromSettings()
+    // 从主进程获取当前激活配置的完整信息
+    const { apiUrl, providerType, model, systemPrompt } = await getActiveProfile()
 
-    // 准备 API 请求
-    const requestMessages = [
+    // 准备 API 请求（深拷贝确保全是纯对象，IPC 序列化需要）
+    const requestMessages = JSON.parse(JSON.stringify([
       { role: 'system', content: systemPrompt },
       ...state.chatHistory.slice(0, -1),
       { role: 'user', content }
-    ]
+    ]))
 
-    let fullText = ''
-    let fullReasoning = ''
     try {
-      const response = await fetch(aiConfig.apiUrl, {
-        method: 'POST',
-        signal: abortController.signal,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model,
-          messages: requestMessages,
-          stream: true
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error?.message || `请求失败 (${response.status})`)
-      }
-
-      for await (const data of parseSSE(response)) {
-        const choice = data.choices?.[0]
-        if (!choice) continue
-
-        const content = choice.delta?.content || ''
-        const reasoning = choice.delta?.reasoning_content || ''
-
-        if (content) {
-          fullText += content
-          state.currentText = fullText
-        }
-        if (reasoning) {
-          fullReasoning += reasoning
-          state.currentReasoning = fullReasoning
-        }
-      }
+      const msgId = createMsgId()
+      currentMsgId = msgId  // 在调用前就赋值，事件可能在 await 返回前就到了
+      const result = await ai.chat({
+        conversationId: String(session.convId),
+        messageId: msgId,
+        apiUrl,
+        providerType,
+        model,
+        messages: requestMessages,
+      }) as { messageId: string }
+      currentMsgId = result.messageId
     } catch (err) {
-      if ((err as Error).name === 'AbortError') {
-        // 取消请求时，保存已拿到的数据
-        if (fullText || fullReasoning) {
-          const assistantMsg: Message = {
-            msgId: createMsgId(),
-            role: 'assistant',
-            content: fullText,
-            reasoning: fullReasoning || undefined
-          }
-          state.chatHistory.push(assistantMsg)
-          syncState()
-          state.currentText = ''
-          state.currentReasoning = ''
-        }
-        state.loading = false
-        state.abortController = null
-        return
-      }
       state.error = (err as Error).message || '请求失败，请检查网络或 API 配置'
       state.loading = false
       state.abortController = null
-      state.currentText = ''
-      return
+      currentMsgId = null
     }
-
-    // 写入响应
-    const assistantMsg: Message = {
-      msgId: createMsgId(),
-      role: 'assistant',
-      content: fullText,
-      reasoning: fullReasoning || undefined
-    }
-    state.chatHistory.push(assistantMsg)
-    syncState()
-    session.updatedAt = Date.now()
-    state.loading = false
-    state.abortController = null
-    state.currentText = ''
-    state.currentReasoning = ''
   }
 
   // 取消请求
   function cancelRequest() {
-    if (state.abortController) {
-      state.abortController.abort()
+    if (currentMsgId) {
+      ai.abort(currentMsgId)
     }
   }
 

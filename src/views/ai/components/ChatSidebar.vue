@@ -14,22 +14,31 @@
         :class="{ active: session.convId === currentSessionId, loading: session.isLoading }"
         @click="$emit('switch-session', session.convId)"
       >
-        <span v-if="session.pinned" class="pin-icon">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
-            <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
-          </svg>
-        </span>
-        <span class="session-title">{{ session.title }}</span>
-        <span v-if="session.isLoading" class="loading-indicator"></span>
-        <div class="session-menu-wrapper" @click.stop>
-          <button class="more-btn" @click="toggleMenu(session.convId, $event)">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-              <circle cx="12" cy="5" r="2"/>
-              <circle cx="12" cy="12" r="2"/>
-              <circle cx="12" cy="19" r="2"/>
-            </svg>
-          </button>
+        <div class="session-main">
+          <div class="session-title-row">
+            <span class="pin-placeholder" :class="{ pinned: session.pinned }">
+              <svg v-if="session.pinned" viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
+              </svg>
+              <svg v-else viewBox="0 0 24 24" width="12" height="12" fill="currentColor" opacity="0.2">
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </span>
+            <span class="session-title">{{ session.title }}</span>
+            <span class="session-time">{{ formatTime(session.updatedAt) }}</span>
+            <div class="session-menu-wrapper" @click.stop>
+              <button class="more-btn" @click="toggleMenu(session.convId, $event)">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <circle cx="12" cy="5" r="2"/>
+                  <circle cx="12" cy="12" r="2"/>
+                  <circle cx="12" cy="19" r="2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="session-preview">{{ getLastMessageContent(session) }}</div>
         </div>
+        <span v-if="session.isLoading" class="loading-indicator"></span>
       </div>
 
       <!-- 加载更多触发器 -->
@@ -127,12 +136,35 @@ function handleOpenSaveDir() {
   }
 }
 
+// 格式化时间：今天显示时间，昨天显示"昨天"，更早显示日期
+function formatTime(timestamp: number): string {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const todayStart = today.getTime()
+  const yesterdayStart = todayStart - 86400000
+
+  if (timestamp >= todayStart) {
+    return new Date(timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  }
+  if (timestamp >= yesterdayStart) {
+    return '昨天'
+  }
+  return new Date(timestamp).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+}
+
 const sortedSessions = computed(() => {
   return [...props.sessions].sort((a, b) => {
     if (a.pinned !== b.pinned) return (b.pinned || 0) - (a.pinned || 0)
     return b.createdAt - a.createdAt
   })
 })
+
+function getLastMessageContent(session: ChatSession): string {
+  if (session.messages.length === 0) return ''
+  const last = session.messages[session.messages.length - 1]
+  const prefix = last.role === 'user' ? '我: ' : 'AI: '
+  return prefix + last.content.slice(0, 50) + (last.content.length > 50 ? '...' : '')
+}
 
 // 下拉菜单
 const menuSession = ref<ChatSession | null>(null)
@@ -302,18 +334,31 @@ onUnmounted(() => {
   background: var(--color-surface);
 }
 
-.session-item.active {
-  background: var(--color-accent);
-}
-
-.session-item.active .pin-icon {
-  color: var(--color-text-inverse);
-}
-
-.pin-icon {
+.session-item.active .session-title {
   color: var(--color-accent);
-  margin-right: 4px;
+  font-weight: 500;
+}
+
+.session-item.active .session-time {
+  color: var(--color-accent);
+  opacity: 0.7;
+}
+
+.session-item.active .pin-placeholder.pinned {
+  color: var(--color-accent);
+}
+
+.pin-placeholder {
+  width: 12px;
+  height: 12px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pin-placeholder.pinned {
+  color: var(--color-accent);
 }
 
 .session-title {
@@ -323,6 +368,43 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.session-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.session-title-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.session-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.session-preview {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-time {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .loading-indicator {

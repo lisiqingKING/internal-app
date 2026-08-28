@@ -1,79 +1,231 @@
 <template>
-  <div class="content-header">
-    <h2>AI 配置</h2>
-    <p>配置大模型接口</p>
-  </div>
-
-  <div class="form-section">
-    <div class="form-item">
-      <label>Provider</label>
-      <select v-model="aiForm.providerType">
-        <option value="openai">OpenAI 兼容</option>
-        <option value="anthropic">Anthropic Claude</option>
-      </select>
+  <div class="ai-settings">
+    <div class="content-header">
+      <h2>AI 配置</h2>
+      <p>支持多套配置切换使用</p>
     </div>
-    <div class="form-item">
-      <label>API Key</label>
-      <div class="input-with-toggle">
-        <input v-model="aiForm.apiKey" :type="showApiKey ? 'text' : 'password'" placeholder="请输入你的 API Key" />
-        <button class="toggle-visibility" @click="showApiKey = !showApiKey" type="button">
-          <svg v-if="showApiKey" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-          </svg>
-          <svg v-else viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-            <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
-          </svg>
-        </button>
+
+    <div class="settings-layout">
+      <AiProfileList
+        :profiles="profiles"
+        :activeName="activeProfile?.name ?? ''"
+        @select="handleSelect"
+        @add="handleAdd"
+        @delete="handleDelete"
+      />
+
+      <AiProfileForm
+        v-if="activeProfile || isCreatingNew"
+        :profile="editingProfile"
+        :isNewProfile="isCreatingNew"
+        :selectedCount="selectedPromptIds.length"
+        @save="handleSave"
+        @openPromptModal="promptModalOpen = true"
+      />
+
+      <div v-else class="no-selection">
+        <p>选择左侧配置或新建</p>
       </div>
     </div>
-    <div class="form-item">
-      <label>API URL</label>
-      <input v-model="aiForm.apiUrl" placeholder="https://token-plan-cn.xiaomimimo.com/v1" />
-    </div>
-    <div class="form-item">
-      <label>Model</label>
-      <input v-model="aiForm.model" placeholder="mimo-v2.5-pro" />
-    </div>
-    <button class="save-btn" @click="saveAiConfig">
-      {{ aiSaved ? '已保存' : '保存' }}
-    </button>
+
+    <!-- 提示词选择 Modal -->
+    <Teleport to="body">
+      <div v-if="promptModalOpen" class="modal-overlay" @click.self="promptModalOpen = false">
+        <div class="modal-dialog prompt-modal">
+          <div class="modal-header">
+            <span>选择提示词</span>
+            <button class="modal-close" @click="promptModalOpen = false">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="prompt-list">
+              <label
+                v-for="prompt in availablePrompts"
+                :key="prompt.id"
+                class="prompt-item"
+                :class="{ selected: selectedPromptIds.includes(prompt.id) }"
+              >
+                <input
+                  type="checkbox"
+                  :value="prompt.id"
+                  v-model="selectedPromptIds"
+                  @change="editingProfile.systemPromptIds = [...selectedPromptIds]"
+                />
+                <div class="prompt-info">
+                  <span class="prompt-name">{{ prompt.name }}</span>
+                  <span class="prompt-preview">{{ prompt.content.slice(0, 50) }}{{ prompt.content.length > 50 ? '...' : '' }}</span>
+                </div>
+              </label>
+              <div v-if="availablePrompts.length === 0" class="no-prompts">
+                暂无提示词，请在下方添加
+              </div>
+            </div>
+            <div class="prompt-editor">
+              <input
+                v-model="newPromptName"
+                class="prompt-input"
+                placeholder="新提示词名称"
+              />
+              <textarea
+                v-model="newPromptContent"
+                class="prompt-textarea"
+                placeholder="提示词内容..."
+                rows="4"
+              />
+              <button
+                class="prompt-add-btn"
+                :disabled="!newPromptName.trim() || !newPromptContent.trim()"
+                @click="addPrompt"
+              >添加</button>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="modal-btn confirm" @click="promptModalOpen = false">确定</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <Toast ref="toastRef" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import AiProfileList from './AiProfileList.vue'
+import AiProfileForm from './AiProfileForm.vue'
+import Toast from '../common/Toast.vue'
+import type { AiProfile } from './AiProfileForm.vue'
 
-const settings = window.bridge.getModules(['settings']).settings
+const ai = window.bridge.getModules(['ai']).ai
 
-const aiForm = ref({
+const profiles = ref<AiProfile[]>([])
+const activeProfile = ref<AiProfile | null>(null)
+const isCreatingNew = ref(false)
+const editingProfile = ref<AiProfile>({
+  name: '',
   providerType: 'openai',
   apiKey: '',
   apiUrl: '',
-  model: ''
+  model: '',
+  systemPromptIds: []
 })
-const aiSaved = ref(false)
-const showApiKey = ref(false)
+const toastRef = ref<InstanceType<typeof Toast>>()
+
+const availablePrompts = ref<Array<{ id: string; name: string; content: string }>>([])
+const selectedPromptIds = ref<string[]>([])
+const promptModalOpen = ref(false)
+const newPromptName = ref('')
+const newPromptContent = ref('')
 
 onMounted(async () => {
-  aiForm.value.providerType = await settings.get('ai_provider_type') || 'openai'
-  aiForm.value.apiKey = await settings.get('ai_api_key') || 'tp-c2c397g9aktqbph1cpe4n9ejroyi6oaqjmeeowaflb22572n'
-  aiForm.value.apiUrl = await settings.get('ai_api_url') || 'https://token-plan-cn.xiaomimimo.com/v1'
-  aiForm.value.model = await settings.get('ai_model') || 'mimo-v2.5-pro'
+  await loadProfiles()
+  await loadActiveProfile()
+  await loadPrompts()
 })
 
-async function saveAiConfig() {
-  await settings.set('ai_provider_type', aiForm.value.providerType)
-  await settings.set('ai_api_key', aiForm.value.apiKey)
-  await settings.set('ai_api_url', aiForm.value.apiUrl)
-  await settings.set('ai_model', aiForm.value.model)
-  aiSaved.value = true
-  setTimeout(() => aiSaved.value = false, 2000)
+async function loadProfiles() {
+  profiles.value = await ai.listProfiles()
+}
+
+async function loadActiveProfile() {
+  activeProfile.value = await ai.getActiveProfile()
+  if (activeProfile.value) {
+    editingProfile.value = { ...activeProfile.value }
+    isCreatingNew.value = false
+    selectedPromptIds.value = activeProfile.value.systemPromptIds || []
+  }
+}
+
+async function loadPrompts() {
+  availablePrompts.value = await ai.listSystemPrompts()
+}
+
+async function handleSelect(name: string) {
+  const profile = profiles.value.find(p => p.name === name)
+  if (!profile) return
+  activeProfile.value = profile
+  editingProfile.value = { ...profile }
+  isCreatingNew.value = false
+  selectedPromptIds.value = profile.systemPromptIds || []
+}
+
+function handleAdd() {
+  activeProfile.value = null
+  isCreatingNew.value = true
+  editingProfile.value = {
+    name: '',
+    providerType: 'openai',
+    apiKey: '',
+    apiUrl: '',
+    model: '',
+    systemPromptIds: []
+  }
+  selectedPromptIds.value = []
+}
+
+async function handleDelete(name: string) {
+  if (!window.confirm(`确定要删除配置「${name}」吗？`)) return
+  try {
+    await ai.deleteProfile(name)
+  } catch (e: any) {
+    showStatus(e.message || '删除失败', 'error')
+    return
+  }
+  await loadProfiles()
+  if (activeProfile.value?.name === name) {
+    await loadActiveProfile()
+  }
+}
+
+async function handleSave(profile: AiProfile) {
+  const toSave = JSON.parse(JSON.stringify({
+    ...profile,
+    providerType: profile.providerType || 'openai',
+    systemPromptIds: profile.systemPromptIds ?? [],
+  }))
+  try {
+    await ai.saveProfile(toSave)
+    await ai.setActiveProfile(toSave.name)
+    activeProfile.value = { ...toSave }
+    isCreatingNew.value = false
+    await loadProfiles()
+    showStatus('保存成功', 'success')
+  } catch (e: any) {
+    showStatus(e.message || '保存失败', 'error')
+  }
+}
+
+async function addPrompt() {
+  if (!newPromptName.value.trim() || !newPromptContent.value.trim()) return
+  try {
+    await ai.saveSystemPrompt({
+      name: newPromptName.value.trim(),
+      content: newPromptContent.value.trim(),
+    })
+    await loadPrompts()
+    newPromptName.value = ''
+    newPromptContent.value = ''
+    showStatus('添加成功', 'success')
+  } catch (e: any) {
+    showStatus(e.message || '添加失败', 'error')
+  }
+}
+
+function showStatus(msg: string, type: 'success' | 'error') {
+  toastRef.value?.show(msg, type)
 }
 </script>
 
 <style scoped>
+.ai-settings {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .content-header {
-  margin-bottom: 28px;
+  padding: 24px 24px 0;
+  margin-bottom: 20px;
 }
 
 .content-header h2 {
@@ -89,102 +241,201 @@ async function saveAiConfig() {
   margin: 0;
 }
 
-.form-section {
-  max-width: 480px;
+.tab-bar {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  gap: 4px;
+  padding: 0 24px 16px;
 }
 
-.form-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-item label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.form-item input {
-  padding: 10px 14px;
+.tab-btn {
+  padding: 8px 20px;
+  border: none;
   border-radius: 8px;
-  border: 1px solid var(--input-border);
-  background: var(--input-bg);
-  color: var(--input-text);
-  font-size: 0.9rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.form-item input:focus {
-  border-color: var(--color-accent);
-}
-
-.form-item input::placeholder {
-  color: var(--input-placeholder);
-}
-
-.form-item select {
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid var(--input-border);
-  background: var(--input-bg);
-  color: var(--input-text);
-  font-size: 0.9rem;
-  outline: none;
-  transition: border-color 0.2s;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
 
-.form-item select:focus {
-  border-color: var(--color-accent);
+.tab-btn:hover {
+  background: var(--color-surface);
 }
 
-.input-with-toggle {
-  position: relative;
+.tab-btn.active {
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+}
+
+.settings-layout {
+  flex: 1;
   display: flex;
+  overflow: hidden;
+  padding: 0 24px 24px;
+  gap: 16px;
+}
+
+.settings-layout > :first-child {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--color-bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--color-divider);
+  overflow: hidden;
+}
+
+.settings-layout > :last-child:not(.no-selection) {
+  flex: 1;
+  min-width: 0;
+}
+
+.no-selection {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+/* 提示词 Modal */
+.prompt-modal {
+  width: 600px;
+  max-width: 90vw;
+}
+
+.prompt-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
 }
 
-.input-with-toggle input {
-  flex: 1;
-  padding-right: 40px;
-}
-
-.toggle-visibility {
-  position: absolute;
-  right: 10px;
-  background: none;
+.modal-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   border: none;
-  padding: 4px;
-  cursor: pointer;
+  background: transparent;
   color: var(--color-text-secondary);
+  font-size: 20px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.toggle-visibility:hover {
-  color: var(--color-text-primary);
+.modal-close:hover {
+  background: var(--color-surface);
 }
 
-.save-btn {
-  padding: 10px 24px;
-  border-radius: 8px;
+.prompt-modal .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.prompt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.prompt-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.prompt-item:hover {
+  background: var(--color-surface);
+}
+
+.prompt-item.selected {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.prompt-item input[type="checkbox"] {
+  margin-top: 2px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.prompt-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.prompt-name {
+  font-size: 13px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.prompt-preview {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.no-prompts {
+  padding: 20px;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.prompt-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-divider);
+}
+
+.prompt-input {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: 13px;
+}
+
+.prompt-textarea {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.prompt-add-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
   border: none;
   background: var(--color-accent);
   color: var(--color-text-inverse);
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 13px;
   cursor: pointer;
-  transition: opacity 0.2s;
-  align-self: flex-start;
+  align-self: flex-end;
 }
 
-.save-btn:hover {
-  opacity: 0.9;
+.prompt-add-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 </style>

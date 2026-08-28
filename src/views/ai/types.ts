@@ -10,6 +10,7 @@ export interface Message {
   role: 'user' | 'assistant'
   content: string
   reasoning?: string
+  createdAt?: number
 }
 
 // 工具定义

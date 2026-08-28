@@ -114,8 +114,17 @@
           <button class="dismiss-btn" @click="currentService?.clearError()">×</button>
         </div>
 
+        <!-- 无配置提示 -->
+        <div v-if="noConfig" class="no-config-prompt">
+          <div class="no-config-icon">⚠️</div>
+          <h3>请先配置 AI</h3>
+          <p>还没有可用的大模型配置，请前往设置添加</p>
+          <button class="go-settings-btn" @click="goToSettings">去设置</button>
+        </div>
+
         <!-- 输入区域 -->
         <ChatInput
+          v-else
           v-model="inputText"
           :disabled="currentService?.state.loading || false"
           :loading="currentService?.state.loading || false"
@@ -128,7 +137,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { onClickOutside } from '@vueuse/core'
 import { useChatHistory } from '../composables/useChatHistory'
 import { createChatService, type ChatService } from '../composables/useChatService'
@@ -137,7 +147,17 @@ import ChatSidebar from './ChatSidebar.vue'
 import ChatMessages from './ChatMessages.vue'
 import ChatInput from './ChatInput.vue'
 
+const ai = window.bridge.getModules(['ai']).ai
+const router = useRouter()
+
 const inputText = ref('')
+const noConfig = ref(false)
+
+function onVisibilityChange() {
+  if (document.visibilityState === 'visible') {
+    checkConfig()
+  }
+}
 const chatMessagesRef = ref<InstanceType<typeof ChatMessages>>()
 const headerMenuOpen = ref(false)
 const headerMenuStyle = ref<Record<string, string>>({})
@@ -223,11 +243,26 @@ const currentSessionTitle = computed(() => {
 
 onMounted(async () => {
   await init()
+  await checkConfig()
   if (sessions.value.length > 0) {
     const firstSession = sessions.value[0]
     switchSession(firstSession.convId)
   }
+  document.addEventListener('visibilitychange', onVisibilityChange)
 })
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+})
+
+async function checkConfig() {
+  const profile = await ai.getActiveProfile()
+  noConfig.value = !profile || !profile.apiKey || !profile.apiUrl
+}
+
+function goToSettings() {
+  router.push('/settings')
+}
 
 async function handleNewChat() {
   // 保存当前 session 状态（包括流式输出中的内容）
@@ -235,6 +270,7 @@ async function handleNewChat() {
   const session = await createSession()
   switchSession(session.convId)
   getOrCreateService(session)
+  await checkConfig()
 }
 
 function handleSwitchSession(sessionId: string) {
@@ -249,6 +285,14 @@ function handleSwitchSession(sessionId: string) {
     // 同步消息到状态（因为其他 session 可能在切换期间修改了 messages）
     service?.syncFromSession()
   }
+
+  // 检查配置是否已补全
+  checkConfig()
+
+  // 切换后强制滚动到底部
+  nextTick(() => {
+    chatMessagesRef.value?.forceScrollToBottom()
+  })
 }
 
 function handleDeleteSession(sessionId: string) {
@@ -351,6 +395,7 @@ async function send(msg?: string) {
   inputText.value = ''
   await service.sendMessage(message)
   saveCurrentSession()
+  nextTick(() => chatMessagesRef.value?.forceScrollToBottom())
 }
 
 // 工具栏：复制
@@ -576,5 +621,50 @@ async function handleDelete(index: number) {
 
 .dismiss-btn:hover {
   background: rgba(0, 0, 0, 0.1);
+}
+
+.no-config-prompt {
+  padding: 32px 24px;
+  border-top: 1px solid var(--color-divider);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.no-config-icon {
+  font-size: 32px;
+  margin-bottom: 4px;
+}
+
+.no-config-prompt h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.no-config-prompt p {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.go-settings-btn {
+  margin-top: 8px;
+  padding: 8px 20px;
+  border-radius: 8px;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.go-settings-btn:hover {
+  opacity: 0.9;
 }
 </style>
