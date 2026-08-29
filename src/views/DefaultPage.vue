@@ -598,6 +598,7 @@ useEventListener(document, 'keydown', (e: KeyboardEvent) => {
   cursor: pointer;
   transition: background 0.15s ease;
   box-sizing: border-box;
+  min-width: 0;
 }
 
 .recent-card:hover {
