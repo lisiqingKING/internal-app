@@ -17,7 +17,7 @@ function initBridge() {
     applyTheme(theme || 'dark')
   }).catch(() => applyTheme('dark'))
 
-  window.bridge.on('settings:theme-changed', (_event: any, theme: string) => {
+  electronApis.settings.onThemeChanged((theme: string) => {
     console.log('[theme] received theme-changed:', theme, 'html has .dark?', document.documentElement.classList.contains('dark'))
     applyTheme(theme)
   })

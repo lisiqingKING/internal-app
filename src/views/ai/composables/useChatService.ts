@@ -68,52 +68,6 @@ export function createChatService(session: ChatSession) {
   let fullText = ''
   let fullReasoning = ''
 
-  // 监听主进程推送的流式事件
-  function handleStream(payload: any) {
-    if (payload.messageId !== currentMsgId) return
-    if (payload.type === 'start') {
-      // 流开始
-    } else if (payload.type === 'chunk') {
-      fullText += payload.content || ''
-      fullReasoning += payload.reasoning || ''
-      state.currentText = fullText
-      state.currentReasoning = fullReasoning
-    } else if (payload.type === 'complete') {
-      // 写入响应
-      const assistantMsg: Message = {
-        msgId: createMsgId(),
-        role: 'assistant',
-        content: fullText,
-        reasoning: fullReasoning || undefined
-      }
-      state.chatHistory.push(assistantMsg)
-      session.updatedAt = Date.now()
-      state.loading = false
-      state.currentText = ''
-      state.currentReasoning = ''
-      state.abortController = null
-    } else if (payload.type === 'halted' || payload.type === 'error') {
-      if (fullText || fullReasoning) {
-        const assistantMsg: Message = {
-          msgId: createMsgId(),
-          role: 'assistant',
-          content: fullText,
-          reasoning: fullReasoning || undefined
-        }
-        state.chatHistory.push(assistantMsg)
-        syncState()
-      }
-      state.error = payload.type === 'error' ? (payload.content || '请求失败') : null
-      state.loading = false
-      state.currentText = ''
-      state.currentReasoning = ''
-      state.abortController = null
-    }
-  }
-
-  // 订阅流式事件
-  ai.onStream(handleStream)
-
   // 同步状态到 session
   function syncState() {
     session.messages = [...state.chatHistory]
@@ -125,6 +79,73 @@ export function createChatService(session: ChatSession) {
       }
     }
   }
+
+  // 订阅流式事件（渲染进程只知道 onStart/onChunk/onComplete，不知道 ai:stream channel）
+  function onStart(_messageId: string) {
+    // 流开始
+  }
+
+  function onChunk(messageId: string, content: string, reasoning?: string) {
+    if (messageId !== currentMsgId) return
+    fullText += content
+    fullReasoning += reasoning || ''
+    state.currentText = fullText
+    state.currentReasoning = fullReasoning
+  }
+
+  function onComplete(messageId: string) {
+    if (messageId !== currentMsgId) return
+    const assistantMsg: Message = {
+      msgId: createMsgId(),
+      role: 'assistant',
+      content: fullText,
+      reasoning: fullReasoning || undefined
+    }
+    state.chatHistory.push(assistantMsg)
+    session.updatedAt = Date.now()
+    state.loading = false
+    state.currentText = ''
+    state.currentReasoning = ''
+    state.abortController = null
+  }
+
+  function onHalted(messageId: string) {
+    if (messageId !== currentMsgId) return
+    commitPartial()
+    state.loading = false
+    state.currentText = ''
+    state.currentReasoning = ''
+    state.abortController = null
+  }
+
+  function onError(messageId: string) {
+    if (messageId !== currentMsgId) return
+    commitPartial()
+    state.error = '请求失败'
+    state.loading = false
+    state.currentText = ''
+    state.currentReasoning = ''
+    state.abortController = null
+  }
+
+  function commitPartial() {
+    if (fullText || fullReasoning) {
+      const assistantMsg: Message = {
+        msgId: createMsgId(),
+        role: 'assistant',
+        content: fullText,
+        reasoning: fullReasoning || undefined
+      }
+      state.chatHistory.push(assistantMsg)
+      syncState()
+    }
+  }
+
+  ai.onStart(onStart)
+  ai.onChunk(onChunk)
+  ai.onComplete(onComplete)
+  ai.onHalted(onHalted)
+  ai.onError(onError)
 
   // 发送消息
   async function sendMessage(content: string) {
@@ -187,13 +208,23 @@ export function createChatService(session: ChatSession) {
     state.chatHistory = [...session.messages]
   }
 
+  // 清理订阅
+  function dispose() {
+    ai.offStart(onStart)
+    ai.offChunk(onChunk)
+    ai.offComplete(onComplete)
+    ai.offHalted(onHalted)
+    ai.offError(onError)
+  }
+
   return {
     state,
     sendMessage,
     cancelRequest,
     clearError,
     syncFromSession,
-    syncState
+    syncState,
+    dispose,
   }
 }
 
