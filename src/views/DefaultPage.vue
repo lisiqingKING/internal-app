@@ -82,7 +82,7 @@ async function loadData() {
       id: String(item.id),
       title: item.title || item.url,
       url: item.url,
-      favicon: item.favicon,
+      favicon: item.favicon ?? undefined,
       visitedAt: item.visitedAt,
     }))
   } catch {
@@ -232,7 +232,7 @@ useEventListener(document, 'keydown', (e: KeyboardEvent) => {
           >
             <div class="fav-icon">
               <svg v-if="getInternalIconPath(item.url)" viewBox="0 0 24 24" width="20" height="20" fill="var(--color-accent)" class="internal-icon">
-                <path :d="getInternalIconPath(item.url)"/>
+                <path :d="getInternalIconPath(item.url) ?? ''"/>
               </svg>
               <img
                 v-else-if="item.favicon && !failedFavicons.has(item.favicon)"
@@ -267,7 +267,7 @@ useEventListener(document, 'keydown', (e: KeyboardEvent) => {
           >
             <div class="fav-icon">
               <svg v-if="getInternalIconPath(tab.url)" viewBox="0 0 24 24" width="16" height="16" fill="var(--color-accent)" class="internal-icon">
-                <path :d="getInternalIconPath(tab.url)"/>
+                <path :d="getInternalIconPath(tab.url) ?? ''"/>
               </svg>
               <img
                 v-else-if="tab.favicon && !failedFavicons.has(tab.favicon)"
