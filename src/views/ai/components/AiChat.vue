@@ -1,18 +1,27 @@
 <template>
   <div class="ai-chat">
     <!-- 左侧边栏 -->
-    <ChatSidebar
-      :sessions="sessions"
-      :current-session-id="currentSessionId"
-      :loading-more="loadingMore"
-      :has-more="hasMore"
-      @new-chat="handleNewChat"
-      @switch-session="handleSwitchSession"
-      @delete-session="handleDeleteSession"
-      @load-more="loadMore"
-      @pin-session="handlePinSession"
-      @rename-session="handleRenameSession"
-    />
+    <div class="sidebar-wrapper" :class="{ collapsed }">
+      <ChatSidebar
+        v-show="!collapsed"
+        :sessions="sessions"
+        :current-session-id="currentSessionId"
+        :loading-more="loadingMore"
+        :has-more="hasMore"
+        @new-chat="handleNewChat"
+        @switch-session="handleSwitchSession"
+        @delete-session="handleDeleteSession"
+        @load-more="loadMore"
+        @pin-session="handlePinSession"
+        @rename-session="handleRenameSession"
+      />
+    </div>
+    <button class="collapse-btn" @click="collapsed = !collapsed" :title="collapsed ? '展开' : '收起'">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline v-if="collapsed" points="9 18 15 12 9 6"/>
+        <polyline v-else points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
 
     <!-- 右侧主内容区 -->
     <div class="main-content">
@@ -73,6 +82,7 @@ const ai = window.bridge.getModules(['ai']).ai
 const router = useRouter()
 
 const inputText = ref('')
+const collapsed = ref(false)
 const noConfig = ref(false)
 
 function onVisibilityChange() {
@@ -289,5 +299,45 @@ async function handleDelete(index: number) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.sidebar-wrapper {
+  flex-shrink: 0;
+  height: 100%;
+  transition: width 0.2s ease;
+  overflow: hidden;
+}
+
+.sidebar-wrapper.collapsed {
+  width: 0;
+}
+
+.collapse-btn {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 48px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-divider);
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  z-index: 10;
+  transition: background 0.15s, left 0.2s ease;
+}
+
+.collapse-btn:hover {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.sidebar-wrapper:not(.collapsed) ~ .collapse-btn {
+  left: 200px;
 }
 </style>

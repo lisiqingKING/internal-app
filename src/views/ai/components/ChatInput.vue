@@ -5,9 +5,9 @@
         ref="textareaRef"
         :value="modelValue"
         @input="$emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
-        @keydown.enter.exact.prevent="handleSend"
+        @keydown.enter.exact.prevent="handleEnterKey"
         :disabled="disabled && !loading"
-        placeholder="输入消息..."
+        placeholder="输入消息，Enter 发送，Shift+Enter 换行"
         rows="4"
       ></textarea>
       <button
@@ -27,7 +27,6 @@
         </template>
       </button>
     </div>
-    <div class="input-hint">Enter 发送 · Shift+Enter 换行</div>
   </div>
 </template>
 
@@ -52,6 +51,11 @@ const canSend = computed(() => {
   if (props.loading) return true
   return !props.disabled && !!props.modelValue.trim()
 })
+
+function handleEnterKey() {
+  if (props.loading || !props.modelValue.trim()) return
+  emit('send')
+}
 
 function handleSend() {
   if (props.loading) {
@@ -156,10 +160,4 @@ function handleSend() {
   to { transform: rotate(360deg); }
 }
 
-.input-hint {
-  text-align: center;
-  font-size: 11px;
-  color: var(--color-text-tertiary);
-  margin-top: 8px;
-}
 </style>

@@ -41,7 +41,6 @@
       <!-- 加载更多触发器 -->
       <div ref="loadMoreTrigger" class="load-more-trigger">
         <span v-if="loadingMore" class="loading-more">加载中...</span>
-        <span v-else-if="!hasMore && sortedSessions.length > 0" class="no-more">没有更多了</span>
       </div>
     </div>
 
@@ -84,7 +83,7 @@
 
     <!-- 底部工具栏 -->
     <div class="sidebar-footer">
-      <button class="footer-btn" @click="handleOpenSaveDir">保存记录</button>
+      <button class="footer-btn" @click="handleOpenSaveDir">查看保存文件</button>
     </div>
 
   </div>
@@ -202,6 +201,7 @@ onUnmounted(() => {
 <style scoped>
 .sidebar {
   width: 200px;
+  height: 100%;
   background: var(--color-bg-secondary);
   border-right: 1px solid var(--color-divider);
   display: flex;

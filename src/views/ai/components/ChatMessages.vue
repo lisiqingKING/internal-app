@@ -8,15 +8,19 @@
         :class="msg.role"
       >
         <div class="message-content" @contextmenu.prevent="showContextMenu(index, $event)">
-          <div class="message-text markdown-body" v-html="renderMarkdown(msg.content)"></div>
+          <div v-if="msg.role === 'assistant'" class="message-text markdown-body" v-html="renderMarkdown(msg.content)"></div>
+          <div v-else class="message-text">{{ msg.content }}</div>
         </div>
       </div>
 
       <!-- 正在输入的助手消息 -->
-      <div v-if="loading && currentText" class="message-item assistant">
+      <div v-if="loading && (currentText || currentReasoning)" class="message-item assistant">
         <div class="message-content">
-          <div class="message-text markdown-body" v-html="renderMarkdown(currentText)"></div>
-          <span class="cursor"></span>
+          <div v-if="currentReasoning" class="thinking-block">
+            <div class="thinking-content">{{ currentReasoning }}</div>
+          </div>
+          <div v-if="currentText" class="message-text markdown-body" v-html="renderMarkdown(currentText)"></div>
+          <span v-if="currentText" class="cursor"></span>
         </div>
       </div>
 
@@ -192,12 +196,11 @@ defineExpose({ copiedIndex, scrollToBottom, forceScrollToBottom })
   padding: 32px 120px 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
 .message-item {
   display: flex;
-  padding: 4px 0;
+  padding: 3px 0;
 }
 
 .message-item.user {
@@ -259,26 +262,49 @@ defineExpose({ copiedIndex, scrollToBottom, forceScrollToBottom })
 /* 思考中动画 */
 .thinking-dots {
   display: inline-flex;
-  gap: 5px;
+  gap: 6px;
   padding: 4px 0;
   align-items: center;
 }
 
 .thinking-dots span {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--color-text-tertiary);
-  animation: dotPulse 1.4s infinite ease-in-out both;
+  background: var(--color-accent);
+  animation: thinkingPulse 1.2s ease-in-out infinite;
 }
 
 .thinking-dots span:nth-child(1) { animation-delay: 0ms; }
-.thinking-dots span:nth-child(2) { animation-delay: 160ms; }
-.thinking-dots span:nth-child(3) { animation-delay: 320ms; }
+.thinking-dots span:nth-child(2) { animation-delay: 150ms; }
+.thinking-dots span:nth-child(3) { animation-delay: 300ms; }
 
-@keyframes dotPulse {
-  0%, 60%, 100% { transform: scale(0.8); opacity: 0.4; }
-  30% { transform: scale(1.1); opacity: 1; }
+@keyframes thinkingPulse {
+  0%, 100% {
+    transform: scale(0.6);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 思考过程流式输出 */
+.thinking-block {
+  margin-bottom: 8px;
+}
+
+.thinking-content {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  padding: 8px 12px;
+  background: rgba(16, 185, 129, 0.06);
+  border-left: 2px solid var(--color-accent);
+  border-radius: 0 6px 6px 0;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* Markdown */
