@@ -3,7 +3,8 @@
     <SettingsSidebar v-model="activeMenu" />
 
     <main class="content">
-      <AppearanceSettings v-if="activeMenu === 'appearance'" />
+      <HelpGuideSettings v-if="activeMenu === 'help'" />
+      <AppearanceSettings v-else-if="activeMenu === 'appearance'" />
       <DownloadSettings v-else-if="activeMenu === 'downloads'" />
       <AiSettings v-else-if="activeMenu === 'ai'" />
       <AboutSettings v-else-if="activeMenu === 'about'" />
@@ -14,6 +15,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import SettingsSidebar from '@/components/settings/SettingsSidebar.vue'
+import HelpGuideSettings from '@/components/settings/HelpGuideSettings.vue'
 import AppearanceSettings from '@/components/settings/AppearanceSettings.vue'
 import DownloadSettings from '@/components/settings/DownloadSettings.vue'
 import AiSettings from '@/components/settings/AiSettings.vue'
@@ -21,7 +23,7 @@ import AboutSettings from '@/components/settings/AboutSettings.vue'
 
 document.title = '设置'
 
-const activeMenu = ref('appearance')
+const activeMenu = ref('help')
 </script>
 
 <style scoped>
