@@ -38,6 +38,7 @@
           :current-reasoning="currentService?.state.currentReasoning || ''"
           @copy="handleCopy"
           @delete="handleDelete"
+          @contextmenu="handleContextMenu"
         />
 
         <!-- 错误提示 -->
@@ -71,12 +72,12 @@ import { ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { useChatHistory } from '../composables/useChatHistory'
 import { createChatService, type ChatService } from '../composables/useChatService'
-import ChatSidebar from './ChatSidebar.vue'
-import ChatMessages from './ChatMessages.vue'
-import ChatInput from './ChatInput.vue'
-import ChatErrorBar from './ChatErrorBar.vue'
-import ChatNoConfigPrompt from './ChatNoConfigPrompt.vue'
-import ChatEmptyState from './ChatEmptyState.vue'
+import ChatSidebar from './sidebar/ChatSidebar.vue'
+import ChatMessages from './messages/ChatMessages.vue'
+import ChatInput from './input/ChatInput.vue'
+import ChatErrorBar from './common/ChatErrorBar.vue'
+import ChatNoConfigPrompt from './common/ChatNoConfigPrompt.vue'
+import ChatEmptyState from './common/ChatEmptyState.vue'
 
 const ai = window.bridge.getModules(['ai']).ai
 const router = useRouter()
@@ -284,6 +285,11 @@ async function handleDelete(index: number) {
   service.state.chatHistory.splice(index, 1)
   service.syncState()
   updateCurrentMessages(service.state.chatHistory)
+}
+
+// 右键菜单处理
+function handleContextMenu(index: number, event: MouseEvent) {
+  // ChatMessages 内部已经处理右键菜单，这里不需要额外处理
 }
 </script>
 

@@ -20,7 +20,8 @@
     "lucide-vue-next": "^1.0.0",
     "marked": "^18.0.7",
     "vue": "^3.4.21",
-    "vue-router": "^5.0.4"
+    "vue-router": "^5.0.4",
+    "vue-virtual-scroller": "^2.0.0-beta.8"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",

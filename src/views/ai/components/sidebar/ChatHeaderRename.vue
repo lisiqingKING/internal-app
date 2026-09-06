@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
-import { ILLEGAL_CHARS, MAX_TITLE_LENGTH } from '../types'
+import { ILLEGAL_CHARS, MAX_TITLE_LENGTH } from '@/views/ai/types'
 
 const props = defineProps<{
   modelValue: string
@@ -67,3 +67,96 @@ defineExpose({
   focus: () => nextTick(() => inputRef.value?.focus())
 })
 </script>
+
+<style scoped>
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.modal-dialog {
+  background: var(--modal-bg);
+  border: 1px solid var(--color-divider);
+  border-radius: 12px;
+  padding: 20px;
+  width: 320px;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: var(--color-text-primary);
+}
+
+.modal-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-divider);
+  border-radius: 8px;
+  background: var(--input-bg);
+  color: var(--input-text);
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.modal-input:focus {
+  border-color: var(--input-border-focus);
+}
+
+.modal-input.error {
+  border-color: #ef4444;
+}
+
+.modal-error {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.modal-btn {
+  flex: 1;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.modal-btn.cancel {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.modal-btn.cancel:hover {
+  background: var(--color-surface-hover);
+}
+
+.modal-btn.confirm {
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+}
+
+.modal-btn.confirm:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.modal-btn.confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+</style>

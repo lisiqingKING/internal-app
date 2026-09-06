@@ -92,8 +92,8 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { onClickOutside } from '@vueuse/core'
-import type { ChatSession } from '../types'
-import { formatSidebarTime } from '../../../utils/time'
+import type { ChatSession } from '@/views/ai/types'
+import { formatSidebarTime } from '@/utils/time'
 import ChatHeaderRename from './ChatHeaderRename.vue'
 
 const props = defineProps<{
