@@ -25,7 +25,7 @@
               </svg>
             </span>
             <span class="session-title">{{ session.title }}</span>
-            <span class="session-time">{{ formatTime(session.updatedAt) }}</span>
+            <span class="session-time">{{ formatSidebarTime(session.updatedAt) }}</span>
             <div class="session-menu-wrapper" @click.stop>
               <button class="more-btn" @click="toggleMenu(session.convId, $event)">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
@@ -82,36 +82,22 @@
     </Teleport>
 
     <!-- 重命名弹窗 -->
-    <Teleport to="body">
-      <div v-if="renamingSession" class="modal-overlay" @click.self="renamingSession = null">
-        <div class="modal-dialog">
-          <div class="modal-header">重命名对话</div>
-          <input
-            ref="renameInputRef"
-            v-model="renameValue"
-            class="modal-input"
-            :class="{ error: renameError }"
-            placeholder="输入新名称"
-            :maxlength="MAX_TITLE_LENGTH"
-            @input="validateRename"
-            @keydown.enter="confirmRename"
-          />
-          <div v-if="renameError" class="modal-error">{{ renameError }}</div>
-          <div class="modal-footer">
-            <button class="modal-btn cancel" @click="renamingSession = null">取消</button>
-            <button class="modal-btn confirm" :disabled="!canRename" @click="confirmRename">确定</button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <ChatHeaderRename
+      v-if="renamingSession"
+      v-model="renameValue"
+      :error="renameError"
+      @confirm="(title) => { emit('rename-session', renamingSession!.convId, title); renamingSession = null }"
+      @cancel="renamingSession = null"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, nextTick, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import type { ChatSession } from '../types'
-import { ILLEGAL_CHARS, MAX_TITLE_LENGTH } from '../types'
+import { formatSidebarTime } from '../../../utils/time'
+import ChatHeaderRename from './ChatHeaderRename.vue'
 
 const props = defineProps<{
   sessions: ChatSession[]
@@ -136,22 +122,6 @@ function handleOpenSaveDir() {
   }
 }
 
-// 格式化时间：今天显示时间，昨天显示"昨天"，更早显示日期
-function formatTime(timestamp: number): string {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const todayStart = today.getTime()
-  const yesterdayStart = todayStart - 86400000
-
-  if (timestamp >= todayStart) {
-    return new Date(timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-  }
-  if (timestamp >= yesterdayStart) {
-    return '昨天'
-  }
-  return new Date(timestamp).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
-}
-
 const sortedSessions = computed(() => {
   return [...props.sessions].sort((a, b) => {
     if (a.pinned !== b.pinned) return (b.pinned || 0) - (a.pinned || 0)
@@ -171,26 +141,7 @@ const menuSession = ref<ChatSession | null>(null)
 const menuStyle = ref<Record<string, string>>({})
 const renamingSession = ref<ChatSession | null>(null)
 const renameValue = ref('')
-const renameInputRef = ref<HTMLInputElement>()
 const renameError = ref('')
-
-const canRename = computed(() => {
-  const val = renameValue.value.trim()
-  return val.length > 0 && val !== renamingSession.value?.title && !ILLEGAL_CHARS.test(val)
-})
-
-function validateRename() {
-  const val = renameValue.value
-  if (val.length === 0) {
-    renameError.value = '名称不能为空'
-  } else if (ILLEGAL_CHARS.test(val)) {
-    renameError.value = '不允许包含 \\ / : * ? " < > |'
-  } else if (val.length > MAX_TITLE_LENGTH) {
-    renameError.value = `名称不能超过 ${MAX_TITLE_LENGTH} 个字符`
-  } else {
-    renameError.value = ''
-  }
-}
 
 function toggleMenu(convId: string, event: MouseEvent) {
   if (menuSession.value?.convId === convId) {
@@ -217,15 +168,6 @@ function handleRename(session: ChatSession) {
   menuSession.value = null
   renamingSession.value = session
   renameValue.value = session.title
-  renameError.value = ''
-  nextTick(() => renameInputRef.value?.focus())
-}
-
-function confirmRename() {
-  validateRename()
-  if (!canRename.value) return
-  emit('rename-session', renamingSession.value!.convId, renameValue.value.trim())
-  renamingSession.value = null
   renameError.value = ''
 }
 

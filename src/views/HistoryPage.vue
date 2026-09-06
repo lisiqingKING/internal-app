@@ -1,7 +1,7 @@
 <template>
   <div class="header">
     <h1>历史记录</h1>
-    <button class="clear-btn" @click="showClearModal = true" :disabled="historyList.length === 0">
+    <button class="clear-btn" @click="onClearAll" :disabled="historyList.length === 0">
       清空
     </button>
   </div>
@@ -60,23 +60,14 @@
       </div>
     </div>
   </div>
-
-  <!-- 确认弹窗 -->
-  <div v-if="showClearModal" class="modal-overlay" @click.self="showClearModal = false">
-    <div class="modal">
-      <div class="modal-title">确认清空</div>
-      <div class="modal-message">确定要清空所有历史记录吗？此操作无法撤销。</div>
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" @click="showClearModal = false">取消</button>
-        <button class="modal-btn modal-btn-confirm" @click="confirmClear">确认清空</button>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, h } from 'vue'
+import { ElMessageBox } from 'element-plus'
 import ContextMenu from '@imengyu/vue3-context-menu'
+import { useFaviconState } from '../composables/useFaviconState'
+import { formatTime } from '../utils/time'
 import { groupByTime, searchHistory, filterByTime, type HistoryItem, type HistoryGroup } from '../composables/historyUtils'
 
 document.title = '历史记录'
@@ -86,10 +77,9 @@ const history = window.bridge.getModules(['history']).history
 
 const historyList = ref<HistoryItem[]>([])
 const loading = ref(true)
-const showClearModal = ref(false)
 const searchKeyword = ref('')
 const timeFilter = ref('all')
-const failedFavicons = ref<Set<string>>(new Set())
+const { failedFavicons, onFaviconError, onFaviconLoad } = useFaviconState()
 
 const filteredGroups = computed<HistoryGroup[]>(() => {
   let items = searchKeyword.value
@@ -123,14 +113,22 @@ async function deleteHistory(id: number) {
   }
 }
 
-async function confirmClear() {
+async function onClearAll() {
+  try {
+    await ElMessageBox.confirm('确定要清空所有历史记录吗？此操作无法撤销。', '确认清空', {
+      confirmButtonText: '清空',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
   try {
     await history.clear()
-    showClearModal.value = false
     await loadHistory()
   } catch (err) {
     console.error('Failed to clear history:', err)
-    alert('清空失败: ' + (err as Error).message)
+    ElMessageBox.alert((err as Error).message || '清空失败', '操作失败', { type: 'error' })
   }
 }
 
@@ -169,27 +167,6 @@ function showContextMenu(e: MouseEvent, item: HistoryItem) {
       }
     ]
   })
-}
-
-function onFaviconError(url: string) {
-  failedFavicons.value.add(url)
-}
-
-function onFaviconLoad(url: string) {
-  failedFavicons.value.delete(url)
-}
-
-function formatTime(timestamp: number): string {
-  const date = new Date(timestamp)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-
-  if (diff < 60000) return '刚刚'
-  if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'
-  if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
-  if (diff < 604800000) return Math.floor(diff / 86400000) + '天前'
-
-  return date.toLocaleDateString('zh-CN')
 }
 
 function handleVisibilityChange() {
@@ -402,66 +379,4 @@ onUnmounted(() => {
   font-size: 0.9rem;
 }
 
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--modal-overlay);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal {
-  background: var(--modal-bg);
-  border-radius: 12px;
-  padding: 20px;
-  width: 320px;
-}
-
-.modal-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin-bottom: 8px;
-}
-
-.modal-message {
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
-  margin-bottom: 20px;
-  line-height: 1.5;
-}
-
-.modal-buttons {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.modal-btn {
-  padding: 6px 16px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  border: none;
-}
-
-.modal-btn-cancel {
-  background: transparent;
-  color: var(--color-text-secondary);
-}
-
-.modal-btn-cancel:hover {
-  background: var(--card-hover-bg);
-}
-
-.modal-btn-confirm {
-  background: var(--color-status-error);
-  color: white;
-}
-
-.modal-btn-confirm:hover {
-  opacity: 0.9;
-}
 </style>

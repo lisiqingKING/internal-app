@@ -6,11 +6,12 @@ import { ChevronRight, Search } from 'lucide-vue-next'
 import aiSvg from '../assets/icons/ai.svg?raw'
 import historySvg from '../assets/icons/history.svg?raw'
 import downloadsSvg from '../assets/icons/downloads.svg?raw'
+import { useFaviconState } from '../composables/useFaviconState'
 
 document.title = '首页'
 
 const query = ref('')
-const failedFavicons = ref<Set<string>>(new Set())
+const { failedFavicons, onFaviconError, onFaviconLoad } = useFaviconState()
 
 interface FavoriteItem { url: string; title: string; favicon?: string | null }
 interface TabItem { id: string; title: string; url: string; favicon?: string; isHome?: boolean; visitedAt?: number }
@@ -20,7 +21,7 @@ const favorites = ref<FavoriteItem[]>([])
 const recentTabs = ref<TabItem[]>([])
 const searchResults = ref<SearchResult[]>([])
 
-const isDev = window.location.hostname === 'localhost'
+const isDev = import.meta.env.DEV
 
 function getInternalUrl(route: string): string {
   if (isDev) return `http://localhost:${__DEV_PORT__}/#/${route}`
@@ -94,14 +95,6 @@ async function loadData() {
 function openItem(url: string, title: string) {
   clearSearch()
   window.bridge.getModules(['tabs']).tabs.create({ title: title || '', url })
-}
-
-function onFaviconError(url: string) {
-  failedFavicons.value.add(url)
-}
-
-function onFaviconLoad(url: string) {
-  failedFavicons.value.delete(url)
 }
 
 function getInternalIconPath(url: string): string | null {

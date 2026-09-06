@@ -9,7 +9,5 @@ export type {
   ToolCallBuffer,
   ChatSession
 } from './types'
-export { useMemory } from './composables/useMemory'
-export { useStream } from './composables/useStream'
 export { useToolHandler } from './composables/useToolHandler'
 export { useChatHistory } from './composables/useChatHistory'

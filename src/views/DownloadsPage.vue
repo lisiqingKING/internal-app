@@ -128,6 +128,7 @@ import {
   File, FileSpreadsheet, Presentation, type LucideIcon
 } from 'lucide-vue-next'
 import { computed } from 'vue'
+import { ElMessageBox } from 'element-plus'
 import { useDownloads, type DownloadTask, type DownloadStatus } from '../composables/useDownloads'
 
 document.title = '下载管理'
@@ -148,7 +149,7 @@ const {
 
 // 按天分组
 const groupedTasks = computed(() => {
-  const groups: { date: string; label: string; tasks: DownloadTask[] }[] = []
+  const map = new Map<number, { date: string; label: string; tasks: DownloadTask[] }>()
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const yesterday = new Date(today.getTime() - 86400000)
@@ -158,26 +159,32 @@ const groupedTasks = computed(() => {
     d.setHours(0, 0, 0, 0)
     const key = d.getTime()
 
-    let group = groups.find(g => g.date === key.toString())
-    if (!group) {
+    if (!map.has(key)) {
       let label: string
       if (d.getTime() === today.getTime()) label = '今天'
       else if (d.getTime() === yesterday.getTime()) label = '昨天'
       else label = d.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
 
-      group = { date: key.toString(), label, tasks: [] }
-      groups.push(group)
+      map.set(key, { date: key.toString(), label, tasks: [] })
     }
-    group.tasks.push(task)
+    map.get(key)!.tasks.push(task)
   }
-  return groups
+  return Array.from(map.values())
 })
 
 async function onPause(id: string) { await pause(id) }
 async function onResume(id: string) { await resume(id) }
 async function onCancel(id: string) { await cancel(id) }
 async function onRemove(id: string) {
-  if (!confirm('确定删除此下载任务和文件?')) return
+  try {
+    await ElMessageBox.confirm('删除后将同时删除文件，是否继续？', '确认删除', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
   await remove(id)
 }
 
@@ -191,7 +198,15 @@ async function onCopyUrl(url: string) {
 async function onReveal(id: string) { await reveal(id) }
 async function onOpenFile(id: string) { await openFile(id) }
 async function onClearAll() {
-  if (!confirm(`确定清空全部 ${tasks.value.length} 个下载任务和文件?`)) return
+  try {
+    await ElMessageBox.confirm(`确定清空全部 ${tasks.value.length} 个下载任务和文件？`, '确认清空', {
+      confirmButtonText: '清空',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
   await clearAll()
 }
 
@@ -204,7 +219,7 @@ async function onReAdd(task: DownloadTask) {
       postBody: task.method === 'POST' ? task.postBody : null,
     })
   } catch (err) {
-    alert('重新下载失败: ' + (err as Error).message)
+    ElMessageBox.alert((err as Error).message || '重新下载失败', '操作失败', { type: 'error' })
   }
 }
 

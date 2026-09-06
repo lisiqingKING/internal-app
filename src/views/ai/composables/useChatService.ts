@@ -141,11 +141,11 @@ export function createChatService(session: ChatSession) {
     }
   }
 
-  ai.onStart(onStart)
-  ai.onChunk(onChunk)
-  ai.onComplete(onComplete)
-  ai.onHalted(onHalted)
-  ai.onError(onError)
+  const offStart = ai.onStart(onStart)
+  const offChunk = ai.onChunk(onChunk)
+  const offComplete = ai.onComplete(onComplete)
+  const offHalted = ai.onHalted(onHalted)
+  const offError = ai.onError(onError)
 
   // 发送消息
   async function sendMessage(content: string) {
@@ -210,11 +210,11 @@ export function createChatService(session: ChatSession) {
 
   // 清理订阅
   function dispose() {
-    ai.offStart(onStart)
-    ai.offChunk(onChunk)
-    ai.offComplete(onComplete)
-    ai.offHalted(onHalted)
-    ai.offError(onError)
+    offStart()
+    offChunk()
+    offComplete()
+    offHalted()
+    offError()
   }
 
   return {

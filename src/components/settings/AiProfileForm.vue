@@ -89,15 +89,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-
-export interface AiProfile {
-  name: string
-  providerType: string
-  apiKey: string
-  apiUrl: string
-  model: string
-  systemPromptIds: string[]
-}
+import type { AiProfile } from '../../types/ai'
 
 const props = defineProps<{
   profile: AiProfile

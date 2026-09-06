@@ -75,22 +75,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { marked } from 'marked'
-import hljs from 'highlight.js'
+import { ElMessageBox } from 'element-plus'
+import { useMarkdown } from './ai/composables/useMarkdown'
 
-marked.setOptions({ gfm: true, breaks: true })
-
-const renderer = new marked.Renderer()
-renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
-  const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext'
-  const highlighted = hljs.highlight(text, { language }).value
-  return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`
-}
-marked.use({ renderer })
-
-function renderMarkdown(content: string): string {
-  return marked.parse(content) as string
-}
+const { renderMarkdown } = useMarkdown()
 
 interface SaveFile {
   filename: string
@@ -122,7 +110,15 @@ async function selectFile(file: SaveFile) {
 }
 
 async function deleteFile(file: SaveFile) {
-  if (!confirm(`确定要删除 ${file.filename} 吗？`)) return
+  try {
+    await ElMessageBox.confirm(`确定要删除 ${file.filename} 吗？`, '确认删除', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
   const success = await window.electronApis?.ai?.deleteSaveFile(file.filename)
   if (success) {
     files.value = files.value.filter(f => f.filename !== file.filename)

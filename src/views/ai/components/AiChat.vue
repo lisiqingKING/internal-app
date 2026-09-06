@@ -17,12 +17,7 @@
     <!-- 右侧主内容区 -->
     <div class="main-content">
       <!-- 无会话时显示默认页面 -->
-      <div v-if="sessions.length === 0" class="empty-state">
-        <div class="empty-icon">💬</div>
-        <h2>开始新对话</h2>
-        <p>点击左侧「新建对话」开始聊天</p>
-        <button class="start-btn" @click="handleNewChat">新建对话</button>
-      </div>
+      <ChatEmptyState v-if="sessions.length === 0" @new-chat="handleNewChat" />
 
       <template v-else-if="currentSessionId">
         <!-- 顶部标题 -->
@@ -44,56 +39,24 @@
         </div>
 
         <!-- 标题栏下拉菜单 -->
-        <Teleport to="body">
-          <div v-if="headerMenuOpen" ref="headerDropdownRef" class="header-dropdown-menu" :style="headerMenuStyle">
-            <button class="menu-item" @click="handleHeaderPin">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
-              </svg>
-              {{ currentSession?.pinned ? '取消置顶' : '置顶' }}
-            </button>
-            <button class="menu-item" @click="handleHeaderRename">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-              重命名
-            </button>
-            <div class="menu-divider"></div>
-            <button class="menu-item danger" @click="handleHeaderDelete">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 6h18"/>
-                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-              </svg>
-              删除
-            </button>
-          </div>
-        </Teleport>
+        <ChatHeaderDropdown
+          v-if="headerMenuOpen"
+          :style="headerMenuStyle"
+          :is-pinned="!!currentSession?.pinned"
+          @pin="handleHeaderPin"
+          @rename="handleHeaderRename"
+          @delete="handleHeaderDelete"
+          @close="headerMenuOpen = false"
+        />
 
         <!-- 重命名弹窗 -->
-        <Teleport to="body">
-          <div v-if="headerRenaming" class="modal-overlay" @click.self="headerRenaming = false">
-            <div class="modal-dialog">
-              <div class="modal-header">重命名对话</div>
-              <input
-                ref="headerRenameInputRef"
-                v-model="headerRenameValue"
-                class="modal-input"
-                :class="{ error: headerRenameError }"
-                placeholder="输入新名称"
-                :maxlength="MAX_TITLE_LENGTH"
-                @input="validateHeaderRename"
-                @keydown.enter="finishHeaderRename"
-              />
-              <div v-if="headerRenameError" class="modal-error">{{ headerRenameError }}</div>
-              <div class="modal-footer">
-                <button class="modal-btn cancel" @click="headerRenaming = false">取消</button>
-                <button class="modal-btn confirm" :disabled="!canHeaderRename" @click="finishHeaderRename">确定</button>
-              </div>
-            </div>
-          </div>
-        </Teleport>
+        <ChatHeaderRename
+          v-if="headerRenaming"
+          v-model="headerRenameValue"
+          :error="headerRenameError"
+          @confirm="finishHeaderRename"
+          @cancel="headerRenaming = false"
+        />
 
         <!-- 聊天消息列表 -->
         <ChatMessages
@@ -107,20 +70,15 @@
         />
 
         <!-- 错误提示 -->
-        <div v-if="currentService?.state.error" class="error-bar">
-          <span class="error-icon">!</span>
-          <span class="error-text">{{ currentService.state.error }}</span>
-          <button class="retry-btn" @click="retry">重试</button>
-          <button class="dismiss-btn" @click="currentService?.clearError()">×</button>
-        </div>
+        <ChatErrorBar
+          v-if="currentService?.state.error"
+          :message="currentService.state.error"
+          @retry="retry"
+          @dismiss="currentService?.clearError()"
+        />
 
         <!-- 无配置提示 -->
-        <div v-if="noConfig" class="no-config-prompt">
-          <div class="no-config-icon">⚠️</div>
-          <h3>请先配置 AI</h3>
-          <p>还没有可用的大模型配置，请前往设置添加</p>
-          <button class="go-settings-btn" @click="goToSettings">去设置</button>
-        </div>
+        <ChatNoConfigPrompt v-if="noConfig" @go-settings="goToSettings" />
 
         <!-- 输入区域 -->
         <ChatInput
@@ -138,14 +96,18 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
-import { onClickOutside } from '@vueuse/core'
 import { useChatHistory } from '../composables/useChatHistory'
 import { createChatService, type ChatService } from '../composables/useChatService'
-import { ILLEGAL_CHARS, MAX_TITLE_LENGTH } from '../types'
 import ChatSidebar from './ChatSidebar.vue'
 import ChatMessages from './ChatMessages.vue'
 import ChatInput from './ChatInput.vue'
+import ChatHeaderDropdown from './ChatHeaderDropdown.vue'
+import ChatHeaderRename from './ChatHeaderRename.vue'
+import ChatErrorBar from './ChatErrorBar.vue'
+import ChatNoConfigPrompt from './ChatNoConfigPrompt.vue'
+import ChatEmptyState from './ChatEmptyState.vue'
 
 const ai = window.bridge.getModules(['ai']).ai
 const router = useRouter()
@@ -163,26 +125,7 @@ const headerMenuOpen = ref(false)
 const headerMenuStyle = ref<Record<string, string>>({})
 const headerRenaming = ref(false)
 const headerRenameValue = ref('')
-const headerRenameInputRef = ref<HTMLInputElement>()
 const headerRenameError = ref('')
-
-const canHeaderRename = computed(() => {
-  const val = headerRenameValue.value.trim()
-  return val.length > 0 && val !== currentSession.value?.title && !ILLEGAL_CHARS.test(val)
-})
-
-function validateHeaderRename() {
-  const val = headerRenameValue.value
-  if (val.length === 0) {
-    headerRenameError.value = '名称不能为空'
-  } else if (ILLEGAL_CHARS.test(val)) {
-    headerRenameError.value = '不允许包含 \\ / : * ? " < > |'
-  } else if (val.length > MAX_TITLE_LENGTH) {
-    headerRenameError.value = `名称不能超过 ${MAX_TITLE_LENGTH} 个字符`
-  } else {
-    headerRenameError.value = ''
-  }
-}
 
 function toggleHeaderMenu(event: MouseEvent) {
   headerMenuOpen.value = !headerMenuOpen.value
@@ -195,11 +138,6 @@ function toggleHeaderMenu(event: MouseEvent) {
     }
   }
 }
-
-const headerDropdownRef = ref<HTMLElement | null>(null)
-onClickOutside(headerDropdownRef, () => {
-  headerMenuOpen.value = false
-})
 
 const {
   sessions,
@@ -253,6 +191,10 @@ onMounted(async () => {
 
 onUnmounted(() => {
   document.removeEventListener('visibilitychange', onVisibilityChange)
+  for (const service of services.values()) {
+    service.dispose()
+  }
+  services.clear()
 })
 
 async function checkConfig() {
@@ -295,7 +237,16 @@ function handleSwitchSession(sessionId: string) {
   })
 }
 
-function handleDeleteSession(sessionId: string) {
+async function handleDeleteSession(sessionId: string) {
+  try {
+    await ElMessageBox.confirm('确定要删除该会话吗？', '确认删除', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
   services.delete(sessionId)
   deleteSession(sessionId)
 }
@@ -324,23 +275,29 @@ function handleHeaderRename() {
     headerRenaming.value = true
     headerRenameValue.value = currentSession.value.title
     headerRenameError.value = ''
-    nextTick(() => headerRenameInputRef.value?.focus())
   }
 }
 
-function finishHeaderRename() {
-  validateHeaderRename()
-  if (!canHeaderRename.value) return
-  updateSessionTitle(currentSession.value!.convId, headerRenameValue.value.trim())
+function finishHeaderRename(title: string) {
+  updateSessionTitle(currentSession.value!.convId, title)
   headerRenaming.value = false
   headerRenameError.value = ''
 }
 
-function handleHeaderDelete() {
-  if (currentSession.value) {
-    services.delete(currentSession.value.convId)
-    deleteSession(currentSession.value.convId)
+async function handleHeaderDelete() {
+  if (!currentSession.value) return
+  try {
+    await ElMessageBox.confirm('确定要删除该会话吗？', '确认删除', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+  } catch {
+    headerMenuOpen.value = false
+    return
   }
+  services.delete(currentSession.value.convId)
+  deleteSession(currentSession.value.convId)
   headerMenuOpen.value = false
 }
 
@@ -508,163 +465,4 @@ async function handleDelete(index: number) {
   background: rgba(0, 0, 0, 0.06);
 }
 
-.header-dropdown-menu {
-  min-width: 140px;
-  background: var(--input-bg);
-  border: 1px solid var(--color-divider);
-  border-radius: 8px;
-  padding: 4px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  z-index: 10000;
-  animation: fadeIn 0.12s ease;
-}
-
-.empty-state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-primary);
-  text-align: center;
-  padding: 40px;
-}
-
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: 24px;
-}
-
-.empty-state h2 {
-  font-size: 24px;
-  font-weight: 600;
-  margin: 0 0 12px;
-}
-
-.empty-state p {
-  color: var(--color-text-secondary);
-  margin: 0 0 24px;
-}
-
-.start-btn {
-  padding: 12px 24px;
-  background: var(--color-accent);
-  color: var(--color-text-inverse);
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.start-btn:hover {
-  background: var(--color-accent-hover);
-}
-
-/* 错误提示 */
-.error-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 20px;
-  background: rgba(239, 68, 68, 0.1);
-  border-top: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-.error-icon {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #ef4444;
-  color: white;
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: bold;
-  flex-shrink: 0;
-}
-
-.error-text {
-  flex: 1;
-  font-size: 14px;
-  color: #ef4444;
-}
-
-.retry-btn {
-  padding: 6px 14px;
-  border-radius: 6px;
-  border: 1px solid #ef4444;
-  background: transparent;
-  color: #ef4444;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.retry-btn:hover {
-  background: #ef4444;
-  color: white;
-}
-
-.dismiss-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: var(--color-text-secondary);
-  font-size: 16px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.dismiss-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.no-config-prompt {
-  padding: 32px 24px;
-  border-top: 1px solid var(--color-divider);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  text-align: center;
-}
-
-.no-config-icon {
-  font-size: 32px;
-  margin-bottom: 4px;
-}
-
-.no-config-prompt h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.no-config-prompt p {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-.go-settings-btn {
-  margin-top: 8px;
-  padding: 8px 20px;
-  border-radius: 8px;
-  background: var(--color-accent);
-  color: var(--color-text-inverse);
-  border: none;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.go-settings-btn:hover {
-  opacity: 0.9;
-}
 </style>

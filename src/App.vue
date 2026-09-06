@@ -31,10 +31,14 @@ if (window?.bridge) {
 
 onMounted(() => {
   if (!window?.bridge) {
+    let retries = 0
     const timer = setInterval(() => {
       if (window?.bridge) {
         clearInterval(timer)
         initBridge()
+      } else if (++retries > 100) {
+        clearInterval(timer)
+        console.error('[bridge] failed to initialize after 5s')
       }
     }, 50)
   }

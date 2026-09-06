@@ -86,18 +86,17 @@ export function useDownloads() {
     if (idx >= 0) {
       const cur = tasks.value[idx]
       const next = { ...cur, status: progress.status, receivedBytes: progress.receivedBytes, totalBytes: progress.totalBytes ?? cur.totalBytes }
-      tasks.value = [...tasks.value.slice(0, idx), next, ...tasks.value.slice(idx + 1)]
+      tasks.value[idx] = next
     }
-    const next = new Map(progressMap.value)
-    next.set(progress.id, progress)
-    progressMap.value = next
+    progressMap.value.set(progress.id, progress)
+    progressMap.value = progressMap.value
   }
 
   function onRemoved(id: string) {
-    tasks.value = tasks.value.filter((t) => t.id !== id)
-    const next = new Map(progressMap.value)
-    next.delete(id)
-    progressMap.value = next
+    const idx = tasks.value.findIndex((t) => t.id === id)
+    if (idx >= 0) tasks.value.splice(idx, 1)
+    progressMap.value.delete(id)
+    progressMap.value = progressMap.value
   }
 
   downloads.onAdded(onAdded)

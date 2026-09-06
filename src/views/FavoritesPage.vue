@@ -1,7 +1,7 @@
 <template>
   <div class="header">
     <h1>收藏夹</h1>
-    <button class="clear-btn" @click="showClearModal = true" :disabled="favoritesList.length === 0">
+    <button class="clear-btn" @click="onClearAll" :disabled="favoritesList.length === 0">
       清空
     </button>
   </div>
@@ -50,22 +50,13 @@
       </div>
     </div>
   </div>
-
-  <!-- 确认弹窗 -->
-  <div v-if="showClearModal" class="modal-overlay" @click.self="showClearModal = false">
-    <div class="modal">
-      <div class="modal-title">确认清空</div>
-      <div class="modal-message">确定要清空所有收藏吗？此操作无法撤销。</div>
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" @click="showClearModal = false">取消</button>
-        <button class="modal-btn modal-btn-confirm" @click="confirmClear">确认清空</button>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ElMessageBox } from 'element-plus'
+import { useFaviconState } from '../composables/useFaviconState'
+import { formatTime } from '../utils/time'
 
 document.title = '收藏夹'
 
@@ -83,17 +74,8 @@ interface FavoriteItem {
 
 const favoritesList = ref<FavoriteItem[]>([])
 const loading = ref(true)
-const showClearModal = ref(false)
 const searchKeyword = ref('')
-const failedFavicons = ref<Set<string>>(new Set())
-
-function onFaviconError(url: string) {
-  failedFavicons.value.add(url)
-}
-
-function onFaviconLoad(url: string) {
-  failedFavicons.value.delete(url)
-}
+const { failedFavicons, onFaviconError, onFaviconLoad } = useFaviconState()
 
 const filteredList = computed<FavoriteItem[]>(() => {
   if (!searchKeyword.value) return favoritesList.value
@@ -131,17 +113,25 @@ async function deleteFavorite(url: string) {
   }
 }
 
-async function confirmClear() {
+async function onClearAll() {
+  try {
+    await ElMessageBox.confirm('确定要清空所有收藏吗？此操作无法撤销。', '确认清空', {
+      confirmButtonText: '清空',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
   try {
     const list = await favorites.list()
     for (const item of list) {
       await favorites.remove(item.url)
     }
-    showClearModal.value = false
     await loadFavorites()
   } catch (err) {
     console.error('Failed to clear favorites:', err)
-    alert('清空失败: ' + (err as Error).message)
+    ElMessageBox.alert((err as Error).message || '清空失败', '操作失败', { type: 'error' })
   }
 }
 
@@ -152,11 +142,6 @@ async function openFavorite(item: FavoriteItem) {
   const currentTabId = tabData?.currentTabId || undefined
   // 在当前 tab 后面创建新标签
   await tabs.create({ title: item.title || '加载中...', url: item.url }, currentTabId)
-}
-
-function formatTime(timestamp: number): string {
-  const date = new Date(timestamp)
-  return date.toLocaleDateString('zh-CN')
 }
 
 function handleVisibilityChange() {
@@ -343,67 +328,4 @@ onUnmounted(() => {
   font-size: 0.9rem;
 }
 
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--modal-overlay);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal {
-  background: var(--modal-bg);
-  border-radius: var(--radius-lg, 12px);
-  padding: 20px;
-  width: 320px;
-}
-
-.modal-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin-bottom: 8px;
-}
-
-.modal-message {
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
-  margin-bottom: 20px;
-  line-height: 1.5;
-}
-
-.modal-buttons {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.modal-btn {
-  padding: 6px 16px;
-  border-radius: var(--radius-md, 6px);
-  font-size: 0.85rem;
-  cursor: pointer;
-  border: none;
-  transition: opacity 0.2s ease;
-}
-
-.modal-btn-cancel {
-  background: transparent;
-  color: var(--color-text-secondary);
-
-  &:hover {
-    background: var(--card-hover-bg);
-  }
-}
-
-.modal-btn-confirm {
-  background: var(--color-status-error);
-  color: white;
-
-  &:hover {
-    opacity: 0.9;
-  }
-}
 </style>

@@ -44,14 +44,7 @@
 </template>
 
 <script setup lang="ts">
-interface AiProfile {
-  name: string
-  providerType: string
-  apiKey: string
-  apiUrl: string
-  model: string
-  systemPromptIds: string[]
-}
+import type { AiProfile } from '../../types/ai'
 
 defineProps<{
   profiles: AiProfile[]

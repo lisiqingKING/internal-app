@@ -7,6 +7,7 @@
 
     <div class="settings-layout">
       <AiProfileList
+        v-if="profiles.length > 0"
         :profiles="profiles"
         :activeName="activeProfile?.name ?? ''"
         @select="handleSelect"
@@ -23,8 +24,10 @@
         @openPromptModal="promptModalOpen = true"
       />
 
-      <div v-else class="no-selection">
-        <p>选择左侧配置或新建</p>
+      <div v-else class="no-profile">
+        <p class="no-profile-title">暂无 AI 配置</p>
+        <p class="no-profile-desc">添加配置以开始使用 AI 对话功能</p>
+        <button class="no-profile-btn" @click="handleAdd">添加配置</button>
       </div>
     </div>
 
@@ -91,10 +94,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { ElMessageBox } from 'element-plus'
 import AiProfileList from './AiProfileList.vue'
 import AiProfileForm from './AiProfileForm.vue'
 import Toast from '../common/Toast.vue'
-import type { AiProfile } from './AiProfileForm.vue'
+import type { AiProfile } from '../../types/ai'
 
 const ai = window.bridge.getModules(['ai']).ai
 
@@ -164,7 +168,15 @@ function handleAdd() {
 }
 
 async function handleDelete(name: string) {
-  if (!window.confirm(`确定要删除配置「${name}」吗？`)) return
+  try {
+    await ElMessageBox.confirm(`确定要删除配置「${name}」吗？`, '确认删除', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
   try {
     await ai.deleteProfile(name)
   } catch (e: any) {
@@ -290,13 +302,45 @@ function showStatus(msg: string, type: 'success' | 'error') {
   min-width: 0;
 }
 
-.no-selection {
+.no-profile {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   color: var(--color-text-secondary);
   font-size: 14px;
+}
+
+.no-profile-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.no-profile-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.no-profile-btn {
+  margin-top: 12px;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.no-profile-btn:hover {
+  opacity: 0.9;
 }
 
 /* 提示词 Modal */

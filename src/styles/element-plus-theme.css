@@ -1,0 +1,135 @@
+/* element-plus 主题覆盖 — 适配项目 CSS Token */
+
+/* 覆盖主色为项目 accent 色 (emerald) */
+:root {
+  --el-color-primary: var(--color-accent);
+  --el-color-primary-light-3: var(--color-emerald-400);
+  --el-color-primary-light-5: var(--color-emerald-500);
+  --el-color-primary-light-7: var(--color-emerald-600);
+  --el-color-primary-light-8: var(--color-emerald-700);
+  --el-color-primary-light-9: var(--color-emerald-800);
+  --el-color-primary-dark-2: var(--color-emerald-300);
+}
+
+.dark {
+  --el-color-primary: var(--color-accent);
+  --el-color-primary-light-3: var(--color-emerald-500);
+  --el-color-primary-light-5: var(--color-emerald-400);
+  --el-color-primary-light-7: var(--color-emerald-300);
+  --el-color-primary-light-8: var(--color-emerald-200);
+  --el-color-primary-light-9: var(--color-emerald-100);
+  --el-color-primary-dark-2: var(--color-emerald-600);
+}
+
+/* MessageBox */
+.el-message-box {
+  --el-messagebox-title-font-size: 16px;
+  --el-messagebox-content-font-size: 14px;
+  border: 1px solid var(--modal-border);
+  border-radius: 12px;
+  background: var(--modal-bg);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+}
+
+.el-message-box__header {
+  padding: 20px 24px 0;
+}
+
+.el-message-box__title {
+  color: var(--modal-title);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.el-message-box__content {
+  padding: 12px 24px 20px;
+  color: var(--modal-message);
+  font-size: 14px;
+}
+
+.el-message-box__status {
+  color: var(--color-status-warning);
+}
+
+.el-message-box__message {
+  color: var(--modal-message);
+}
+
+.el-message-box__input input {
+  border-color: var(--input-border);
+  background: var(--input-bg);
+  color: var(--input-text);
+}
+
+.el-message-box__input input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+.el-message-box__footer {
+  padding: 0 16px 16px;
+  gap: 8px;
+}
+
+.el-message-box__btn {
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.el-message-box__btn--cancel {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--color-text-secondary);
+}
+
+.dark .el-message-box__btn--cancel {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.el-message-box__btn--cancel:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.dark .el-message-box__btn--cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.el-message-box__btn--confirm {
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+  border: none;
+}
+
+.el-message-box__btn--confirm:hover {
+  background: var(--color-accent-hover);
+}
+
+/* Overlay / Dialog */
+.el-overlay {
+  background: var(--modal-overlay);
+  backdrop-filter: blur(4px);
+}
+
+/* Confirm type (warning) */
+.el-message-box--warning .el-message-box__status {
+  color: var(--color-status-warning);
+}
+
+/* Error type */
+.el-message-box--error .el-message-box__status {
+  color: var(--color-status-error);
+}
+
+/* Success type */
+.el-message-box--success .el-message-box__status {
+  color: var(--color-status-success);
+}
+
+/* Info type */
+.el-message-box--info .el-message-box__status {
+  color: var(--color-accent);
+}

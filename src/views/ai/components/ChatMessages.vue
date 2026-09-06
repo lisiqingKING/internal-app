@@ -117,28 +117,10 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
 import { onClickOutside, useEventListener } from '@vueuse/core'
-import { marked } from 'marked'
-import hljs from 'highlight.js'
 import type { Message } from '../types'
+import { useMarkdown } from '../composables/useMarkdown'
 
-// 配置 marked 使用 highlight.js
-marked.setOptions({
-  gfm: true,
-  breaks: true
-})
-
-const renderer = new marked.Renderer()
-renderer.code = function({ text, lang }: { text: string; lang?: string }) {
-  const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext'
-  const highlighted = hljs.highlight(text, { language }).value
-  const langLabel = lang || 'text'
-  return `<pre class="code-block" data-lang="${langLabel}"><code class="hljs language-${language}">${highlighted}</code></pre>`
-}
-marked.use({ renderer })
-
-function renderMarkdown(content: string): string {
-  return marked.parse(content) as string
-}
+const { renderMarkdown } = useMarkdown()
 
 // 一键复制
 async function handleCopyMessage(content: string) {
