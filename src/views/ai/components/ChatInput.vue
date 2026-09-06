@@ -16,7 +16,7 @@
       >
         <template v-if="loading">
           <span class="spinner"></span>
-          <span>thinking</span>
+          <span>取消</span>
         </template>
         <span v-else>发送</span>
       </button>

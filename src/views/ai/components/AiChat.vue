@@ -247,6 +247,8 @@ async function handleDeleteSession(sessionId: string) {
   } catch {
     return
   }
+  const service = services.get(sessionId)
+  service?.dispose()
   services.delete(sessionId)
   deleteSession(sessionId)
 }

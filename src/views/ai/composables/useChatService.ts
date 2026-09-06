@@ -5,6 +5,7 @@ import type { Message, ChatSession } from '../types'
 // 从主进程获取当前激活的完整配置
 async function getActiveProfile(): Promise<{
   apiUrl: string
+  apiKey: string
   providerType: string
   model: string
   systemPrompt: string
@@ -14,6 +15,7 @@ async function getActiveProfile(): Promise<{
   if (!profile) {
     return {
       apiUrl: aiConfig.apiUrl,
+      apiKey: '',
       providerType: 'openai',
       model: aiConfig.model,
       systemPrompt: '',
@@ -32,6 +34,7 @@ async function getActiveProfile(): Promise<{
   }
   return {
     apiUrl: profile.apiUrl || aiConfig.apiUrl,
+    apiKey: profile.apiKey || '',
     providerType: profile.providerType || 'openai',
     model: profile.model || aiConfig.model,
     systemPrompt,
@@ -162,7 +165,7 @@ export function createChatService(session: ChatSession) {
     state.chatHistory.push(userMsg)
 
     // 从主进程获取当前激活配置的完整信息
-    const { apiUrl, providerType, model, systemPrompt } = await getActiveProfile()
+    const { apiUrl, apiKey, providerType, model, systemPrompt } = await getActiveProfile()
 
     // 准备 API 请求（深拷贝确保全是纯对象，IPC 序列化需要）
     const requestMessages = JSON.parse(JSON.stringify([
@@ -178,6 +181,7 @@ export function createChatService(session: ChatSession) {
         conversationId: String(session.convId),
         messageId: msgId,
         apiUrl,
+        apiKey,
         providerType,
         model,
         messages: requestMessages,
