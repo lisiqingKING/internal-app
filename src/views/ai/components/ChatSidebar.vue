@@ -2,43 +2,40 @@
   <div class="sidebar">
     <div class="sidebar-header">
       <button class="new-chat-btn" @click="$emit('new-chat')">
-        <span>+</span> 新建对话
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        新对话
       </button>
     </div>
-    <div class="sidebar-title">历史对话</div>
+
     <div class="session-list" ref="sessionListRef">
       <div
         v-for="session in sortedSessions"
         :key="session.convId"
         class="session-item"
-        :class="{ active: session.convId === currentSessionId, loading: session.isLoading }"
+        :class="{ active: session.convId === currentSessionId }"
         @click="$emit('switch-session', session.convId)"
       >
-        <div class="session-main">
-          <div class="session-title-row">
-            <span class="pin-placeholder" :class="{ pinned: session.pinned }">
-              <svg v-if="session.pinned" viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+        <div class="session-info">
+          <div class="session-title">{{ session.title }}</div>
+          <div class="session-meta">
+            <span>{{ formatSidebarTime(session.updatedAt) }}</span>
+            <span v-if="session.pinned" class="pin-icon">
+              <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
                 <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
               </svg>
-              <svg v-else viewBox="0 0 24 24" width="12" height="12" fill="currentColor" opacity="0.2">
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
             </span>
-            <span class="session-title">{{ session.title }}</span>
-            <span class="session-time">{{ formatSidebarTime(session.updatedAt) }}</span>
-            <div class="session-menu-wrapper" @click.stop>
-              <button class="more-btn" @click="toggleMenu(session.convId, $event)">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                  <circle cx="12" cy="5" r="2"/>
-                  <circle cx="12" cy="12" r="2"/>
-                  <circle cx="12" cy="19" r="2"/>
-                </svg>
-              </button>
-            </div>
           </div>
-          <div class="session-preview">{{ getLastMessageContent(session) }}</div>
         </div>
-        <span v-if="session.isLoading" class="loading-indicator"></span>
+        <button class="more-btn" @click.stop="toggleMenu(session.convId, $event)">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="12" r="2"/>
+            <circle cx="12" cy="19" r="2"/>
+          </svg>
+        </button>
       </div>
 
       <!-- 加载更多触发器 -->
@@ -48,12 +45,7 @@
       </div>
     </div>
 
-    <!-- 底部工具栏 -->
-    <div class="sidebar-footer">
-      <button class="footer-btn" @click="handleOpenSaveDir">查看保存记录</button>
-    </div>
-
-    <!-- 下拉菜单（Teleport 到 body 避免被 overflow 裁剪） -->
+    <!-- 下拉菜单 -->
     <Teleport to="body">
       <div v-if="menuSession" ref="dropdownRef" class="dropdown-menu" :style="menuStyle">
         <button class="menu-item" @click="handlePin(menuSession.convId)">
@@ -89,6 +81,12 @@
       @confirm="(title) => { emit('rename-session', renamingSession!.convId, title); renamingSession = null }"
       @cancel="renamingSession = null"
     />
+
+    <!-- 底部工具栏 -->
+    <div class="sidebar-footer">
+      <button class="footer-btn" @click="handleOpenSaveDir">保存记录</button>
+    </div>
+
   </div>
 </template>
 
@@ -120,20 +118,6 @@ function handleOpenSaveDir() {
   if (tabs?.createAiSaves) {
     tabs.createAiSaves()
   }
-}
-
-const sortedSessions = computed(() => {
-  return [...props.sessions].sort((a, b) => {
-    if (a.pinned !== b.pinned) return (b.pinned || 0) - (a.pinned || 0)
-    return b.createdAt - a.createdAt
-  })
-})
-
-function getLastMessageContent(session: ChatSession): string {
-  if (session.messages.length === 0) return ''
-  const last = session.messages[session.messages.length - 1]
-  const prefix = last.role === 'user' ? '我: ' : 'AI: '
-  return prefix + last.content.slice(0, 50) + (last.content.length > 50 ? '...' : '')
 }
 
 // 下拉菜单
@@ -176,10 +160,16 @@ function handleDelete(convId: string) {
   menuSession.value = null
 }
 
-// onClickOutside — 点击菜单外部自动关闭
 const dropdownRef = ref<HTMLElement | null>(null)
 onClickOutside(dropdownRef, () => {
   menuSession.value = null
+})
+
+const sortedSessions = computed(() => {
+  return [...props.sessions].sort((a, b) => {
+    if (a.pinned !== b.pinned) return (b.pinned || 0) - (a.pinned || 0)
+    return b.createdAt - a.createdAt
+  })
 })
 
 // Intersection Observer for infinite scroll
@@ -211,7 +201,7 @@ onUnmounted(() => {
 
 <style scoped>
 .sidebar {
-  width: 260px;
+  width: 200px;
   background: var(--color-bg-secondary);
   border-right: 1px solid var(--color-divider);
   display: flex;
@@ -220,40 +210,28 @@ onUnmounted(() => {
 }
 
 .sidebar-header {
-  padding: 16px;
+  padding: 14px 12px 10px;
 }
 
 .new-chat-btn {
   width: 100%;
-  padding: 12px 16px;
+  padding: 8px 12px;
   border-radius: 8px;
-  border: 1px dashed var(--color-border);
+  border: 1px solid var(--color-divider);
   background: transparent;
-  color: var(--color-text-primary);
-  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: background 0.2s, border-color 0.2s;
+  gap: 6px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .new-chat-btn:hover {
   background: var(--color-surface);
-  border-color: var(--color-accent);
-}
-
-.new-chat-btn span {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.sidebar-title {
-  padding: 8px 16px;
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
 }
 
 .session-list {
@@ -265,168 +243,160 @@ onUnmounted(() => {
 .session-item {
   display: flex;
   align-items: center;
-  padding: 10px 12px;
+  padding: 8px 8px;
   border-radius: 8px;
   cursor: pointer;
-  margin-bottom: 4px;
-  transition: background 0.2s;
+  margin-bottom: 2px;
+  transition: background 0.15s;
 }
 
 .session-item:hover {
   background: var(--color-surface);
 }
 
+.session-item:hover .more-btn {
+  opacity: 1;
+}
+
+.session-item.active {
+  background: var(--color-surface-hover);
+}
+
 .session-item.active .session-title {
-  color: var(--color-accent);
-  font-weight: 500;
-}
-
-.session-item.active .session-time {
-  color: var(--color-accent);
-  opacity: 0.7;
-}
-
-.session-item.active .pin-placeholder.pinned {
-  color: var(--color-accent);
-}
-
-.pin-placeholder {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.pin-placeholder.pinned {
-  color: var(--color-accent);
-}
-
-.session-title {
-  flex: 1;
-  font-size: 14px;
   color: var(--color-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-weight: 500;
 }
 
 .session-info {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
   overflow: hidden;
 }
 
-.session-title-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.session-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  overflow: hidden;
-}
-
-.session-preview {
-  font-size: 12px;
+.session-title {
+  font-size: 13px;
   color: var(--color-text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.session-time {
+.session-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.session-meta span {
   font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+.pin-icon {
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+}
+
+/* 加载更多 */
+.load-more-trigger {
+  padding: 10px;
+  text-align: center;
+}
+
+.loading-more,
+.no-more {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+/* 底部工具栏 */
+.sidebar-footer {
+  padding: 10px 12px 14px;
+  border-top: 1px solid var(--color-divider);
+}
+
+.footer-btn {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.footer-btn:hover {
+  background: var(--color-surface);
   color: var(--color-text-secondary);
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-.loading-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  animation: bounce 1.4s infinite ease-in-out both;
-  flex-shrink: 0;
-}
-
-@keyframes bounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
 }
 
 /* 更多按钮 */
-.session-menu-wrapper {
-  position: relative;
-  flex-shrink: 0;
-}
-
 .more-btn {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: var(--color-text-secondary);
+  color: var(--color-text-tertiary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
   transition: opacity 0.15s, background 0.15s;
-}
-
-.session-item:hover .more-btn {
-  opacity: 1;
+  flex-shrink: 0;
 }
 
 .more-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
-}
-
-/* 加载更多 */
-.load-more-trigger {
-  padding: 12px;
-  text-align: center;
-}
-
-.loading-more,
-.no-more {
-  font-size: 12px;
+  background: var(--color-divider);
   color: var(--color-text-secondary);
 }
 
-/* 底部工具栏 */
-.sidebar-footer {
-  padding: 12px 16px;
-  border-top: 1px solid var(--color-divider);
+/* 下拉菜单 */
+.dropdown-menu {
+  min-width: 140px;
+  background: var(--modal-bg);
+  border: 1px solid var(--color-divider);
+  border-radius: 10px;
+  padding: 4px;
+  box-shadow: var(--shadow-lg);
+  z-index: 10000;
 }
 
-.footer-btn {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-text-secondary);
-  font-size: 13px;
-  cursor: pointer;
+.menu-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: background 0.2s, color 0.2s;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
 }
 
-.footer-btn:hover {
-  background: var(--color-surface);
-  color: var(--color-text-primary);
+.menu-item:hover {
+  background: var(--color-surface-hover);
+}
+
+.menu-item.danger {
+  color: #ef4444;
+}
+
+.menu-item.danger:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.menu-divider {
+  height: 1px;
+  background: var(--color-divider);
+  margin: 4px 8px;
 }
 </style>

@@ -20,44 +20,6 @@
       <ChatEmptyState v-if="sessions.length === 0" @new-chat="handleNewChat" />
 
       <template v-else-if="currentSessionId">
-        <!-- 顶部标题 -->
-        <div class="chat-header">
-          <h1>{{ currentSessionTitle }}</h1>
-          <div v-if="currentService?.state.loading && currentService?.state.currentReasoning" class="thinking-badge">
-            <span class="thinking-pulse"></span>
-            <span>思考中</span>
-          </div>
-          <div class="header-menu-wrapper" @click.stop>
-            <button class="header-more-btn" @click="toggleHeaderMenu($event)">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                <circle cx="12" cy="5" r="2"/>
-                <circle cx="12" cy="12" r="2"/>
-                <circle cx="12" cy="19" r="2"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- 标题栏下拉菜单 -->
-        <ChatHeaderDropdown
-          v-if="headerMenuOpen"
-          :style="headerMenuStyle"
-          :is-pinned="!!currentSession?.pinned"
-          @pin="handleHeaderPin"
-          @rename="handleHeaderRename"
-          @delete="handleHeaderDelete"
-          @close="headerMenuOpen = false"
-        />
-
-        <!-- 重命名弹窗 -->
-        <ChatHeaderRename
-          v-if="headerRenaming"
-          v-model="headerRenameValue"
-          :error="headerRenameError"
-          @confirm="finishHeaderRename"
-          @cancel="headerRenaming = false"
-        />
-
         <!-- 聊天消息列表 -->
         <ChatMessages
           ref="chatMessagesRef"
@@ -103,8 +65,6 @@ import { createChatService, type ChatService } from '../composables/useChatServi
 import ChatSidebar from './ChatSidebar.vue'
 import ChatMessages from './ChatMessages.vue'
 import ChatInput from './ChatInput.vue'
-import ChatHeaderDropdown from './ChatHeaderDropdown.vue'
-import ChatHeaderRename from './ChatHeaderRename.vue'
 import ChatErrorBar from './ChatErrorBar.vue'
 import ChatNoConfigPrompt from './ChatNoConfigPrompt.vue'
 import ChatEmptyState from './ChatEmptyState.vue'
@@ -121,23 +81,6 @@ function onVisibilityChange() {
   }
 }
 const chatMessagesRef = ref<InstanceType<typeof ChatMessages>>()
-const headerMenuOpen = ref(false)
-const headerMenuStyle = ref<Record<string, string>>({})
-const headerRenaming = ref(false)
-const headerRenameValue = ref('')
-const headerRenameError = ref('')
-
-function toggleHeaderMenu(event: MouseEvent) {
-  headerMenuOpen.value = !headerMenuOpen.value
-  if (headerMenuOpen.value) {
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-    headerMenuStyle.value = {
-      position: 'fixed',
-      top: `${rect.bottom + 4}px`,
-      right: `${window.innerWidth - rect.right}px`
-    }
-  }
-}
 
 const {
   sessions,
@@ -171,12 +114,6 @@ function getOrCreateService(session: ReturnType<typeof getCurrentSession>) {
 
 const currentService = computed(() => {
   return getOrCreateService(getCurrentSession())
-})
-
-// 当前对话标题
-const currentSessionTitle = computed(() => {
-  const session = getCurrentSession()
-  return session?.title || '新会话'
 })
 
 onMounted(async () => {
@@ -259,48 +196,6 @@ function handlePinSession(sessionId: string) {
 
 function handleRenameSession(sessionId: string, title: string) {
   updateSessionTitle(sessionId, title)
-}
-
-// 标题栏菜单
-const currentSession = computed(() => getCurrentSession())
-
-function handleHeaderPin() {
-  if (currentSession.value) {
-    togglePin(currentSession.value.convId)
-  }
-  headerMenuOpen.value = false
-}
-
-function handleHeaderRename() {
-  headerMenuOpen.value = false
-  if (currentSession.value) {
-    headerRenaming.value = true
-    headerRenameValue.value = currentSession.value.title
-    headerRenameError.value = ''
-  }
-}
-
-function finishHeaderRename(title: string) {
-  updateSessionTitle(currentSession.value!.convId, title)
-  headerRenaming.value = false
-  headerRenameError.value = ''
-}
-
-async function handleHeaderDelete() {
-  if (!currentSession.value) return
-  try {
-    await ElMessageBox.confirm('确定要删除该会话吗？', '确认删除', {
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-      type: 'warning',
-    })
-  } catch {
-    headerMenuOpen.value = false
-    return
-  }
-  services.delete(currentSession.value.convId)
-  deleteSession(currentSession.value.convId)
-  headerMenuOpen.value = false
 }
 
 function saveCurrentSession() {
@@ -393,78 +288,6 @@ async function handleDelete(index: number) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  max-width: 1000px;
-  margin: 0 auto;
-  width: 100%;
+  overflow: hidden;
 }
-
-.chat-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--color-divider);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.chat-header h1 {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.thinking-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  border-radius: 12px;
-  background: rgba(99, 102, 241, 0.08);
-  color: var(--color-accent);
-  font-size: 12px;
-  font-weight: 500;
-  animation: fadeIn 0.2s ease;
-}
-
-.thinking-pulse {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.4; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* 标题栏菜单 */
-.header-menu-wrapper {
-  margin-left: auto;
-}
-
-.header-more-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
-}
-
-.header-more-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
-}
-
 </style>
