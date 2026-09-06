@@ -270,6 +270,18 @@ defineExpose({ copiedIndex, scrollToBottom, forceScrollToBottom })
   align-items: flex-end;
   gap: 8px;
   margin-bottom: 16px;
+  animation: msgIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes msgIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .message-row.user {
@@ -280,7 +292,7 @@ defineExpose({ copiedIndex, scrollToBottom, forceScrollToBottom })
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-width: 70%;
+  max-width: 72%;
 }
 
 .message-row.user .message-column {
@@ -338,25 +350,33 @@ defineExpose({ copiedIndex, scrollToBottom, forceScrollToBottom })
 /* 思考中动画 */
 .thinking-bubble {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   padding: 14px 18px;
+  align-items: center;
 }
 
 .thinking-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--color-accent);
-  animation: bounce 1.4s infinite ease-in-out both;
+  opacity: 0.5;
+  animation: typingPulse 1.4s infinite ease-in-out both;
 }
 
-.thinking-dot:nth-child(1) { animation-delay: -0.32s; }
-.thinking-dot:nth-child(2) { animation-delay: -0.16s; }
-.thinking-dot:nth-child(3) { animation-delay: 0s; }
+.thinking-dot:nth-child(1) { animation-delay: 0ms; }
+.thinking-dot:nth-child(2) { animation-delay: 160ms; }
+.thinking-dot:nth-child(3) { animation-delay: 320ms; }
 
-@keyframes bounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+@keyframes typingPulse {
+  0%, 60%, 100% {
+    transform: scale(0.85);
+    opacity: 0.4;
+  }
+  30% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
 }
 
 /* Markdown 样式 */
