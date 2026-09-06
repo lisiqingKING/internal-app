@@ -236,8 +236,7 @@ function showStatus(msg: string, type: 'success' | 'error') {
 }
 
 .content-header {
-  padding: 24px 24px 0;
-  margin-bottom: 20px;
+  margin-bottom: 28px;
 }
 
 .content-header h2 {
@@ -284,7 +283,6 @@ function showStatus(msg: string, type: 'success' | 'error') {
   flex: 1;
   display: flex;
   overflow: hidden;
-  padding: 0 24px 24px;
   gap: 16px;
 }
 
