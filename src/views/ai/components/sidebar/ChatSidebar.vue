@@ -38,7 +38,6 @@
         </button>
       </div>
 
-      <!-- 加载更多触发器 -->
       <div ref="loadMoreTrigger" class="load-more-trigger">
         <span v-if="loadingMore" class="loading-more">加载中...</span>
       </div>
@@ -46,7 +45,7 @@
 
     <!-- 下拉菜单 -->
     <Teleport to="body">
-      <div v-if="menuSession" ref="dropdownRef" class="dropdown-menu" :style="menuStyle">
+      <div v-if="menuSession" ref="dropdownRef" class="dropdown-menu" :style="menuStyle" @click.stop>
         <button class="menu-item" @click="handlePin(menuSession.convId)">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
@@ -77,15 +76,13 @@
       v-if="renamingSession"
       v-model="renameValue"
       :error="renameError"
-      @confirm="(title) => { emit('rename-session', renamingSession!.convId, title); renamingSession = null }"
+      @confirm="(title: string) => { emit('rename-session', renamingSession!.convId, title); renamingSession = null }"
       @cancel="renamingSession = null"
     />
 
-    <!-- 底部工具栏 -->
     <div class="sidebar-footer">
       <button class="footer-btn" @click="handleOpenSaveDir">查看保存文件</button>
     </div>
-
   </div>
 </template>
 
@@ -138,7 +135,7 @@ function toggleMenu(convId: string, event: MouseEvent) {
   menuStyle.value = {
     position: 'fixed',
     top: `${rect.bottom + 4}px`,
-    right: `${window.innerWidth - rect.right}px`
+    right: `${window.innerWidth - rect.right}px`,
   }
 }
 
@@ -171,7 +168,7 @@ const sortedSessions = computed(() => {
   })
 })
 
-// Intersection Observer for infinite scroll
+// 分页加载
 const sessionListRef = ref<HTMLElement>()
 const loadMoreTrigger = ref<HTMLElement>()
 let observer: IntersectionObserver | null = null
@@ -184,10 +181,7 @@ onMounted(() => {
           emit('load-more')
         }
       },
-      {
-        root: sessionListRef.value,
-        threshold: 0.1
-      }
+      { root: sessionListRef.value, threshold: 0.1 },
     )
     observer.observe(loadMoreTrigger.value)
   }
@@ -243,7 +237,7 @@ onUnmounted(() => {
 .session-item {
   display: flex;
   align-items: center;
-  padding: 8px 8px;
+  padding: 8px;
   border-radius: 8px;
   cursor: pointer;
   margin-bottom: 2px;
@@ -298,19 +292,16 @@ onUnmounted(() => {
   align-items: center;
 }
 
-/* 加载更多 */
 .load-more-trigger {
   padding: 10px;
   text-align: center;
 }
 
-.loading-more,
-.no-more {
+.loading-more {
   font-size: 11px;
   color: var(--color-text-tertiary);
 }
 
-/* 底部工具栏 */
 .sidebar-footer {
   padding: 10px 12px 14px;
   border-top: 1px solid var(--color-divider);
@@ -333,7 +324,6 @@ onUnmounted(() => {
   color: var(--color-text-secondary);
 }
 
-/* 更多按钮 */
 .more-btn {
   width: 26px;
   height: 26px;
@@ -355,7 +345,6 @@ onUnmounted(() => {
   color: var(--color-text-secondary);
 }
 
-/* 下拉菜单 */
 .dropdown-menu {
   min-width: 140px;
   background: var(--modal-bg);

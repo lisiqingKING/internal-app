@@ -1,6 +1,6 @@
 import { reactive } from 'vue'
-import { aiConfig } from '../config'
-import type { Message, ChatSession } from '../types'
+import { aiConfig } from '@/views/ai/config'
+import type { Message, ChatSession } from '@/views/ai/types'
 
 // 从主进程获取当前激活的完整配置
 async function getActiveProfile(): Promise<{

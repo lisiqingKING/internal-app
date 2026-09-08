@@ -1,4 +1,4 @@
-import type { ChatSession } from '../types'
+import type { ChatSession } from '@/views/ai/types'
 
 export const PAGE_SIZE = 10
 

@@ -13,7 +13,7 @@ import { useMarkdown } from '@/views/ai/composables/useMarkdown'
 
 const { renderMarkdown } = useMarkdown()
 
-const props = defineProps<{
+defineProps<{
   content: string
   role: 'user' | 'assistant'
 }>()

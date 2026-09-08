@@ -31,7 +31,7 @@
       :style="contextMenuStyle"
       @close="contextMenu = null"
       @copy="(i) => emit('copy', i)"
-      @save="(i, content) => handleSave(i, content)"
+      @save="(i, _content) => handleSave(i)"
       @delete="(i) => emit('delete', i)"
     />
   </div>
@@ -97,7 +97,7 @@ function showToast(msg: string) {
   setTimeout(() => { toast.value = '' }, 2000)
 }
 
-async function handleSave(index: number, content: string) {
+async function handleSave(index: number) {
   const msg = props.messages[index]
   if (!msg) return
   const preview = msg.content.replace(/\n/g, ' ').trim().slice(0, 20).replace(/[\\/:*?"<>|]/g, '_')

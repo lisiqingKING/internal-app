@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import type { Message, ChatSession } from '../types'
-import { electronStorageAdapter, initElectronStorage, loadNextPage, PAGE_SIZE } from './storageElectron'
+import type { Message, ChatSession } from '@/views/ai/types'
+import { electronStorageAdapter, initElectronStorage, loadNextPage, PAGE_SIZE } from '../storage/storageElectron'
 
 export { initElectronStorage }
 

@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import type { Message } from '@/views/ai/types'
 
