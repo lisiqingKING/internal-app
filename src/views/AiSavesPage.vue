@@ -154,7 +154,7 @@ function formatSize(bytes: number): string {
 <style scoped>
 .ai-saves-page {
   min-height: 100vh;
-  background: var(--color-bg-primary);
+  background: transparent;
   color: var(--color-text-primary);
 }
 

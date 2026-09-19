@@ -30,7 +30,7 @@ const activeMenu = ref('help')
 .settings-container {
   display: flex;
   height: 100vh;
-  background: var(--page-bg);
+  background: transparent;
   color: var(--color-text-primary);
 }
 

@@ -59,7 +59,7 @@ function retry() {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: var(--page-bg);
+  background: transparent;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 

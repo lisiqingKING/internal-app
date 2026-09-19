@@ -285,7 +285,7 @@ useEventListener(document, 'keydown', (e: KeyboardEvent) => {
 <style scoped>
 .page {
   min-height: 100vh;
-  background: var(--page-bg);
+  background: transparent;
   padding: 32px 0 48px;
   box-sizing: border-box;
 }

@@ -85,7 +85,7 @@ const openSite = (url: string) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg-primary);
+  background: transparent;
   margin: 0;
   padding: 0;
 }

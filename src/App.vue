@@ -44,3 +44,9 @@ onMounted(() => {
   }
 })
 </script>
+
+<style>
+html, body {
+  background: transparent;
+}
+</style>

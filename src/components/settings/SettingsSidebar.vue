@@ -71,7 +71,7 @@ const menuItems = [
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: var(--card-bg);
+  background: transparent;
   border-right: 1px solid var(--card-border);
 }
 
