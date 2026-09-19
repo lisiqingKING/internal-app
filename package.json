@@ -6,12 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@imengyu/vue3-context-menu": "^1.5.6",
     "@lqzh/vue-context-menu": "^2.0.4",
-    "@tanstack/vue-virtual": "^3.13.34",
     "@vueuse/core": "^14.3.0",
     "echarts": "^6.1.0",
     "element-plus": "^2.14.5",
@@ -21,15 +22,18 @@
     "marked": "^18.0.7",
     "vue": "^3.4.21",
     "vue-router": "^5.0.4",
-    "vue-virtual-scroller": "^2.0.0-beta.8"
+    "vue-virtual-scroller": "^3.0.5"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",
-    "@vitejs/plugin-vue": "^5.0.4",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "@vue/test-utils": "^2.5.0",
+    "jsdom": "^29.1.1",
     "sass": "^1.103.1",
     "sass-embedded": "^1.103.1",
     "typescript": "^5.2.2",
     "vite": "^5.1.6",
+    "vitest": "^2.1.9",
     "vue-tsc": "^2.0.26"
   }
 }
