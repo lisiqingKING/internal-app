@@ -144,6 +144,30 @@ const skinOptions = ref<BuiltinSkin[]>([
 
 const customSkins = ref<CustomSkin[]>([])
 
+// 监听主题变化
+const handleThemeChange = (newTheme: string) => {
+  if (newTheme === 'light' || newTheme === 'dark') {
+    theme.value = newTheme
+    applyTheme(newTheme)
+  }
+}
+
+// 监听壁纸变化
+const handleWallpaperChange = async (data: WallpaperData) => {
+  if (data.type === 'custom' && data.id && data.path) {
+    const preview = await wallpaper.getWallpaperImage(data.path)
+    const skin: CustomSkin = { id: data.id, path: data.path, previewUrl: preview }
+    const existing = customSkins.value.find(s => s.id === data.id)
+    if (!existing) {
+      customSkins.value.push(skin)
+    }
+    currentSkin.value = data.id
+    saveCustomSkins()
+  } else if (data.type === 'builtin' && data.name) {
+    currentSkin.value = data.name
+  }
+}
+
 onMounted(async () => {
   const savedTheme = await settings.get('theme')
   if (savedTheme === 'light' || savedTheme === 'dark') {
@@ -178,30 +202,7 @@ onMounted(async () => {
     }
   }
 
-  // 监听主题变化
-  const handleThemeChange = (newTheme: string) => {
-    if (newTheme === 'light' || newTheme === 'dark') {
-      theme.value = newTheme
-      applyTheme(newTheme)
-    }
-  }
   bridge.on(bridge.channels.settings.themeChanged, handleThemeChange)
-
-  // 监听壁纸变化
-  const handleWallpaperChange = async (data: WallpaperData) => {
-    if (data.type === 'custom' && data.id && data.path) {
-      const preview = await wallpaper.getWallpaperImage(data.path)
-      const skin: CustomSkin = { id: data.id, path: data.path, previewUrl: preview }
-      const existing = customSkins.value.find(s => s.id === data.id)
-      if (!existing) {
-        customSkins.value.push(skin)
-      }
-      currentSkin.value = data.id
-      saveCustomSkins()
-    } else if (data.type === 'builtin' && data.name) {
-      currentSkin.value = data.name
-    }
-  }
   bridge.on(bridge.channels.wallpaper.wallpaperChanged, handleWallpaperChange)
 })
 
