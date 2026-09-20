@@ -100,6 +100,18 @@
         </span>
       </div>
     </div>
+
+    <div class="blur-toggle">
+      <label class="toggle-label">
+        <span>毛玻璃效果</span>
+        <button
+          :class="['toggle-btn', { active: blurEnabled }]"
+          @click="toggleBlur"
+        >
+          <span class="toggle-dot"></span>
+        </button>
+      </label>
+    </div>
   </div>
 </template>
 
@@ -112,6 +124,7 @@ const bridge = window.bridge
 
 const theme = ref<'light' | 'dark'>('dark')
 const currentSkin = ref<string>('')
+const blurEnabled = ref(false)
 
 interface BuiltinSkin {
   name: string
@@ -204,6 +217,10 @@ onMounted(async () => {
 
   bridge.on(bridge.channels.settings.themeChanged, handleThemeChange)
   bridge.on(bridge.channels.wallpaper.wallpaperChanged, handleWallpaperChange)
+
+  // 加载毛玻璃设置
+  const savedBlur = await settings.get('wallpaperBlur')
+  blurEnabled.value = savedBlur === 'true'
 })
 
 onUnmounted(() => {
@@ -280,6 +297,11 @@ async function deleteCustomSkin(id: string) {
     await settings.set('wallpaper', JSON.stringify({ type: 'builtin', name: 'cosmic.jpg' }))
   }
   saveCustomSkins()
+}
+
+async function toggleBlur() {
+  blurEnabled.value = !blurEnabled.value
+  await settings.set('wallpaperBlur', String(blurEnabled.value))
 }
 
 async function pickCustomSkin() {
@@ -576,5 +598,53 @@ async function pickCustomSkin() {
 
 .delete-btn:hover {
   background: rgba(255, 59, 48, 0.8);
+}
+
+.blur-toggle {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--card-border);
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.toggle-label span {
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+}
+
+.toggle-btn {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border: none;
+  border-radius: 12px;
+  background: var(--input-border);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.toggle-btn.active {
+  background: var(--color-accent);
+}
+
+.toggle-dot {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s ease;
+}
+
+.toggle-btn.active .toggle-dot {
+  transform: translateX(20px);
 }
 </style>
