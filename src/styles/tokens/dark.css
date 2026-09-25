@@ -3,10 +3,10 @@
   /* Semantic */
   --color-bg-primary: var(--color-neutral-950);
   --color-bg-secondary: var(--color-neutral-900);
-  --color-bg-tertiary: var(--color-neutral-850);
-  --color-text-primary: var(--color-neutral-100);
-  --color-text-secondary: var(--color-neutral-400);
-  --color-text-tertiary: var(--color-neutral-500);
+  --color-bg-tertiary: rgba(28, 28, 30, 0.85);
+  --color-text-primary: #f5f5f7;
+  --color-text-secondary: #a1a1a6;
+  --color-text-tertiary: #6e6e73;
   --color-accent: var(--color-emerald-400);
   --color-accent-hover: var(--color-emerald-300);
   --color-border: var(--color-neutral-700);
@@ -17,13 +17,13 @@
   --page-text: var(--color-text-primary);
 
   /* Component — Card */
-  --card-bg: rgba(255, 255, 255, 0.03);
+  --card-bg: rgba(28, 28, 30, 0.8);
   --card-border: rgba(255, 255, 255, 0.06);
-  --card-hover-bg: rgba(255, 255, 255, 0.06);
+  --card-hover-bg: rgba(39, 39, 42, 0.9);
 
   /* Component — Header */
-  --header-title: var(--color-neutral-100);
-  --header-subtitle: var(--color-neutral-400);
+  --header-title: var(--color-text-primary);
+  --header-subtitle: var(--color-text-secondary);
 
   /* Component — Button */
   --btn-primary-bg: var(--color-accent);
@@ -33,40 +33,40 @@
   --btn-danger-text: var(--color-red-400);
 
   /* Component — Input */
-  --input-bg: var(--color-neutral-900);
+  --input-bg: var(--color-bg-tertiary);
   --input-border: var(--color-neutral-700);
   --input-border-focus: var(--color-emerald-500);
   --input-text: var(--color-text-primary);
   --input-placeholder: var(--color-text-tertiary);
 
   /* Component — Modal */
-  --modal-bg: var(--color-neutral-850);
+  --modal-bg: var(--color-bg-tertiary);
   --modal-border: var(--color-neutral-700);
   --modal-overlay: rgba(0, 0, 0, 0.7);
-  --modal-title: var(--color-neutral-100);
-  --modal-message: var(--color-neutral-400);
+  --modal-title: var(--color-text-primary);
+  --modal-message: var(--color-text-secondary);
 
   /* Component — Surface (elevated cards, list items) */
-  --color-surface: rgba(255, 255, 255, 0.03);
-  --color-surface-hover: rgba(255, 255, 255, 0.06);
+  --color-surface: rgba(28, 28, 30, 0.8);
+  --color-surface-hover: rgba(39, 39, 42, 0.9);
 
   /* Component — Text inverse (white text on colored bg) */
   --color-text-inverse: #0a0a0b;
 
   /* Component — Accent muted (bg for accent buttons/tags) */
-  --color-accent-muted: rgba(16, 185, 129, 0.2);
+  --color-accent-muted: rgba(16, 185, 129, 0.15);
 
   /* Status */
-  --color-status-error: var(--color-red-400);
-  --color-status-error-muted: rgba(248, 81, 73, 0.08);
-  --color-status-warning: var(--color-yellow-400);
-  --color-status-warning-muted: rgba(250, 204, 21, 0.08);
-  --color-status-success: var(--color-emerald-400);
-  --color-status-success-muted: rgba(16, 185, 129, 0.08);
+  --color-status-error: var(--color-red-500);
+  --color-status-error-muted: rgba(239, 68, 68, 0.1);
+  --color-status-warning: var(--color-yellow-500);
+  --color-status-warning-muted: rgba(234, 179, 8, 0.1);
+  --color-status-success: var(--color-emerald-600);
+  --color-status-success-muted: rgba(5, 150, 105, 0.1);
   --color-status-info: var(--color-neutral-500);
 
   /* Component — Code block */
-  --color-code-bg: var(--color-neutral-950);
-  --color-code-border: var(--color-neutral-800);
-  --color-code-text: var(--color-neutral-300);
+  --color-code-bg: var(--color-bg-tertiary);
+  --color-code-border: var(--color-border);
+  --color-code-text: var(--color-text-primary);
 }

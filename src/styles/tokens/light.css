@@ -3,10 +3,10 @@
   /* Semantic */
   --color-bg-primary: var(--color-neutral-50);
   --color-bg-secondary: var(--color-neutral-100);
-  --color-bg-tertiary: #ffffff;
-  --color-text-primary: var(--color-neutral-900);
-  --color-text-secondary: var(--color-neutral-500);
-  --color-text-tertiary: var(--color-neutral-400);
+  --color-bg-tertiary: rgba(255, 255, 255, 0.85);
+  --color-text-primary: #1d1d1f;
+  --color-text-secondary: #86868b;
+  --color-text-tertiary: #a1a1a6;
   --color-accent: var(--color-emerald-500);
   --color-accent-hover: var(--color-emerald-600);
   --color-border: var(--color-neutral-200);
@@ -17,9 +17,9 @@
   --page-text: var(--color-text-primary);
 
   /* Component — Card */
-  --card-bg: rgba(255, 255, 255, 0.9);
-  --card-border: var(--color-border);
-  --card-hover-bg: #ffffff;
+  --card-bg: rgba(255, 255, 255, 0.8);
+  --card-border: rgba(0, 0, 0, 0.06);
+  --card-hover-bg: rgba(255, 255, 255, 0.95);
 
   /* Component — Header */
   --header-title: var(--color-text-primary);
@@ -47,8 +47,8 @@
   --modal-message: var(--color-text-secondary);
 
   /* Component — Surface (elevated cards, list items) */
-  --color-surface: rgba(255, 255, 255, 0.9);
-  --color-surface-hover: #ffffff;
+  --color-surface: rgba(255, 255, 255, 0.8);
+  --color-surface-hover: rgba(255, 255, 255, 0.95);
 
   /* Component — Text inverse (white text on colored bg) */
   --color-text-inverse: #ffffff;

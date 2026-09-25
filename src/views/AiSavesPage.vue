@@ -399,14 +399,15 @@ function formatSize(bytes: number): string {
 }
 
 .markdown-body :deep(code) {
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--color-code-bg);
   padding: 2px 5px;
   border-radius: 3px;
   font-size: 0.9em;
 }
 
 .markdown-body :deep(pre) {
-  background: #1e1e2e;
+  background: var(--color-code-bg);
+  border: 1px solid var(--color-code-border);
   border-radius: 6px;
   padding: 14px;
   overflow-x: auto;
@@ -416,7 +417,7 @@ function formatSize(bytes: number): string {
 .markdown-body :deep(pre code) {
   background: transparent;
   padding: 0;
-  color: #e0e0e0;
+  color: var(--color-code-text);
   font-size: 0.85em;
 }
 
