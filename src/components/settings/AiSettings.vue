@@ -1,6 +1,6 @@
 <template>
   <div class="ai-settings">
-    <div class="content-header">
+    <div class="section-header">
       <h2>AI 配置</h2>
       <p>支持多套配置切换使用</p>
     </div>
@@ -228,71 +228,50 @@ function showStatus(msg: string, type: 'success' | 'error') {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .ai-settings {
   height: 100%;
   display: flex;
   flex-direction: column;
+  gap: 32px;
+  max-width: 800px;
 }
 
-.content-header {
-  margin-bottom: 28px;
+.section-header {
+  padding-bottom: 4px;
+
 }
 
-.content-header h2 {
-  font-size: 1.5rem;
+.section-header h2 {
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--color-text-primary);
-  margin: 0 0 6px;
+  margin: 0 0 4px;
 }
 
-.content-header p {
-  font-size: 0.9rem;
+.section-header p {
+  font-size: 0.8rem;
   color: var(--color-text-secondary);
   margin: 0;
-}
-
-.tab-bar {
-  display: flex;
-  gap: 4px;
-  padding: 0 24px 16px;
-}
-
-.tab-btn {
-  padding: 8px 20px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.tab-btn:hover {
-  background: var(--color-surface);
-}
-
-.tab-btn.active {
-  background: var(--color-accent);
-  color: var(--color-text-inverse);
 }
 
 .settings-layout {
   flex: 1;
   display: flex;
   overflow: hidden;
-  gap: 16px;
+  gap: 12px;
+  min-height: 0;
 }
 
 .settings-layout > :first-child {
-  width: 240px;
+  width: 220px;
   flex-shrink: 0;
-  background: var(--color-bg-secondary);
-  border-radius: 12px;
-  border: 1px solid var(--color-divider);
+  background: var(--color-surface);
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .settings-layout > :last-child:not(.no-selection) {
@@ -306,7 +285,7 @@ function showStatus(msg: string, type: 'success' | 'error') {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   color: var(--color-text-secondary);
   font-size: 14px;
 }
@@ -343,14 +322,28 @@ function showStatus(msg: string, type: 'success' | 'error') {
 
 /* 提示词 Modal */
 .prompt-modal {
-  width: 600px;
+  width: 560px;
   max-width: 90vw;
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  overflow: hidden;
 }
 
 .prompt-modal .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 16px 20px;
+
+}
+
+.prompt-modal .modal-header span {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
 }
 
 .modal-close {
@@ -374,9 +367,10 @@ function showStatus(msg: string, type: 'success' | 'error') {
 .prompt-modal .modal-body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   max-height: 60vh;
   overflow-y: auto;
+  padding: 16px 20px;
 }
 
 .prompt-list {
@@ -388,7 +382,7 @@ function showStatus(msg: string, type: 'success' | 'error') {
 .prompt-item {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 12px;
   padding: 10px 12px;
   border-radius: 6px;
   cursor: pointer;
@@ -400,7 +394,7 @@ function showStatus(msg: string, type: 'success' | 'error') {
 }
 
 .prompt-item.selected {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 .prompt-item input[type="checkbox"] {
@@ -428,6 +422,7 @@ function showStatus(msg: string, type: 'success' | 'error') {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 280px;
 }
 
 .no-prompts {
@@ -440,7 +435,7 @@ function showStatus(msg: string, type: 'success' | 'error') {
 .prompt-editor {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   padding-top: 12px;
   border-top: 1px solid var(--color-divider);
 }
@@ -452,6 +447,14 @@ function showStatus(msg: string, type: 'success' | 'error') {
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-size: 13px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.prompt-input:focus {
+  border-color: var(--color-accent);
 }
 
 .prompt-textarea {
@@ -463,6 +466,14 @@ function showStatus(msg: string, type: 'success' | 'error') {
   font-size: 13px;
   resize: vertical;
   font-family: inherit;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.prompt-textarea:focus {
+  border-color: var(--color-accent);
 }
 
 .prompt-add-btn {
@@ -474,10 +485,37 @@ function showStatus(msg: string, type: 'success' | 'error') {
   font-size: 13px;
   cursor: pointer;
   align-self: flex-end;
+  transition: opacity 0.15s;
+}
+
+.prompt-add-btn:hover:not(:disabled) {
+  opacity: 0.9;
 }
 
 .prompt-add-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.prompt-modal .modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-divider);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 7px 18px;
+  border-radius: 6px;
+  border: none;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.modal-btn:hover {
+  opacity: 0.9;
 }
 </style>

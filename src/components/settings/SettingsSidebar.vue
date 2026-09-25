@@ -65,43 +65,44 @@ const menuItems = [
 ]
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .sidebar {
-  width: 220px;
+  width: 200px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   background: transparent;
   border-right: 1px solid var(--card-border);
+  padding: 16px 12px;
 }
 
 .sidebar-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 24px 20px 20px;
+  padding: 8px 8px 16px;
 }
 
 .sidebar-icon {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--color-accent), var(--color-indigo-400));
-  border-radius: 10px;
+  background: var(--color-accent);
+  border-radius: 8px;
   color: white;
+  flex-shrink: 0;
 }
 
 .sidebar-title {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--color-text-primary);
 }
 
 .sidebar-nav {
   flex: 1;
-  padding: 8px 12px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -110,44 +111,46 @@ const menuItems = [
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 12px;
+  padding: 7px 10px;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.15s ease;
   text-align: left;
   width: 100%;
+  border-left: 3px solid transparent;
 }
 
 .nav-item:hover {
-  background: var(--card-hover-bg);
+  background: var(--color-surface);
   color: var(--color-text-primary);
 }
 
 .nav-item.active {
-  background: rgba(99, 102, 241, 0.12);
+  background: var(--color-surface);
   color: var(--color-accent);
+  border-left-color: var(--color-accent);
 }
 
 .nav-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .sidebar-footer {
-  padding: 16px 20px;
-  border-top: 1px solid var(--card-border);
+  padding: 12px 8px 4px;
 }
 
 .version {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--color-text-tertiary);
 }
 </style>

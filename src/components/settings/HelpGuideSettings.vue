@@ -1,15 +1,17 @@
 <template>
-  <div class="content-header">
-    <h2>使用指南</h2>
-    <p>了解 lsqapp 能为你做什么</p>
-  </div>
+  <div class="help-settings">
+    <div class="content-header">
+      <h2>使用指南</h2>
+      <p>了解 lsqapp 能为你做什么</p>
+    </div>
 
-  <div class="guide-list">
-    <div v-for="item in guides" :key="item.title" class="guide-card">
-      <div class="guide-icon" v-html="item.icon"></div>
-      <div class="guide-info">
-        <h3>{{ item.title }}</h3>
-        <p>{{ item.desc }}</p>
+    <div class="guide-list">
+      <div v-for="item in guides" :key="item.title" class="guide-card">
+        <div class="guide-icon" v-html="item.icon"></div>
+        <div class="guide-info">
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.desc }}</p>
+        </div>
       </div>
     </div>
   </div>
@@ -50,7 +52,11 @@ const guides = [
 ]
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+.help-settings {
+  max-width: 560px;
+}
+
 .content-header {
   margin-bottom: 28px;
 }
@@ -78,7 +84,7 @@ const guides = [
 .guide-card {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
+  gap: 12px;
   padding: 18px 20px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);

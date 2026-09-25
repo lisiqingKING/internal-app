@@ -114,16 +114,17 @@ const canApply = computed(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .profile-form {
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-width: 560px;
 }
 
 .form-header {
   padding: 16px 20px;
-  border-bottom: 1px solid var(--color-divider);
+
   display: flex;
   align-items: center;
   gap: 12px;
@@ -165,7 +166,7 @@ const canApply = computed(() => {
 
 .mode-hint.edit {
   color: var(--color-accent);
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(16, 185, 129, 0.1);
 }
 
 .form-body {
@@ -174,7 +175,7 @@ const canApply = computed(() => {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 
 .form-item {
@@ -264,7 +265,7 @@ const canApply = computed(() => {
 
 .form-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   padding-top: 4px;
 }
 

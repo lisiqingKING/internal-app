@@ -62,7 +62,7 @@ function formatProvider(type: string): string {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .profile-list {
   display: flex;
   flex-direction: column;
@@ -74,7 +74,7 @@ function formatProvider(type: string): string {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--color-divider);
+
 }
 
 .list-title {
@@ -118,7 +118,7 @@ function formatProvider(type: string): string {
   cursor: pointer;
   margin-bottom: 4px;
   transition: background 0.15s;
-  gap: 8px;
+  gap: 6px;
 }
 
 .profile-item:hover {
@@ -126,7 +126,7 @@ function formatProvider(type: string): string {
 }
 
 .profile-item.active {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 .profile-item.active .profile-name {
@@ -140,6 +140,7 @@ function formatProvider(type: string): string {
   flex-direction: column;
   gap: 2px;
   overflow: hidden;
+  min-width: 0;
 }
 
 .profile-name {
@@ -153,6 +154,9 @@ function formatProvider(type: string): string {
 .profile-meta {
   font-size: 11px;
   color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .delete-btn {
@@ -184,7 +188,7 @@ function formatProvider(type: string): string {
 .active-badge {
   font-size: 11px;
   color: var(--color-accent);
-  background: rgba(99, 102, 241, 0.12);
+  background: rgba(16, 185, 129, 0.12);
   padding: 2px 8px;
   border-radius: 10px;
   flex-shrink: 0;
