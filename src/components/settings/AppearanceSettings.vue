@@ -1,130 +1,165 @@
 <template>
-  <div class="content-header">
-    <h2>外观</h2>
-    <p>选择你喜欢的视觉风格</p>
-  </div>
-
-  <div class="theme-section">
-    <div class="theme-cards">
-      <button
-        :class="['theme-card', { active: theme === 'light' }]"
-        @click="setTheme('light')"
-      >
-        <div class="theme-preview light-preview">
-          <div class="preview-sidebar"></div>
-          <div class="preview-main">
-            <div class="preview-bar"></div>
-            <div class="preview-content">
-              <div class="preview-line long"></div>
-              <div class="preview-line short"></div>
-              <div class="preview-line medium"></div>
-            </div>
-          </div>
-        </div>
-        <div class="theme-info">
-          <span class="theme-name">浅色模式</span>
-          <span class="theme-desc">明亮清爽</span>
-        </div>
-        <div v-if="theme === 'light'" class="check-icon">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-          </svg>
-        </div>
-      </button>
-
-      <button
-        :class="['theme-card', { active: theme === 'dark' }]"
-        @click="setTheme('dark')"
-      >
-        <div class="theme-preview dark-preview">
-          <div class="preview-sidebar"></div>
-          <div class="preview-main">
-            <div class="preview-bar"></div>
-            <div class="preview-content">
-              <div class="preview-line long"></div>
-              <div class="preview-line short"></div>
-              <div class="preview-line medium"></div>
-            </div>
-          </div>
-        </div>
-        <div class="theme-info">
-          <span class="theme-name">深色模式</span>
-          <span class="theme-desc">护眼沉浸</span>
-        </div>
-        <div v-if="theme === 'dark'" class="check-icon">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-          </svg>
-        </div>
-      </button>
-    </div>
-  </div>
-
-  <div class="skin-section">
+  <div class="appearance-settings">
     <div class="section-header">
-      <h3>应用皮肤</h3>
-      <button class="add-btn" @click="pickCustomSkin">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-        </svg>
-        上传
-      </button>
+      <h2>外观</h2>
+      <p>选择你喜欢的视觉风格</p>
     </div>
-    <div class="skin-cards">
-      <button
-        v-for="skin in skinOptions"
-        :key="skin.name"
-        :class="['skin-card', { active: currentSkin === skin.name }]"
-        @click="selectSkin(skin)"
-      >
-        <div class="skin-preview" :style="skin.previewUrl ? { backgroundImage: `url(${skin.previewUrl})` } : {}"></div>
-        <span class="skin-name">{{ skin.label }}</span>
-      </button>
-      <div
-        v-for="skin in customSkins"
-        :key="skin.id"
-        :class="['skin-card', 'custom-skin', { active: currentSkin === skin.id }]"
-        @click="selectCustomSkin(skin)"
-      >
-        <div class="skin-preview" :style="skin.previewUrl ? { backgroundImage: `url(${skin.previewUrl})` } : {}"></div>
-        <span class="skin-name">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" class="local-icon">
-            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-          </svg>
-          本地
-        </span>
-        <span class="delete-btn" @click.stop="deleteCustomSkin(skin.id)">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-          </svg>
-        </span>
+
+    <div class="settings-group">
+      <div class="group-title">主题</div>
+      <div class="theme-cards">
+        <button
+          :class="['theme-card', { active: theme === 'system' }]"
+          @click="setTheme('system')"
+        >
+          <div class="theme-preview system-preview">
+            <div class="preview-sidebar"></div>
+            <div class="preview-main">
+              <div class="preview-bar"></div>
+              <div class="preview-content">
+                <div class="preview-line long"></div>
+                <div class="preview-line short"></div>
+                <div class="preview-line medium"></div>
+              </div>
+            </div>
+          </div>
+          <div class="theme-info">
+            <span class="theme-name">跟随系统</span>
+            <span class="theme-desc">自动适配</span>
+          </div>
+          <div v-if="theme === 'system'" class="check-icon">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+          </div>
+        </button>
+
+        <button
+          :class="['theme-card', { active: theme === 'light' }]"
+          @click="setTheme('light')"
+        >
+          <div class="theme-preview light-preview">
+            <div class="preview-sidebar"></div>
+            <div class="preview-main">
+              <div class="preview-bar"></div>
+              <div class="preview-content">
+                <div class="preview-line long"></div>
+                <div class="preview-line short"></div>
+                <div class="preview-line medium"></div>
+              </div>
+            </div>
+          </div>
+          <div class="theme-info">
+            <span class="theme-name">浅色模式</span>
+            <span class="theme-desc">明亮清爽</span>
+          </div>
+          <div v-if="theme === 'light'" class="check-icon">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+          </div>
+        </button>
+
+        <button
+          :class="['theme-card', { active: theme === 'dark' }]"
+          @click="setTheme('dark')"
+        >
+          <div class="theme-preview dark-preview">
+            <div class="preview-sidebar"></div>
+            <div class="preview-main">
+              <div class="preview-bar"></div>
+              <div class="preview-content">
+                <div class="preview-line long"></div>
+                <div class="preview-line short"></div>
+                <div class="preview-line medium"></div>
+              </div>
+            </div>
+          </div>
+          <div class="theme-info">
+            <span class="theme-name">深色模式</span>
+            <span class="theme-desc">护眼沉浸</span>
+          </div>
+          <div v-if="theme === 'dark'" class="check-icon">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+          </div>
+        </button>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">毛玻璃效果</span>
+        <SettingsToggle v-model="blurEnabled" />
       </div>
     </div>
 
-    <div class="blur-toggle">
-      <label class="toggle-label">
-        <span>毛玻璃效果</span>
-        <button
-          :class="['toggle-btn', { active: blurEnabled }]"
-          @click="toggleBlur"
-        >
-          <span class="toggle-dot"></span>
+    <div class="settings-group">
+      <div class="group-title">应用皮肤</div>
+
+      <div class="skin-cards">
+        <!-- 上传卡片 -->
+        <button class="skin-card upload-card" @click="pickCustomSkin">
+          <div class="skin-preview upload-preview">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+          </div>
         </button>
-      </label>
+
+        <!-- 默认主题卡片 -->
+        <button
+          :class="['skin-card', { active: currentSkin === '' }]"
+          @click="selectDefault"
+        >
+          <div class="skin-preview default-preview">
+            <span class="default-text">默认主题</span>
+          </div>
+        </button>
+
+        <!-- 内置皮肤 -->
+        <button
+          v-for="skin in skinOptions"
+          :key="skin.name"
+          :class="['skin-card', { active: currentSkin === skin.name }]"
+          @click="selectSkin(skin)"
+        >
+          <div class="skin-preview" :style="skin.previewUrl ? { backgroundImage: `url(${skin.previewUrl})` } : {}"></div>
+        </button>
+
+        <!-- 自定义皮肤 -->
+        <button
+          v-for="skin in customSkins"
+          :key="skin.id"
+          :class="['skin-card', { active: currentSkin === skin.id }]"
+          @click="selectCustomSkin(skin)"
+        >
+          <div class="skin-preview" :style="skin.previewUrl ? { backgroundImage: `url(${skin.previewUrl})` } : {}"></div>
+          <span class="delete-btn" @click.stop="deleteCustomSkin(skin.id)">
+            <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          </span>
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
+import SettingsToggle from './SettingsToggle.vue'
 
 const settings = window.bridge.getModules(['settings']).settings
 const wallpaper = window.bridge.getModules(['wallpaper']).wallpaper
 const bridge = window.bridge
 
-const theme = ref<'light' | 'dark'>('dark')
+const theme = ref<'light' | 'dark' | 'system'>('system')
 const currentSkin = ref<string>('')
 const blurEnabled = ref(false)
+
+watch(blurEnabled, async (val) => {
+  await settings.set('wallpaperBlur', String(val))
+})
 
 interface BuiltinSkin {
   name: string
@@ -148,16 +183,15 @@ type WallpaperData = {
 }
 
 const skinOptions = ref<BuiltinSkin[]>([
-  { name: 'cosmic.jpg', label: '星空' },
-  { name: 'mountain.jpg', label: '山水' },
-  { name: 'city.jpg', label: '城市' },
-  { name: 'abstract.jpg', label: '抽象' },
-  { name: 'anime.jpg', label: '动漫' }
+  { name: 'skin-01.jpg', label: '壁纸 1' },
+  { name: 'skin-02.jpg', label: '壁纸 2' },
+  { name: 'skin-03.jpg', label: '壁纸 3' },
+  { name: 'skin-04.jpg', label: '壁纸 4' },
+  { name: 'skin-05.jpg', label: '壁纸 5' }
 ])
 
 const customSkins = ref<CustomSkin[]>([])
 
-// 监听主题变化
 const handleThemeChange = (newTheme: string) => {
   if (newTheme === 'light' || newTheme === 'dark') {
     theme.value = newTheme
@@ -165,7 +199,6 @@ const handleThemeChange = (newTheme: string) => {
   }
 }
 
-// 监听壁纸变化
 const handleWallpaperChange = async (data: WallpaperData) => {
   if (data.type === 'custom' && data.id && data.path) {
     const preview = await wallpaper.getWallpaperImage(data.path)
@@ -183,7 +216,7 @@ const handleWallpaperChange = async (data: WallpaperData) => {
 
 onMounted(async () => {
   const savedTheme = await settings.get('theme')
-  if (savedTheme === 'light' || savedTheme === 'dark') {
+  if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
     theme.value = savedTheme
     applyTheme(savedTheme)
   }
@@ -192,18 +225,16 @@ onMounted(async () => {
   if (savedWallpaper) {
     try {
       const data = JSON.parse(savedWallpaper)
-      if (data.type === 'builtin' && data.name) {
-        currentSkin.value = data.name
+      if (data.type === 'builtin') {
+        currentSkin.value = data.name || ''
       } else if (data.type === 'custom' && data.id) {
         currentSkin.value = data.id
       }
     } catch {}
   }
 
-  // 加载自定义皮肤列表
   await loadCustomSkins()
 
-  // 加载内置皮肤预览图
   for (const skin of skinOptions.value) {
     try {
       const url = await wallpaper.getBuiltinSkinImage(skin.name)
@@ -218,7 +249,6 @@ onMounted(async () => {
   bridge.on(bridge.channels.settings.themeChanged, handleThemeChange)
   bridge.on(bridge.channels.wallpaper.wallpaperChanged, handleWallpaperChange)
 
-  // 加载毛玻璃设置
   const savedBlur = await settings.get('wallpaperBlur')
   blurEnabled.value = savedBlur === 'true'
 })
@@ -254,15 +284,22 @@ async function saveCustomSkins() {
   await settings.set('customSkins', JSON.stringify(customSkins.value.map(s => ({ id: s.id, path: s.path }))))
 }
 
-function applyTheme(newTheme: 'light' | 'dark') {
-  if (newTheme === 'dark') {
+function applyTheme(newTheme: 'light' | 'dark' | 'system') {
+  if (newTheme === 'system') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    if (prefersDark) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  } else if (newTheme === 'dark') {
     document.documentElement.classList.add('dark')
   } else {
     document.documentElement.classList.remove('dark')
   }
 }
 
-async function setTheme(newTheme: 'light' | 'dark') {
+async function setTheme(newTheme: 'light' | 'dark' | 'system') {
   theme.value = newTheme
   applyTheme(newTheme)
   await settings.set('theme', newTheme)
@@ -294,14 +331,14 @@ async function deleteCustomSkin(id: string) {
   customSkins.value = customSkins.value.filter(s => s.id !== id)
   if (currentSkin.value === id) {
     currentSkin.value = ''
-    await settings.set('wallpaper', JSON.stringify({ type: 'builtin', name: 'cosmic.jpg' }))
+    await settings.set('wallpaper', JSON.stringify({ type: 'builtin', name: 'skin-01.jpg' }))
   }
   saveCustomSkins()
 }
 
-async function toggleBlur() {
-  blurEnabled.value = !blurEnabled.value
-  await settings.set('wallpaperBlur', String(blurEnabled.value))
+async function selectDefault() {
+  currentSkin.value = ''
+  await settings.set('wallpaper', JSON.stringify({ type: 'builtin', name: '' }))
 }
 
 async function pickCustomSkin() {
@@ -313,9 +350,7 @@ async function pickCustomSkin() {
       if (preview) {
         customSkins.value.push({ id, path: result.path, previewUrl: preview })
         currentSkin.value = id
-        // 直接设置当前壁纸，让容器应用效果
         await settings.set('wallpaper', JSON.stringify({ type: 'custom', id, path: result.path }))
-        // 保存列表
         await saveCustomSkins()
       }
     }
@@ -325,32 +360,49 @@ async function pickCustomSkin() {
 }
 </script>
 
-<style scoped>
-.content-header {
-  margin-bottom: 28px;
+<style lang="scss" scoped>
+.appearance-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 560px;
 }
 
-.content-header h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0 0 6px;
+.section-header {
+  padding-bottom: 4px;
+
+  h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 4px;
+  }
+
+  p {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
 }
 
-.content-header p {
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
-  margin: 0;
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.theme-section {
-  max-width: 480px;
+.group-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .theme-cards {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: repeat(3, 180px);
+  gap: 12px;
 }
 
 .theme-card {
@@ -358,28 +410,26 @@ async function pickCustomSkin() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 16px;
-  background: var(--input-bg);
-  border: 2px solid var(--input-border);
-  border-radius: 12px;
+  gap: 12px;
+  padding: 12px;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
+  transition: all 0.15s ease;
 
-.theme-card:hover {
-  border-color: var(--color-text-tertiary);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-}
+  &:hover {
+    border-color: var(--color-text-tertiary);
+  }
 
-.theme-card.active {
-  border-color: var(--color-accent);
-  background: rgba(99, 102, 241, 0.06);
+  &.active {
+    border-color: var(--color-accent);
+    background: rgba(16, 185, 129, 0.06);
+  }
 }
 
 .theme-preview {
-  width: 100%;
+  width: 140px;
   height: 90px;
   border-radius: 6px;
   display: flex;
@@ -392,7 +442,12 @@ async function pickCustomSkin() {
 }
 
 .dark-preview {
-  background: #1e1e2e;
+  background: #1c1c1e;
+  border: 1px solid #2d2d3d;
+}
+
+.system-preview {
+  background: linear-gradient(135deg, #1c1c1e 50%, #ffffff 50%);
   border: 1px solid #2d2d3d;
 }
 
@@ -410,11 +465,11 @@ async function pickCustomSkin() {
   padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .preview-bar {
-  height: 8px;
+  height: 6px;
   width: 60%;
   border-radius: 2px;
   background: #e2e8f0;
@@ -427,12 +482,12 @@ async function pickCustomSkin() {
 .preview-content {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   margin-top: 4px;
 }
 
 .preview-line {
-  height: 5px;
+  height: 4px;
   border-radius: 2px;
 }
 
@@ -445,84 +500,42 @@ async function pickCustomSkin() {
 
 .theme-info {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
+  justify-content: space-between;
+  align-self: stretch;
+  gap: 6px;
 }
 
 .theme-name {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .theme-desc {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: var(--color-text-secondary);
+  text-align: right;
 }
 
 .check-icon {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 22px;
-  height: 22px;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--color-accent);
   border-radius: 50%;
   color: white;
-  animation: scaleIn 0.2s ease;
-}
-
-@keyframes scaleIn {
-  from { transform: scale(0); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-.skin-section {
-  margin-top: 36px;
-  max-width: 480px;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.section-header h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.add-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border: 1px solid var(--input-border);
-  border-radius: 6px;
-  background: var(--input-bg);
-  color: var(--color-text-secondary);
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.add-btn:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
 }
 
 .skin-cards {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  display: flex;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .skin-card {
@@ -530,56 +543,67 @@ async function pickCustomSkin() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
+  gap: 6px;
+  padding: 0;
   background: transparent;
-  border: 2px solid transparent;
-  border-radius: 10px;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
+  transition: all 0.15s ease;
 
-.skin-card:hover {
-  background: var(--input-bg);
-}
+  &:hover {
+    background: var(--color-surface);
+  }
 
-.skin-card.active {
-  border-color: var(--color-accent);
-  background: rgba(99, 102, 241, 0.06);
+  &.active {
+    border-color: var(--color-accent);
+    background: rgba(16, 185, 129, 0.06);
+  }
 }
 
 .skin-preview {
-  width: 100%;
+  width: 80px;
   aspect-ratio: 16/10;
   border-radius: 6px;
   background-size: cover;
   background-position: center;
-  background-color: var(--input-bg);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
 }
 
-.skin-name {
+.upload-preview {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
+  justify-content: center;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  color: var(--color-text-tertiary);
+}
+
+.default-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.default-text {
+  font-size: 0.7rem;
   color: var(--color-text-secondary);
 }
 
-.skin-card.active .skin-name {
+.skin-card:hover .upload-preview {
+  border-color: var(--color-accent);
   color: var(--color-accent);
-  font-weight: 500;
-}
-
-.local-icon {
-  opacity: 0.7;
 }
 
 .delete-btn {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 20px;
-  height: 20px;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -597,54 +621,19 @@ async function pickCustomSkin() {
 }
 
 .delete-btn:hover {
-  background: rgba(255, 59, 48, 0.8);
+  background: rgba(239, 68, 68, 0.8);
 }
 
-.blur-toggle {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--card-border);
-}
-
-.toggle-label {
+.setting-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  cursor: pointer;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-divider);
 }
 
-.toggle-label span {
-  font-size: 0.9rem;
+.setting-label {
+  font-size: 0.88rem;
   color: var(--color-text-primary);
-}
-
-.toggle-btn {
-  position: relative;
-  width: 44px;
-  height: 24px;
-  border: none;
-  border-radius: 12px;
-  background: var(--input-border);
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.toggle-btn.active {
-  background: var(--color-accent);
-}
-
-.toggle-dot {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: white;
-  transition: transform 0.2s ease;
-}
-
-.toggle-btn.active .toggle-dot {
-  transform: translateX(20px);
 }
 </style>
