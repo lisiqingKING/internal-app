@@ -177,7 +177,7 @@ export function createChatService(session: ChatSession) {
     try {
       const msgId = createMsgId()
       currentMsgId = msgId  // 在调用前就赋值，事件可能在 await 返回前就到了
-      const result = await ai.chat({
+      await ai.chat({
         conversationId: String(session.convId),
         messageId: msgId,
         apiUrl,
@@ -185,8 +185,8 @@ export function createChatService(session: ChatSession) {
         providerType,
         model,
         messages: requestMessages,
-      }) as { messageId: string }
-      currentMsgId = result.messageId
+      })
+      // currentMsgId 已在调用前设置，不需要用返回值覆盖
     } catch (err) {
       state.error = (err as Error).message || '请求失败，请检查网络或 API 配置'
       state.loading = false

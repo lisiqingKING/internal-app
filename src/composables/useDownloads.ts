@@ -47,12 +47,6 @@ interface DownloadsAPI {
   reveal(id: string): Promise<void>
   openFile(id: string): Promise<void>
   clear(): Promise<number>
-  onAdded(handler: (task: DownloadTask) => void): void
-  onProgress(handler: (progress: DownloadProgress) => void): void
-  onRemoved(handler: (id: string) => void): void
-  removeOnAdded(handler: (task: DownloadTask) => void): void
-  removeOnProgress(handler: (progress: DownloadProgress) => void): void
-  removeOnRemoved(handler: (id: string) => void): void
 }
 
 export function useDownloads() {
@@ -99,14 +93,14 @@ export function useDownloads() {
     progressMap.value = progressMap.value
   }
 
-  downloads.onAdded(onAdded)
-  downloads.onProgress(onProgress)
-  downloads.onRemoved(onRemoved)
+  const unsubAdded = window.bridge.on('downloads:added', onAdded)
+  const unsubProgress = window.bridge.on('downloads:progress', onProgress)
+  const unsubRemoved = window.bridge.on('downloads:removed', onRemoved)
 
   onScopeDispose(() => {
-    downloads.removeOnAdded(onAdded)
-    downloads.removeOnProgress(onProgress)
-    downloads.removeOnRemoved(onRemoved)
+    unsubAdded()
+    unsubProgress()
+    unsubRemoved()
   })
 
   refresh()

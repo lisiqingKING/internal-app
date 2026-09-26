@@ -35,7 +35,10 @@
       </div>
       <div class="setting-row">
         <span class="setting-label">下载完成时弹出通知</span>
-        <SettingsToggle v-model="downloadNotifyOnComplete" />
+        <SettingsToggle
+          :model-value="downloadNotifyOnComplete"
+          @update:model-value="onNotifyToggle"
+        />
       </div>
     </div>
   </div>
@@ -71,6 +74,11 @@ async function openDownloadDir() {
     const windowProxy = window.bridge.getModules(['window']).window
     await windowProxy.openPath(downloadDir.value)
   }
+}
+
+async function onNotifyToggle(val: boolean) {
+  downloadNotifyOnComplete.value = val
+  await settings.set('download_notify_on_complete', val ? 'true' : 'false')
 }
 </script>
 
