@@ -28,7 +28,7 @@ export function useChatSessions() {
     const session = sessions.value.find(s => s.convId === convId)
     if (!session) return null
     if (!services.has(convId)) {
-      services.set(convId, createChatService(session))
+      services.set(convId, createChatService(session, () => currentSessionId.value))
     }
     return services.get(convId)!
   }

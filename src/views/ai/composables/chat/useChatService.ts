@@ -56,7 +56,11 @@ interface SessionState {
 }
 
 // 为每个 session 创建独立的服务实例
-export function createChatService(session: ChatSession) {
+// getCurrentConvId: 回调，用于判断当前是否为本 session
+export function createChatService(
+  session: ChatSession,
+  getCurrentConvId: () => string | null
+) {
   const state = reactive<SessionState>({
     chatHistory: [...session.messages],
     currentText: '',
@@ -105,17 +109,24 @@ export function createChatService(session: ChatSession) {
       reasoning: fullReasoning || undefined
     }
     state.chatHistory.push(assistantMsg)
-    session.updatedAt = Date.now()
+    syncState()  // 同步到 session.messages（用于持久化）
     state.loading = false
+    session.isLoading = false
     state.currentText = ''
     state.currentReasoning = ''
     state.abortController = null
+
+    // 非当前会话标记有新消息
+    if (getCurrentConvId() !== session.convId) {
+      session.hasNewMessages = true
+    }
   }
 
   function onHalted(messageId: string) {
     if (messageId !== currentMsgId) return
     commitPartial()
     state.loading = false
+    session.isLoading = false
     state.currentText = ''
     state.currentReasoning = ''
     state.abortController = null
@@ -126,6 +137,7 @@ export function createChatService(session: ChatSession) {
     commitPartial()
     state.error = '请求失败'
     state.loading = false
+    session.isLoading = false
     state.currentText = ''
     state.currentReasoning = ''
     state.abortController = null
@@ -154,6 +166,7 @@ export function createChatService(session: ChatSession) {
   async function sendMessage(content: string) {
     state.abortController = new AbortController()
     state.loading = true
+    session.isLoading = true  // 同步到 session（供 sidebar 显示）
     state.currentText = ''
     state.currentReasoning = ''
     fullText = ''
@@ -190,6 +203,7 @@ export function createChatService(session: ChatSession) {
     } catch (err) {
       state.error = (err as Error).message || '请求失败，请检查网络或 API 配置'
       state.loading = false
+      session.isLoading = false
       state.abortController = null
       currentMsgId = null
     }

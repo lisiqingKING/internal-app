@@ -66,6 +66,7 @@ export interface ChatSession {
   pinned?: number
   isLoading?: boolean
   abortController?: AbortController
+  hasNewMessages?: boolean  // 是否有未审查的新消息
 }
 
 // 技术概念

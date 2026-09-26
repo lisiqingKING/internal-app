@@ -18,16 +18,20 @@
         :class="{ active: session.convId === currentSessionId }"
         @click="$emit('switch-session', session.convId)"
       >
-        <div class="session-info">
+        <div class="session-left">
+          <span class="status-placeholder">
+            <span v-if="session.isLoading" class="loading-spinner"></span>
+            <span v-else-if="session.hasNewMessages" class="unread-dot"></span>
+          </span>
           <div class="session-title">{{ session.title }}</div>
-          <div class="session-meta">
-            <span>{{ formatSidebarTime(session.updatedAt) }}</span>
-            <span v-if="session.pinned" class="pin-icon">
-              <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
-                <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
-              </svg>
-            </span>
-          </div>
+        </div>
+        <div class="session-right">
+          <span class="session-time">{{ formatSidebarTime(session.updatedAt) }}</span>
+          <span v-if="session.pinned" class="pin-icon">
+            <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
+              <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
+            </svg>
+          </span>
         </div>
         <button class="more-btn" @click.stop="toggleMenu(session.convId, $event)">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
@@ -91,6 +95,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import type { ChatSession } from '@/views/ai/types'
 import { formatSidebarTime } from '@/utils/time'
+import { sortSessions } from '@/utils/sessionSort'
 import ChatHeaderRename from './ChatHeaderRename.vue'
 
 const props = defineProps<{
@@ -161,12 +166,7 @@ onClickOutside(dropdownRef, () => {
   menuSession.value = null
 })
 
-const sortedSessions = computed(() => {
-  return [...props.sessions].sort((a, b) => {
-    if (a.pinned !== b.pinned) return (b.pinned || 0) - (a.pinned || 0)
-    return b.createdAt - a.createdAt
-  })
-})
+const sortedSessions = computed(() => sortSessions(props.sessions))
 
 // 分页加载
 const sessionListRef = ref<HTMLElement>()
@@ -261,27 +261,67 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
-.session-info {
+.session-left {
   flex: 1;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.session-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+}
+
+.status-placeholder {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.loading-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-divider);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-spinner.small {
+  width: 10px;
+  height: 10px;
+  border-width: 1.5px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .session-title {
-  font-size: 13px;
-  color: var(--color-text-secondary);
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.session-meta {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 2px;
-}
-
-.session-meta span {
+.session-time {
   font-size: 11px;
   color: var(--color-text-tertiary);
 }

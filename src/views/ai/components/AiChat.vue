@@ -100,15 +100,10 @@ onMounted(async () => {
   nextTick(() => messagesAreaRef.value?.forceScrollToBottom())
 })
 
-/** 切换/新建会话前，保存当前会话的消息（含取消进行中的流式输出） */
+/** 切换会话前保存（请求在后台继续运行，onComplete/onError 会自动同步状态） */
 async function saveCurrentBeforeSwitch() {
-  const service = currentService.value
-  if (!service) return
-  if (service.state.loading) service.cancelRequest()
-  if (service.state.chatHistory.length > 0) {
-    service.syncState()
-    await updateCurrentMessages(service.state.chatHistory)
-  }
+  // sendMessage 和 onComplete 都会调用 syncState，session.messages 始终保持最新
+  // 无需在此主动同步或取消请求
 }
 
 async function handleNewChat() {
@@ -120,6 +115,9 @@ async function handleNewChat() {
 
 function handleSwitchSession(convId: string) {
   saveCurrentBeforeSwitch()
+  // 清除目标会话的未读标记
+  const target = sessions.value.find(s => s.convId === convId)
+  if (target) target.hasNewMessages = false
   switchSession(convId)
   checkConfig()
   nextTick(() => messagesAreaRef.value?.forceScrollToBottom())
