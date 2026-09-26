@@ -11,13 +11,15 @@
     </div>
 
     <div class="session-list" ref="sessionListRef">
-      <div
-        v-for="session in sortedSessions"
-        :key="session.convId"
-        class="session-item"
-        :class="{ active: session.convId === currentSessionId }"
-        @click="$emit('switch-session', session.convId)"
-      >
+      <template v-for="group in sessionGroups" :key="group.label">
+        <div class="session-group-label">{{ group.label }}</div>
+        <div
+          v-for="session in group.sessions"
+          :key="session.convId"
+          class="session-item"
+          :class="{ active: session.convId === currentSessionId }"
+          @click="$emit('switch-session', session.convId)"
+        >
         <div class="session-left">
           <span class="status-placeholder">
             <span v-if="session.isLoading" class="loading-spinner"></span>
@@ -40,7 +42,8 @@
             <circle cx="12" cy="19" r="2"/>
           </svg>
         </button>
-      </div>
+        </div>
+      </template>
 
       <div ref="loadMoreTrigger" class="load-more-trigger">
         <span v-if="loadingMore" class="loading-more">加载中...</span>
@@ -168,6 +171,45 @@ onClickOutside(dropdownRef, () => {
 
 const sortedSessions = computed(() => sortSessions(props.sessions))
 
+// 按时间分组
+interface SessionGroup {
+  label: string
+  sessions: ChatSession[]
+}
+
+const sessionGroups = computed((): SessionGroup[] => {
+  const pinned = sortedSessions.value.filter(s => s.pinned)
+  const unpinned = sortedSessions.value.filter(s => !s.pinned)
+
+  const now = Date.now()
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const todayMs = today.getTime()
+  const weekMs = 7 * 24 * 60 * 60 * 1000
+
+  const todaySessions: ChatSession[] = []
+  const recentWeekSessions: ChatSession[] = []
+  const olderSessions: ChatSession[] = []
+
+  for (const s of unpinned) {
+    if (s.updatedAt >= todayMs) {
+      todaySessions.push(s)
+    } else if (now - s.updatedAt < weekMs) {
+      recentWeekSessions.push(s)
+    } else {
+      olderSessions.push(s)
+    }
+  }
+
+  const groups: SessionGroup[] = []
+  if (pinned.length > 0) groups.push({ label: '置顶', sessions: pinned })
+  if (todaySessions.length > 0) groups.push({ label: '今天', sessions: todaySessions })
+  if (recentWeekSessions.length > 0) groups.push({ label: '最近一周', sessions: recentWeekSessions })
+  if (olderSessions.length > 0) groups.push({ label: '一周以前', sessions: olderSessions })
+
+  return groups
+})
+
 // 分页加载
 const sessionListRef = ref<HTMLElement>()
 const loadMoreTrigger = ref<HTMLElement>()
@@ -209,7 +251,7 @@ onUnmounted(() => {
 
 .new-chat-btn {
   width: 100%;
-  padding: 8px 12px;
+  padding: 8px;
   border-radius: 8px;
   border: 1px solid var(--color-divider);
   background: transparent;
@@ -218,6 +260,7 @@ onUnmounted(() => {
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
@@ -232,6 +275,13 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 0 8px;
+}
+
+.session-group-label {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  padding: 12px 8px 4px;
+  font-weight: 500;
 }
 
 .session-item {
@@ -319,6 +369,7 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 12px;
 }
 
 .session-time {

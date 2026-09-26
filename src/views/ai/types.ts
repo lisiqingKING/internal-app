@@ -67,6 +67,7 @@ export interface ChatSession {
   isLoading?: boolean
   abortController?: AbortController
   hasNewMessages?: boolean  // 是否有未审查的新消息
+  persisted?: boolean       // 是否已持久化到后端
 }
 
 // 技术概念

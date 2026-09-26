@@ -29,10 +29,18 @@ export function useChatHistory() {
     loadingMore.value = false
   }
 
-  // 创建新对话
+  // 创建新对话（不立即持久化，等发送第一条消息后再持久化）
   async function createSession(): Promise<ChatSession> {
-    const title = '新对话'
-    const session = await electronStorageAdapter.add(title)
+    const now = Date.now()
+    const session: ChatSession = {
+      convId: `local-${now}-${Math.random().toString(36).slice(2, 8)}`,
+      title: '新对话',
+      messages: [],
+      createdAt: now,
+      updatedAt: now,
+      pinned: 0,
+      persisted: false,
+    }
     sessions.value.unshift(session)
     return session
   }
@@ -52,11 +60,15 @@ export function useChatHistory() {
   async function deleteSession(convId: string) {
     const index = sessions.value.findIndex(s => s.convId === convId)
     if (index !== -1) {
+      const session = sessions.value[index]
       sessions.value.splice(index, 1)
       if (currentSessionId.value === convId) {
         currentSessionId.value = sessions.value[0]?.convId || null
       }
-      await electronStorageAdapter.delete(convId)
+      // 仅已持久化的会话才需要调用后端删除
+      if (session.persisted) {
+        await electronStorageAdapter.delete(convId)
+      }
     }
   }
 
@@ -72,6 +84,13 @@ export function useChatHistory() {
           session.title = firstUserMsg.content.slice(0, 20) + (firstUserMsg.content.length > 20 ? '...' : '')
         }
       }
+      // 未持久化的会话，先创建持久化条目
+      if (!session.persisted) {
+        const persisted = await electronStorageAdapter.add(session.title)
+        session.convId = persisted.convId
+        session.createdAt = persisted.createdAt
+        session.persisted = true
+      }
       await electronStorageAdapter.update(session.convId, {
         messages: session.messages,
         title: session.title,
@@ -85,7 +104,9 @@ export function useChatHistory() {
     const session = sessions.value.find(s => s.convId === convId)
     if (session) {
       session.title = title
-      await electronStorageAdapter.update(convId, { title })
+      if (session.persisted) {
+        await electronStorageAdapter.update(convId, { title })
+      }
     }
   }
 
@@ -95,7 +116,9 @@ export function useChatHistory() {
     if (session) {
       const newPinned = session.pinned ? 0 : 1
       session.pinned = newPinned
-      await electronStorageAdapter.updatePinned(convId, newPinned)
+      if (session.persisted) {
+        await electronStorageAdapter.updatePinned(convId, newPinned)
+      }
       // 重新排序：置顶优先
       sessions.value.sort((a, b) => {
         if (a.pinned !== b.pinned) return (b.pinned || 0) - (a.pinned || 0)

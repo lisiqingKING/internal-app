@@ -199,7 +199,6 @@ export function createChatService(
         model,
         messages: requestMessages,
       })
-      // currentMsgId 已在调用前设置，不需要用返回值覆盖
     } catch (err) {
       state.error = (err as Error).message || '请求失败，请检查网络或 API 配置'
       state.loading = false
