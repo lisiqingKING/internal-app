@@ -84,18 +84,6 @@ export function useChatHistory() {
           session.title = firstUserMsg.content.slice(0, 20) + (firstUserMsg.content.length > 20 ? '...' : '')
         }
       }
-      // 未持久化的会话，先创建持久化条目
-      if (!session.persisted) {
-        const persisted = await electronStorageAdapter.add(session.title)
-        session.convId = persisted.convId
-        session.createdAt = persisted.createdAt
-        session.persisted = true
-      }
-      await electronStorageAdapter.update(session.convId, {
-        messages: session.messages,
-        title: session.title,
-        updatedAt: session.updatedAt
-      })
     }
   }
 
@@ -104,9 +92,7 @@ export function useChatHistory() {
     const session = sessions.value.find(s => s.convId === convId)
     if (session) {
       session.title = title
-      if (session.persisted) {
-        await electronStorageAdapter.update(convId, { title })
-      }
+      await electronStorageAdapter.update(convId, { title })
     }
   }
 
@@ -116,9 +102,7 @@ export function useChatHistory() {
     if (session) {
       const newPinned = session.pinned ? 0 : 1
       session.pinned = newPinned
-      if (session.persisted) {
-        await electronStorageAdapter.updatePinned(convId, newPinned)
-      }
+      await electronStorageAdapter.updatePinned(convId, newPinned)
       // 重新排序：置顶优先
       sessions.value.sort((a, b) => {
         if (a.pinned !== b.pinned) return (b.pinned || 0) - (a.pinned || 0)

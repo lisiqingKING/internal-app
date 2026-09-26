@@ -41,7 +41,7 @@ export function useChatSessions() {
   async function initSessions() {
     await init()
     if (sessions.value.length > 0) {
-      switchHistorySession(sessions.value[0].convId)
+      await switchSession(sessions.value[0].convId)
     }
   }
 
@@ -52,9 +52,9 @@ export function useChatSessions() {
     return session
   }
 
-  function switchSession(convId: string) {
+  async function switchSession(convId: string) {
     switchHistorySession(convId)
-    getOrCreateService(convId)?.syncFromSession()
+    await getOrCreateService(convId)?.syncFromSession()
   }
 
   async function deleteSession(convId: string) {

@@ -69,30 +69,20 @@ describe('useChatHistory', () => {
   })
 
   describe('updateCurrentMessages', () => {
-    it('should persist session on first message', async () => {
+    it('should update session messages and title locally without calling backend', async () => {
       const { sessions, createSession, switchSession, updateCurrentMessages } = useChatHistory()
       await createSession()
       switchSession(sessions.value[0].convId)
 
-      const persistedSession: ChatSession = {
-        convId: 'persisted-123',
-        title: '测试会话',
-        messages: [],
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        pinned: 0,
-        persisted: true,
-      }
-      mockAdapter.add.mockResolvedValue(persistedSession)
-      mockAdapter.update.mockResolvedValue()
-
       const messages = [makeMessage('你好')]
       await updateCurrentMessages(messages)
 
-      // Title is updated to first user msg BEFORE add, so add gets the truncated title
-      expect(mockAdapter.add).toHaveBeenCalledWith('你好')
-      expect(sessions.value[0].persisted).toBe(true)
-      expect(sessions.value[0].convId).toBe('persisted-123')
+      // Backend is NOT called - messages are persisted by streaming handler
+      expect(mockAdapter.update).not.toHaveBeenCalled()
+      expect(mockAdapter.add).not.toHaveBeenCalled()
+      // Local state is updated
+      expect(sessions.value[0].messages).toEqual(messages)
+      expect(sessions.value[0].title).toBe('你好')
     })
 
     it('should update title from first user message', async () => {
@@ -100,82 +90,12 @@ describe('useChatHistory', () => {
       await createSession()
       switchSession(sessions.value[0].convId)
 
-      const persistedSession: ChatSession = {
-        convId: 'persisted-123',
-        title: '新对话',
-        messages: [],
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        pinned: 0,
-        persisted: true,
-      }
-      mockAdapter.add.mockResolvedValue(persistedSession)
-      mockAdapter.update.mockResolvedValue()
-
       // Message is > 20 chars, should be truncated with ellipsis
       const longMessage = '这是一条非常非常非常非常长的第一条消息内容'
       const messages = [makeMessage(longMessage)]
       await updateCurrentMessages(messages)
 
       expect(sessions.value[0].title).toBe(longMessage.slice(0, 20) + '...')
-    })
-
-    it('should not call add for already persisted session', async () => {
-      const { sessions, createSession, switchSession, updateCurrentMessages } = useChatHistory()
-      await createSession()
-      switchSession(sessions.value[0].convId)
-
-      const persistedSession: ChatSession = {
-        convId: 'persisted-123',
-        title: '新对话',
-        messages: [],
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        pinned: 0,
-        persisted: true,
-      }
-      mockAdapter.add.mockResolvedValue(persistedSession)
-      mockAdapter.update.mockResolvedValue()
-
-      const messages = [makeMessage('你好')]
-      await updateCurrentMessages(messages)
-
-      // First call persists it
-      expect(mockAdapter.add).toHaveBeenCalledTimes(1)
-
-      // Clear and call again
-      mockAdapter.add.mockClear()
-      const messages2 = [makeMessage('你好'), makeMessage('第二条消息', 'assistant')]
-      await updateCurrentMessages(messages2)
-
-      // Should NOT call add again
-      expect(mockAdapter.add).not.toHaveBeenCalled()
-    })
-
-    it('should call update with correct convId after persistence', async () => {
-      const { sessions, createSession, switchSession, updateCurrentMessages } = useChatHistory()
-      await createSession()
-      switchSession(sessions.value[0].convId)
-
-      const persistedSession: ChatSession = {
-        convId: 'persisted-123',
-        title: '新对话',
-        messages: [],
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        pinned: 0,
-        persisted: true,
-      }
-      mockAdapter.add.mockResolvedValue(persistedSession)
-      mockAdapter.update.mockResolvedValue()
-
-      const messages = [makeMessage('你好')]
-      await updateCurrentMessages(messages)
-
-      expect(mockAdapter.update).toHaveBeenCalledWith(
-        'persisted-123',
-        expect.objectContaining({ messages, title: expect.any(String) })
-      )
     })
   })
 
@@ -208,21 +128,10 @@ describe('useChatHistory', () => {
   })
 
   describe('updateSessionTitle', () => {
-    it('should not call backend for non-persisted session', async () => {
+    it('should call backend for any session', async () => {
       const { sessions, createSession, switchSession, updateSessionTitle } = useChatHistory()
       await createSession()
       switchSession(sessions.value[0].convId)
-
-      await updateSessionTitle(sessions.value[0].convId, '新标题')
-
-      expect(mockAdapter.update).not.toHaveBeenCalled()
-    })
-
-    it('should call backend for persisted session', async () => {
-      const { sessions, createSession, switchSession, updateSessionTitle } = useChatHistory()
-      await createSession()
-      switchSession(sessions.value[0].convId)
-      sessions.value[0].persisted = true
 
       await updateSessionTitle(sessions.value[0].convId, '新标题')
 
@@ -234,21 +143,10 @@ describe('useChatHistory', () => {
   })
 
   describe('togglePin', () => {
-    it('should not call backend updatePinned for non-persisted session', async () => {
+    it('should call backend updatePinned for any session', async () => {
       const { sessions, createSession, switchSession, togglePin } = useChatHistory()
       await createSession()
       switchSession(sessions.value[0].convId)
-
-      await togglePin(sessions.value[0].convId)
-
-      expect(mockAdapter.updatePinned).not.toHaveBeenCalled()
-    })
-
-    it('should call backend updatePinned for persisted session', async () => {
-      const { sessions, createSession, switchSession, togglePin } = useChatHistory()
-      await createSession()
-      switchSession(sessions.value[0].convId)
-      sessions.value[0].persisted = true
 
       await togglePin(sessions.value[0].convId)
 

@@ -113,13 +113,13 @@ async function handleNewChat() {
   nextTick(() => messagesAreaRef.value?.forceScrollToBottom())
 }
 
-function handleSwitchSession(convId: string) {
-  saveCurrentBeforeSwitch()
+async function handleSwitchSession(convId: string) {
+  await saveCurrentBeforeSwitch()
   // 清除目标会话的未读标记
   const target = sessions.value.find(s => s.convId === convId)
   if (target) target.hasNewMessages = false
-  switchSession(convId)
-  checkConfig()
+  await switchSession(convId)
+  await checkConfig()
   nextTick(() => messagesAreaRef.value?.forceScrollToBottom())
 }
 

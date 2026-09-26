@@ -62,7 +62,7 @@ export function createChatService(
   getCurrentConvId: () => string | null
 ) {
   const state = reactive<SessionState>({
-    chatHistory: [...session.messages],
+    chatHistory: [...(session.messages || [])],
     currentText: '',
     currentReasoning: '',
     loading: false,
@@ -221,8 +221,20 @@ export function createChatService(
   }
 
   // 更新 chatHistory（当切换回该 session 时调用）
-  function syncFromSession() {
-    state.chatHistory = [...session.messages]
+  async function syncFromSession() {
+    if (session.messages && session.messages.length > 0) {
+      state.chatHistory = [...session.messages]
+    } else {
+      // 从后端加载消息
+      const msgs = await ai.getMessages(session.convId) as any[]
+      state.chatHistory = msgs.map((m: any) => ({
+        msgId: m.msgId,
+        role: m.role,
+        content: m.content,
+        createdAt: m.created_at,
+      }))
+      session.messages = state.chatHistory
+    }
   }
 
   // 清理订阅

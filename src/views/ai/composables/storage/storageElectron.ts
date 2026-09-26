@@ -42,13 +42,9 @@ export const electronStorageAdapter: StorageAdapter = {
     if (index !== -1) {
       cachedSessions[index] = { ...cachedSessions[index], ...updates }
     }
-    // 深拷贝数据，移除 Vue 响应式包装
     const serializedUpdates = JSON.parse(JSON.stringify(updates))
     if (serializedUpdates.title !== undefined) {
       await window.electronApis?.ai?.updateTitle(convId, serializedUpdates.title)
-    }
-    if (serializedUpdates.messages !== undefined) {
-      await window.electronApis?.ai?.updateMessages(convId, serializedUpdates.messages)
     }
   },
 
