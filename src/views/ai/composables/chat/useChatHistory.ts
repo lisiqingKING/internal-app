@@ -1,11 +1,24 @@
 import { ref } from 'vue'
-import type { Message, ChatSession } from '@/views/ai/types'
-import { electronStorageAdapter, initElectronStorage, loadNextPage, PAGE_SIZE } from '../storage/storageElectron'
+import type { Message, ChatSession, Category } from '@/views/ai/types'
+import {
+  electronStorageAdapter,
+  initElectronStorage,
+  loadNextPage,
+  PAGE_SIZE,
+  getCachedCategories,
+  createCategory,
+  renameCategory,
+  deleteCategory,
+  deleteCategoryWithSessions,
+  moveSession,
+  addInCategory,
+} from '../storage/storageElectron'
 
 export { initElectronStorage }
 
 export function useChatHistory() {
   const sessions = ref<ChatSession[]>([])
+  const categories = ref<Category[]>([])
   const currentSessionId = ref<string | null>(null)
   const loadingMore = ref(false)
   const hasMore = ref(true)
@@ -15,6 +28,7 @@ export function useChatHistory() {
     await initElectronStorage()
     const data = await electronStorageAdapter.readAll()
     sessions.value = data
+    categories.value = getCachedCategories()
     currentSessionId.value = null
     hasMore.value = data.length >= PAGE_SIZE
   }
@@ -39,10 +53,34 @@ export function useChatHistory() {
       createdAt: now,
       updatedAt: now,
       pinned: 0,
+      categoryId: null,
       persisted: false,
     }
     sessions.value.unshift(session)
     return session
+  }
+
+  // 在指定目录内创建新对话（立即持久化）
+  async function createSessionInCategory(categoryId: string): Promise<ChatSession> {
+    const now = Date.now()
+    const session: ChatSession = {
+      convId: `local-${now}-${Math.random().toString(36).slice(2, 8)}`,
+      title: '新对话',
+      messages: [],
+      createdAt: now,
+      updatedAt: now,
+      pinned: 0,
+      categoryId,
+      persisted: false,
+    }
+    sessions.value.unshift(session)
+    // 立即持久化到后端
+    const persisted = await addInCategory('新对话', categoryId)
+    const index = sessions.value.findIndex(s => s.convId === session.convId)
+    if (index !== -1) {
+      sessions.value[index] = { ...sessions.value[index], ...persisted, persisted: true }
+    }
+    return sessions.value[index]
   }
 
   // 获取当前对话
@@ -117,20 +155,73 @@ export function useChatHistory() {
     return session ? session.messages : []
   }
 
+  // ============ 目录操作 ============
+
+  // 创建目录
+  async function addCategory(name: string): Promise<Category> {
+    const category = await createCategory(name)
+    categories.value.push(category)
+    return category
+  }
+
+  // 重命名目录
+  async function renameCategoryFn(id: string, name: string): Promise<void> {
+    await renameCategory(id, name)
+    const cat = categories.value.find(c => c.id === id)
+    if (cat) {
+      cat.name = name
+    }
+  }
+
+  // 删除目录（仅删除目录）
+  async function removeCategory(id: string): Promise<void> {
+    await deleteCategory(id)
+    categories.value = categories.value.filter(c => c.id !== id)
+    // 更新会话的 categoryId
+    sessions.value.forEach(s => {
+      if (s.categoryId === id) {
+        s.categoryId = null
+      }
+    })
+  }
+
+  // 删除目录及会话
+  async function removeCategoryWithSessions(id: string): Promise<void> {
+    await deleteCategoryWithSessions(id)
+    categories.value = categories.value.filter(c => c.id !== id)
+    sessions.value = sessions.value.filter(s => s.categoryId !== id)
+  }
+
+  // 将会话移动到目录
+  async function moveSessionToCategory(convId: string, categoryId: string | null): Promise<void> {
+    await moveSession(convId, categoryId)
+    const session = sessions.value.find(s => s.convId === convId)
+    if (session) {
+      session.categoryId = categoryId
+    }
+  }
+
   return {
     sessions,
+    categories,
     currentSessionId,
     loadingMore,
     hasMore,
     init,
     loadMore,
     createSession,
+    createSessionInCategory,
     getCurrentSession,
     switchSession,
     deleteSession,
     updateCurrentMessages,
     updateSessionTitle,
     togglePin,
-    getCurrentMessages
+    getCurrentMessages,
+    addCategory,
+    renameCategory: renameCategoryFn,
+    removeCategory,
+    removeCategoryWithSessions,
+    moveSessionToCategory,
   }
 }

@@ -1,4 +1,4 @@
-import type { ChatSession } from '@/views/ai/types'
+import type { ChatSession, Category } from '@/views/ai/types'
 
 export const PAGE_SIZE = 10
 
@@ -14,6 +14,7 @@ export interface StorageAdapter {
 
 // Electron 适配器实现
 let cachedSessions: ChatSession[] = []
+let cachedCategories: Category[] = []
 
 export const electronStorageAdapter: StorageAdapter = {
   readAll: async () => {
@@ -30,14 +31,12 @@ export const electronStorageAdapter: StorageAdapter = {
   },
 
   add: async (title): Promise<ChatSession> => {
-    console.log('[ElectronStorage] add:', title)
     const newSession = await window.electronApis?.ai?.create(title)
     cachedSessions.unshift(newSession)
     return newSession
   },
 
   update: async (convId, updates) => {
-    console.log('[ElectronStorage] update:', convId, updates)
     const index = cachedSessions.findIndex(s => s.convId === convId)
     if (index !== -1) {
       cachedSessions[index] = { ...cachedSessions[index], ...updates }
@@ -49,13 +48,11 @@ export const electronStorageAdapter: StorageAdapter = {
   },
 
   delete: async (convId) => {
-    console.log('[ElectronStorage] delete:', convId)
     cachedSessions = cachedSessions.filter(s => s.convId !== convId)
     await window.electronApis?.ai?.delete(convId)
   },
 
   updatePinned: async (convId, pinned) => {
-    console.log('[ElectronStorage] updatePinned:', convId, pinned)
     const index = cachedSessions.findIndex(s => s.convId === convId)
     if (index !== -1) {
       cachedSessions[index].pinned = pinned
@@ -64,10 +61,11 @@ export const electronStorageAdapter: StorageAdapter = {
   }
 }
 
-// 初始化 Electron 存储适配器（加载第一页）
+// 初始化 Electron 存储适配器（加载第一页 + 目录列表）
 export async function initElectronStorage(): Promise<void> {
   if (window.electronApis?.ai) {
     cachedSessions = await window.electronApis.ai.list({ limit: PAGE_SIZE, offset: 0 })
+    cachedCategories = await window.electronApis.ai.listCategories()
   }
 }
 
@@ -86,4 +84,56 @@ export async function hasMoreSessions(): Promise<boolean> {
 // 获取缓存数据
 export function getCachedSessions(): ChatSession[] {
   return cachedSessions
+}
+
+// ============ Category（目录）操作 ============
+
+export function getCachedCategories(): Category[] {
+  return cachedCategories
+}
+
+export async function createCategory(name: string): Promise<Category> {
+  const category = await window.electronApis?.ai?.createCategory(name)
+  cachedCategories.push(category)
+  return category
+}
+
+export async function renameCategory(id: string, name: string): Promise<void> {
+  await window.electronApis?.ai?.renameCategory(id, name)
+  const cat = cachedCategories.find(c => c.id === id)
+  if (cat) {
+    cat.name = name
+  }
+}
+
+export async function deleteCategory(id: string): Promise<void> {
+  await window.electronApis?.ai?.deleteCategory(id)
+  cachedCategories = cachedCategories.filter(c => c.id !== id)
+  // 将会话迁移到默认分组
+  cachedSessions.forEach(s => {
+    if (s.categoryId === id) {
+      s.categoryId = null
+    }
+  })
+}
+
+export async function deleteCategoryWithSessions(id: string): Promise<void> {
+  await window.electronApis?.ai?.deleteCategoryWithSessions(id)
+  cachedCategories = cachedCategories.filter(c => c.id !== id)
+  cachedSessions = cachedSessions.filter(s => s.categoryId !== id)
+}
+
+export async function moveSession(convId: string, categoryId: string | null): Promise<void> {
+  await window.electronApis?.ai?.moveSession(convId, categoryId)
+  const session = cachedSessions.find(s => s.convId === convId)
+  if (session) {
+    session.categoryId = categoryId
+  }
+}
+
+export async function addInCategory(title: string, categoryId: string): Promise<ChatSession> {
+  const newSession = await window.electronApis?.ai?.create(title, categoryId)
+  if (!newSession) throw new Error('Failed to create session in category')
+  cachedSessions.unshift(newSession)
+  return newSession
 }

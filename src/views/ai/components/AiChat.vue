@@ -5,15 +5,21 @@
       <ChatSidebar
         v-show="!collapsed"
         :sessions="sessions"
+        :categories="categories"
         :current-session-id="currentSessionId"
         :loading-more="loadingMore"
         :has-more="hasMore"
         @new-chat="handleNewChat"
+        @new-chat-in-category="handleNewChatInCategory"
         @switch-session="handleSwitchSession"
         @delete-session="handleDeleteSession"
         @load-more="loadMore"
         @pin-session="handlePinSession"
         @rename-session="handleRenameSession"
+        @create-category="handleCreateCategory"
+        @rename-category="handleRenameCategory"
+        @delete-category="handleDeleteCategory"
+        @move-session="handleMoveSession"
       />
     </div>
 
@@ -29,6 +35,16 @@
       <ChatEmptyState v-if="sessions.length === 0" @new-chat="handleNewChat" />
 
       <template v-else-if="currentSessionId">
+        <!-- 顶部工具栏 -->
+        <div class="toolbar">
+          <button class="toolbar-btn" @click="openAssistantSession">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            关联会话
+          </button>
+        </div>
+
         <MessagesArea
           ref="messagesAreaRef"
           :messages="currentService?.state.chatHistory || []"
@@ -37,6 +53,7 @@
           :current-reasoning="currentService?.state.currentReasoning || ''"
           @copy="copy"
           @delete="remove"
+          @assistant="handleAssistant"
         />
 
         <InputArea
@@ -72,6 +89,7 @@ const messagesAreaRef = ref<InstanceType<typeof MessagesArea>>()
 
 const {
   sessions,
+  categories,
   currentSessionId,
   currentService,
   loadingMore,
@@ -79,11 +97,17 @@ const {
   initSessions,
   loadMore,
   createSession,
+  createSessionInCategory,
   switchSession,
   deleteSession,
   updateSessionTitle,
   togglePin,
   updateCurrentMessages,
+  addCategory,
+  renameCategory,
+  removeCategory,
+  removeCategoryWithSessions,
+  moveSessionToCategory,
 } = useChatSessions()
 
 const { noConfig, checkConfig, goToSettings } = useConfigCheck()
@@ -143,6 +167,62 @@ function handlePinSession(convId: string) {
 function handleRenameSession(convId: string, title: string) {
   updateSessionTitle(convId, title)
 }
+
+function handleCreateCategory(name: string) {
+  addCategory(name)
+}
+
+async function handleNewChatInCategory(categoryId: string) {
+  await saveCurrentBeforeSwitch()
+  const session = await createSessionInCategory(categoryId)
+  await switchSession(session.convId)
+  await checkConfig()
+  nextTick(() => messagesAreaRef.value?.forceScrollToBottom())
+}
+
+function handleRenameCategory(id: string, name: string) {
+  renameCategory(id, name)
+}
+
+function handleDeleteCategory(id: string, withSessions: boolean) {
+  if (withSessions) {
+    removeCategoryWithSessions(id)
+  } else {
+    removeCategory(id)
+  }
+}
+
+function handleMoveSession(convId: string, categoryId: string | null) {
+  moveSessionToCategory(convId, categoryId)
+}
+
+async function openAssistantWindow(x: number, y: number) {
+  if (!currentSessionId.value) return
+  try {
+    const assistant = window.bridge.getModules(['assistant']).assistant
+    const link = await assistant.getLinksForSource('conversation', currentSessionId.value)
+    if (link?.assistantConvId) {
+      assistant.create({ x, y, convId: link.assistantConvId })
+    } else {
+      const { convId } = await assistant.createSession({
+        title: 'AI 辅助',
+        sourceType: 'conversation',
+        sourceId: currentSessionId.value,
+      })
+      assistant.create({ x, y, convId })
+    }
+  } catch (e) {
+    console.error('打开辅助会话失败:', e)
+  }
+}
+
+async function handleAssistant(screenX: number, screenY: number) {
+  await openAssistantWindow(screenX, screenY)
+}
+
+async function openAssistantSession() {
+  await openAssistantWindow(100, 100)
+}
 </script>
 
 <style scoped>
@@ -201,5 +281,31 @@ function handleRenameSession(convId: string, title: string) {
 
 .sidebar-wrapper:not(.collapsed) ~ .collapse-btn {
   left: 200px;
+}
+
+.toolbar {
+  display: flex;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--color-divider);
+  gap: 8px;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.toolbar-btn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
 }
 </style>

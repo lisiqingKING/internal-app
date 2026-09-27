@@ -47,10 +47,13 @@
       :index="contextMenuIndex ?? -1"
       :message="contextMenuIndex !== null ? messages[contextMenuIndex] : null"
       :style="contextMenuStyle"
+      :screen-x="contextMenu?.screenX ?? 0"
+      :screen-y="contextMenu?.screenY ?? 0"
       @close="contextMenu = null"
       @copy="(i) => emit('copy', i)"
       @save="(i, _content) => handleSave(i, messages)"
       @delete="(i) => emit('delete', i)"
+      @assistant="(screenX, screenY) => emit('assistant', screenX, screenY)"
     />
 
     <!-- Toast -->
@@ -79,17 +82,18 @@ const props = defineProps<{
 const emit = defineEmits<{
   copy: [index: number]
   delete: [index: number]
+  assistant: [screenX: number, screenY: number]
 }>()
 
 const scrollRef = ref<HTMLElement>()
 
 // 右键菜单
-const contextMenu = ref<{ index: number } | null>(null)
+const contextMenu = ref<{ index: number; screenX: number; screenY: number } | null>(null)
 const contextMenuStyle = ref<Record<string, string>>({})
 const contextMenuIndex = ref<number | null>(null)
 
 function showContextMenu(index: number, event: MouseEvent) {
-  contextMenu.value = { index }
+  contextMenu.value = { index, screenX: event.screenX, screenY: event.screenY }
   contextMenuIndex.value = index
   contextMenuStyle.value = {
     position: 'fixed',

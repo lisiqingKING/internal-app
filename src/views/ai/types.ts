@@ -64,10 +64,18 @@ export interface ChatSession {
   createdAt: number
   updatedAt: number
   pinned?: number
+  categoryId?: string | null  // 所属目录，null 表示默认分组
   isLoading?: boolean
   abortController?: AbortController
   hasNewMessages?: boolean  // 是否有未审查的新消息
   persisted?: boolean       // 是否已持久化到后端
+}
+
+// 目录
+export interface Category {
+  id: string
+  name: string
+  ord: number
 }
 
 // 技术概念

@@ -8,18 +8,25 @@ import { createChatService, type ChatService } from './useChatService'
 export function useChatSessions() {
   const {
     sessions,
+    categories,
     currentSessionId,
     loadingMore,
     hasMore,
     init,
     loadMore,
     createSession: createHistorySession,
+    createSessionInCategory,
     getCurrentSession,
     switchSession: switchHistorySession,
     deleteSession: deleteHistorySession,
     updateCurrentMessages,
     togglePin,
     updateSessionTitle,
+    addCategory,
+    renameCategory: renameCategoryFn,
+    removeCategory,
+    removeCategoryWithSessions,
+    moveSessionToCategory,
   } = useChatHistory()
 
   const services = new Map<string, ChatService>()
@@ -74,6 +81,7 @@ export function useChatSessions() {
 
   return {
     sessions,
+    categories,
     currentSessionId,
     currentService,
     loadingMore,
@@ -81,6 +89,7 @@ export function useChatSessions() {
     initSessions,
     loadMore,
     createSession,
+    createSessionInCategory,
     switchSession,
     deleteSession,
     updateSessionTitle,
@@ -88,5 +97,10 @@ export function useChatSessions() {
     updateCurrentMessages,
     getCurrentSession,
     disposeAll,
+    addCategory,
+    renameCategory: renameCategoryFn,
+    removeCategory,
+    removeCategoryWithSessions,
+    moveSessionToCategory,
   }
 }
