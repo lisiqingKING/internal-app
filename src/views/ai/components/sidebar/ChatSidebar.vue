@@ -1,40 +1,12 @@
 <template>
   <div class="sidebar">
-    <div class="sidebar-header">
-      <button class="new-chat-btn" @click="$emit('new-chat')">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"/>
-          <line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        新对话
-      </button>
-    </div>
-
-    <div class="sidebar-categories">
-      <button class="new-category-btn" @click="showNewCategoryInput = true">
-        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"/>
-          <line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        新建目录
-      </button>
-      <!-- 新建目录输入 -->
-      <div v-if="showNewCategoryInput" class="new-category-input-wrap">
-        <input
-          ref="newCategoryInputRef"
-          v-model="newCategoryName"
-          class="new-category-input"
-          placeholder="目录名称"
-          @keydown.enter="confirmCreateCategory"
-          @keydown.esc="showNewCategoryInput = false"
-          @blur="showNewCategoryInput = false"
-        />
-        <button class="confirm-btn" @mousedown.prevent="confirmCreateCategory">✓</button>
-      </div>
-    </div>
+    <ChatSidebarHeader
+      @new-chat="$emit('new-chat')"
+      @create-category="(name) => emit('create-category', name)"
+      @open-search="showSearchDialog = true"
+    />
 
     <div class="session-list" ref="sessionListRef">
-      <!-- 目录列表 -->
       <div v-for="cat in categoriesWithSessions" :key="cat.id" class="category-block">
         <div
           class="category-header"
@@ -44,7 +16,7 @@
           <svg class="chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="9 18 15 12 9 6"/>
           </svg>
-          <span class="category-name" @click.stop="startRenameCategory(cat)">{{ cat.name }}</span>
+          <span class="category-name" @click.stop="dropdownRef?.showCategoryMenu(cat, $event)">{{ cat.name }}</span>
           <span class="category-count">({{ cat.sessions.length }})</span>
           <button class="category-new-chat" @click.stop="$emit('new-chat-in-category', cat.id)" title="在此目录新建会话">
             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
@@ -52,7 +24,7 @@
               <line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
           </button>
-          <button class="category-more" @click.stop="showCategoryMenu(cat, $event)">
+          <button class="category-more" @click.stop="dropdownRef?.showCategoryMenu(cat, $event)">
             <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
               <circle cx="12" cy="5" r="2"/>
               <circle cx="12" cy="12" r="2"/>
@@ -86,7 +58,7 @@
                 </svg>
               </span>
             </div>
-            <button class="more-btn" @click.stop="toggleMenu(session.convId, $event)">
+            <button class="more-btn" @click.stop="dropdownRef?.toggleMenu(session, $event)">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
                 <circle cx="12" cy="5" r="2"/>
                 <circle cx="12" cy="12" r="2"/>
@@ -98,16 +70,8 @@
         </div>
       </div>
 
-      <!-- 默认分组 -->
       <div class="category-block">
-        <div
-          class="category-header default-category"
-          :class="{ expanded: expandedCategories.has('default') }"
-          @click="toggleCategory('default')"
-        >
-          <svg class="chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
+        <div class="category-header default-category">
           <span class="category-name">默认分组</span>
           <span class="category-count">({{ defaultSessions.length }})</span>
         </div>
@@ -137,7 +101,7 @@
                 </svg>
               </span>
             </div>
-            <button class="more-btn" @click.stop="toggleMenu(session.convId, $event)">
+            <button class="more-btn" @click.stop="dropdownRef?.toggleMenu(session, $event)">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
                 <circle cx="12" cy="5" r="2"/>
                 <circle cx="12" cy="12" r="2"/>
@@ -154,118 +118,22 @@
       </div>
     </div>
 
-    <!-- 下拉菜单 -->
-    <Teleport to="body">
-      <div v-if="menuSession" ref="dropdownRef" class="dropdown-menu" :style="menuStyle" @click.stop>
-        <button class="menu-item" @click="handlePin(menuSession.convId)">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
-          </svg>
-          {{ menuSession.pinned ? '取消置顶' : '置顶' }}
-        </button>
-        <button class="menu-item" @click="handleRename(menuSession)">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-          重命名
-        </button>
-        <!-- 移动到子菜单 -->
-        <div class="menu-submenu-wrap">
-          <button class="menu-item has-submenu" @click="showMoveToSubmenu = true">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            移动到
-            <svg class="submenu-arrow" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-          </button>
-          <div v-if="showMoveToSubmenu" class="dropdown-menu submenu">
-            <button class="menu-item" @click="moveSessionTo(null)">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-              </svg>
-              默认分组
-            </button>
-            <button
-              v-for="cat in categories"
-              :key="cat.id"
-              class="menu-item"
-              :class="{ disabled: cat.id === menuSession.categoryId }"
-              @click="moveSessionTo(cat.id)"
-            >
-              {{ cat.name }}
-            </button>
-          </div>
-        </div>
-        <div class="menu-divider"></div>
-        <button class="menu-item danger" @click="handleDelete(menuSession.convId)">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 6h18"/>
-            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-          </svg>
-          删除
-        </button>
-      </div>
-    </Teleport>
-
-    <!-- 目录右键菜单 -->
-    <Teleport to="body">
-      <div v-if="menuCategory" ref="categoryMenuRef" class="dropdown-menu" :style="categoryMenuStyle" @click.stop>
-        <button class="menu-item" @click="startRenameCategory(menuCategory)">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-          重命名
-        </button>
-        <div class="menu-divider"></div>
-        <button class="menu-item danger" @click="showDeleteCategoryModal = true">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 6h18"/>
-            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-          </svg>
-          删除目录
-        </button>
-      </div>
-    </Teleport>
-
-    <!-- 删除目录二次确认弹窗 -->
-    <Teleport to="body">
-      <div v-if="showDeleteCategoryModal" class="modal-overlay" @click.self="showDeleteCategoryModal = false">
-        <div class="modal-dialog">
-          <div class="modal-header">删除目录「{{ menuCategory?.name }}」</div>
-          <div class="modal-body">
-            <p>目录内的会话将如何处理？</p>
-          </div>
-          <div class="modal-footer">
-            <button class="modal-btn cancel" @click="showDeleteCategoryModal = false">取消</button>
-            <button class="modal-btn danger" @click="confirmDeleteCategory(false)">仅删除目录</button>
-            <button class="modal-btn danger" @click="confirmDeleteCategory(true)">删除目录及会话</button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
-
-    <!-- 重命名弹窗 -->
-    <ChatHeaderRename
-      v-if="renamingSession"
-      v-model="renameValue"
-      :error="renameError"
-      @confirm="(title: string) => { emit('rename-session', renamingSession!.convId, title); renamingSession = null }"
-      @cancel="renamingSession = null"
+    <ChatSidebarDropdown
+      ref="dropdownRef"
+      :categories="categories"
+      @pin-session="(id) => $emit('pin-session', id)"
+      @rename-session="(id, title) => $emit('rename-session', id, title)"
+      @delete-session="(id) => $emit('delete-session', id)"
+      @move-session="(convId, catId) => $emit('move-session', convId, catId)"
+      @rename-category="(id, name) => $emit('rename-category', id, name)"
+      @delete-category="(id, withSessions) => $emit('delete-category', id, withSessions)"
     />
 
-    <!-- 重命名目录弹窗 -->
-    <ChatHeaderRename
-      v-if="renamingCategory"
-      v-model="renameCategoryValue"
-      :error="renameCategoryError"
-      @confirm="(name: string) => { emit('rename-category', renamingCategory!.id, name); renamingCategory = null }"
-      @cancel="renamingCategory = null"
+    <ChatSidebarSearchDialog
+      v-model:show="showSearchDialog"
+      :sessions="sessions"
+      :categories="categories"
+      @select-session="(id) => $emit('switch-session', id)"
     />
 
     <div class="sidebar-footer">
@@ -275,12 +143,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import { onClickOutside } from '@vueuse/core'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { ChatSession, Category } from '@/views/ai/types'
 import { formatSidebarTime } from '@/utils/time'
 import { sortSessions } from '@/utils/sessionSort'
-import ChatHeaderRename from './ChatHeaderRename.vue'
+import ChatSidebarHeader from './ChatSidebarHeader.vue'
+import ChatSidebarDropdown from './ChatSidebarDropdown.vue'
+import ChatSidebarSearchDialog from './ChatSidebarSearchDialog.vue'
+
+type DropdownInstance = InstanceType<typeof ChatSidebarDropdown> & { toggleMenu: (session: ChatSession, event: MouseEvent) => void; showCategoryMenu: (cat: Category, event: MouseEvent) => void }
 
 const props = defineProps<{
   sessions: ChatSession[]
@@ -311,6 +182,9 @@ function handleOpenSaveDir() {
   }
 }
 
+// ============ 搜索 ============
+const showSearchDialog = ref(false)
+
 // ============ 目录折叠状态 ============
 const expandedCategories = ref<Set<string>>(new Set(['default']))
 
@@ -322,27 +196,7 @@ function toggleCategory(id: string) {
   }
 }
 
-// ============ 新建目录 ============
-const showNewCategoryInput = ref(false)
-const newCategoryName = ref('')
-const newCategoryInputRef = ref<HTMLInputElement>()
-
-watch(showNewCategoryInput, (v) => {
-  if (v) {
-    nextTick(() => newCategoryInputRef.value?.focus())
-  }
-})
-
-function confirmCreateCategory() {
-  const name = newCategoryName.value.trim()
-  if (name) {
-    emit('create-category', name)
-    newCategoryName.value = ''
-  }
-  showNewCategoryInput.value = false
-}
-
-// ============ 会话/目录分组计算 ============
+// ============ 会话分组计算 ============
 interface CategoryWithSessions extends Category {
   sessions: ChatSession[]
 }
@@ -360,94 +214,9 @@ const defaultSessions = computed(() => {
   return sortedSessions.value.filter(s => !s.categoryId)
 })
 
-// ============ 下拉菜单 ============
-const menuSession = ref<ChatSession | null>(null)
-const menuStyle = ref<Record<string, string>>({})
-const renamingSession = ref<ChatSession | null>(null)
-const renameValue = ref('')
-const renameError = ref('')
-const showMoveToSubmenu = ref(false)
-
-function toggleMenu(convId: string, event: MouseEvent) {
-  if (menuSession.value?.convId === convId) {
-    menuSession.value = null
-    showMoveToSubmenu.value = false
-    return
-  }
-  const session = props.sessions.find(s => s.convId === convId)
-  if (!session) return
-  menuSession.value = session
-  showMoveToSubmenu.value = false
-  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-  menuStyle.value = {
-    position: 'fixed',
-    top: `${rect.bottom + 4}px`,
-    right: `${window.innerWidth - rect.right}px`,
-  }
-}
-
-function handlePin(convId: string) {
-  emit('pin-session', convId)
-  menuSession.value = null
-}
-
-function handleRename(session: ChatSession) {
-  menuSession.value = null
-  showMoveToSubmenu.value = false
-  renamingSession.value = session
-  renameValue.value = session.title
-  renameError.value = ''
-}
-
-function handleDelete(convId: string) {
-  emit('delete-session', convId)
-  menuSession.value = null
-  showMoveToSubmenu.value = false
-}
-
-function moveSessionTo(categoryId: string | null) {
-  if (menuSession.value) {
-    emit('move-session', menuSession.value.convId, categoryId)
-  }
-  menuSession.value = null
-  showMoveToSubmenu.value = false
-}
-
-// ============ 目录菜单 ============
-const menuCategory = ref<Category | null>(null)
-const categoryMenuStyle = ref<Record<string, string>>({})
-const renamingCategory = ref<Category | null>(null)
-const renameCategoryValue = ref('')
-const renameCategoryError = ref('')
-const showDeleteCategoryModal = ref(false)
-
-function showCategoryMenu(cat: Category, event: MouseEvent) {
-  menuCategory.value = cat
-  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-  categoryMenuStyle.value = {
-    position: 'fixed',
-    top: `${rect.bottom + 4}px`,
-    right: `${window.innerWidth - rect.right}px`,
-  }
-}
-
-function startRenameCategory(cat: Category) {
-  menuCategory.value = null
-  renamingCategory.value = cat
-  renameCategoryValue.value = cat.name
-  renameCategoryError.value = ''
-}
-
-function confirmDeleteCategory(withSessions: boolean) {
-  if (menuCategory.value) {
-    emit('delete-category', menuCategory.value.id, withSessions)
-  }
-  showDeleteCategoryModal.value = false
-  menuCategory.value = null
-}
-
 // ============ 拖拽 ============
 const draggingSessionId = ref<string | null>(null)
+const dropdownRef = ref<DropdownInstance | null>(null)
 
 function onDragStart(convId: string, event: DragEvent) {
   draggingSessionId.value = convId
@@ -458,20 +227,7 @@ function onDragEnd() {
   draggingSessionId.value = null
 }
 
-// ============ 通用 ============
-const dropdownRef = ref<HTMLElement | null>(null)
-const categoryMenuRef = ref<HTMLElement | null>(null)
-
-onClickOutside(dropdownRef, () => {
-  menuSession.value = null
-  showMoveToSubmenu.value = false
-})
-
-onClickOutside(categoryMenuRef, () => {
-  menuCategory.value = null
-})
-
-// 分页加载
+// ============ 分页加载 ============
 const sessionListRef = ref<HTMLElement>()
 const loadMoreTrigger = ref<HTMLElement>()
 let observer: IntersectionObserver | null = null
@@ -504,89 +260,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-}
-
-.sidebar-header {
-  padding: 14px 12px 10px;
-}
-
-.new-chat-btn {
-  width: 100%;
-  padding: 8px;
-  border-radius: 8px;
-  border: 1px solid var(--color-divider);
-  background: transparent;
-  color: var(--color-text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-
-.new-chat-btn:hover {
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  border-color: var(--color-border);
-}
-
-.sidebar-categories {
-  padding: 0 12px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.new-category-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: var(--color-text-tertiary);
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.new-category-btn:hover {
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-}
-
-.new-category-input-wrap {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.new-category-input {
-  flex: 1;
-  padding: 5px 8px;
-  border: 1px solid var(--color-divider);
-  border-radius: 5px;
-  background: var(--input-bg);
-  color: var(--input-text);
-  font-size: 12px;
-  outline: none;
-}
-
-.new-category-input:focus {
-  border-color: var(--input-border-focus);
-}
-
-.confirm-btn {
-  padding: 4px 8px;
-  border: none;
-  border-radius: 5px;
-  background: var(--color-accent);
-  color: var(--color-text-inverse);
-  font-size: 12px;
-  cursor: pointer;
 }
 
 .session-list {
@@ -846,143 +519,5 @@ onUnmounted(() => {
 .more-btn:hover {
   background: var(--color-divider);
   color: var(--color-text-secondary);
-}
-
-.dropdown-menu {
-  min-width: 140px;
-  background: var(--modal-bg);
-  border: 1px solid var(--color-divider);
-  border-radius: 10px;
-  padding: 4px;
-  box-shadow: var(--shadow-lg);
-  z-index: 10000;
-}
-
-.dropdown-menu.submenu {
-  position: absolute;
-  left: 100%;
-  top: 0;
-  min-width: 120px;
-}
-
-.menu-submenu-wrap {
-  position: relative;
-}
-
-.menu-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--color-text-primary);
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.15s;
-  text-align: left;
-}
-
-.menu-item:hover {
-  background: var(--color-surface-hover);
-}
-
-.menu-item.has-submenu {
-  justify-content: space-between;
-}
-
-.menu-item.disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.submenu-arrow {
-  flex-shrink: 0;
-}
-
-.menu-item.danger {
-  color: #ef4444;
-}
-
-.menu-item.danger:hover {
-  background: rgba(239, 68, 68, 0.08);
-}
-
-.menu-divider {
-  height: 1px;
-  background: var(--color-divider);
-  margin: 4px 8px;
-}
-
-/* 弹窗 */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-}
-
-.modal-dialog {
-  background: var(--modal-bg);
-  border: 1px solid var(--color-divider);
-  border-radius: 12px;
-  padding: 20px;
-  width: 320px;
-  box-shadow: var(--shadow-lg);
-}
-
-.modal-header {
-  font-size: 16px;
-  font-weight: 500;
-  margin-bottom: 12px;
-  color: var(--color-text-primary);
-}
-
-.modal-body {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  margin-bottom: 16px;
-}
-
-.modal-body p {
-  margin: 0;
-}
-
-.modal-footer {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.modal-btn {
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: none;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.modal-btn.cancel {
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-}
-
-.modal-btn.cancel:hover {
-  background: var(--color-surface-hover);
-}
-
-.modal-btn.danger {
-  background: #ef4444;
-  color: white;
-}
-
-.modal-btn.danger:hover {
-  background: #dc2626;
 }
 </style>

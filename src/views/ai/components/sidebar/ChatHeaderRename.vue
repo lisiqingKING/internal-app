@@ -11,12 +11,11 @@
           placeholder="输入新名称"
           :maxlength="MAX_TITLE_LENGTH"
           @input="onInput"
-          @keydown.enter="emit('confirm', localValue.trim())"
         />
         <div v-if="error" class="modal-error">{{ error }}</div>
         <div class="modal-footer">
           <button class="modal-btn cancel" @click="emit('cancel')">取消</button>
-          <button class="modal-btn confirm" :disabled="!canConfirm" @click="emit('confirm', localValue.trim())">确定</button>
+          <button type="button" class="modal-btn confirm" :disabled="!canConfirm" @click="emit('confirm', localValue.trim())">确定</button>
         </div>
       </div>
     </div>

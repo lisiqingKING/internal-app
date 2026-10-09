@@ -156,12 +156,25 @@ export function useChatHistory() {
   }
 
   // ============ 目录操作 ============
+  const pendingCategoryNames = new Set<string>()
 
   // 创建目录
   async function addCategory(name: string): Promise<Category> {
-    const category = await createCategory(name)
-    categories.value.push(category)
-    return category
+    if (pendingCategoryNames.has(name)) {
+      while (pendingCategoryNames.has(name)) {
+        await new Promise(resolve => setTimeout(resolve, 10))
+      }
+      return categories.value.find(c => c.name === name)!
+    }
+    const existing = categories.value.find(c => c.name === name)
+    if (existing) return existing
+    pendingCategoryNames.add(name)
+    try {
+      // storageElectron.createCategory 已经 push 到 cachedCategories（即 categories.value），无需再 push
+      return await createCategory(name)
+    } finally {
+      pendingCategoryNames.delete(name)
+    }
   }
 
   // 重命名目录
