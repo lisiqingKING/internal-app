@@ -22,12 +22,6 @@
         </svg>
         保存
       </button>
-      <button class="context-menu-item" @click="handleAssistant">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-        </svg>
-        AI 辅助
-      </button>
       <div class="context-menu-divider"></div>
       <button class="context-menu-item danger" @click="handleDelete">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
@@ -51,8 +45,6 @@ const props = defineProps<{
   index: number
   message: Message | null
   style: Record<string, string>
-  screenX: number
-  screenY: number
 }>()
 
 const emit = defineEmits<{
@@ -60,7 +52,6 @@ const emit = defineEmits<{
   copy: [index: number]
   save: [index: number, content: string]
   delete: [index: number]
-  assistant: [screenX: number, screenY: number]
 }>()
 
 const menuRef = ref<HTMLElement>()
@@ -91,10 +82,6 @@ function handleDelete() {
   emit('close')
 }
 
-function handleAssistant() {
-  emit('assistant', props.screenX, props.screenY)
-  emit('close')
-}
 </script>
 
 <style scoped>

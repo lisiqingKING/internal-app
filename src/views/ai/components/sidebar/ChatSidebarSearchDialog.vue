@@ -24,9 +24,6 @@
               </svg>
               <span class="result-title">{{ item.title }}</span>
               <span v-if="item.categoryId" class="result-badge">{{ getCategoryName(item.categoryId) }}</span>
-              <svg v-if="linkedSessionIds.has(item.convId)" class="linked-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
             </div>
           </template>
           <div v-if="localQuery && sessionResults.length === 0" class="search-empty">未找到相关会话</div>
@@ -54,21 +51,11 @@ const emit = defineEmits<{
 
 const localQuery = ref('')
 const searchInputRef = ref<HTMLInputElement>()
-const linkedSessionIds = ref<Set<string>>(new Set())
-
 watch(() => props.show, async (v) => {
   if (v) {
     localQuery.value = ''
-    linkedSessionIds.value = new Set()
     await nextTick()
     searchInputRef.value?.focus()
-    const assistant = window.bridge.getModules(['assistant']).assistant
-    for (const s of props.sessions) {
-      const link = await assistant.getLinksForSource('conversation', s.convId)
-      if (link?.assistantConvId) {
-        linkedSessionIds.value.add(s.convId)
-      }
-    }
   }
 })
 

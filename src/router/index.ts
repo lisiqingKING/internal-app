@@ -5,7 +5,6 @@ import HistoryPage from '@/views/HistoryPage.vue'
 import FavoritesPage from '@/views/FavoritesPage.vue'
 import AiPage from '@/views/AiPage.vue'
 import AiSavesPage from '@/views/AiSavesPage.vue'
-import AssistantView from '@/views/ai/views/AssistantView.vue'
 import DownloadsPage from '@/views/DownloadsPage.vue'
 import LogsPage from '@/views/LogsPage.vue'
 import SettingsPage from '@/views/SettingsPage.vue'
@@ -53,12 +52,6 @@ const router = createRouter({
       name: 'ai-saves',
       component: AiSavesPage,
       meta: { title: 'AI 保存记录' }
-    },
-    {
-      path: '/assistant',
-      name: 'assistant',
-      component: AssistantView,
-      meta: { title: 'AI 辅助' }
     },
     {
       path: '/downloads',

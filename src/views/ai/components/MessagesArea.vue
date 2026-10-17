@@ -47,13 +47,10 @@
       :index="contextMenuIndex ?? -1"
       :message="contextMenuIndex !== null ? messages[contextMenuIndex] : null"
       :style="contextMenuStyle"
-      :screen-x="contextMenu?.screenX ?? 0"
-      :screen-y="contextMenu?.screenY ?? 0"
       @close="contextMenu = null"
       @copy="(i) => emit('copy', i)"
       @save="(i, _content) => handleSave(i, messages)"
       @delete="(i) => emit('delete', i)"
-      @assistant="(screenX, screenY) => emit('assistant', screenX, screenY)"
     />
 
     <!-- Toast -->
@@ -82,7 +79,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   copy: [index: number]
   delete: [index: number]
-  assistant: [screenX: number, screenY: number]
 }>()
 
 const scrollRef = ref<HTMLElement>()
@@ -191,12 +187,17 @@ defineExpose({ scrollToBottom, forceScrollToBottom })
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 120px;
+  padding: 0 24px;
   box-sizing: border-box;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .chat-scroller {
+  width: 100%;
+  max-width: 768px;
   height: auto;
 }
 
@@ -214,6 +215,8 @@ defineExpose({ scrollToBottom, forceScrollToBottom })
 }
 
 .streaming-footer {
+  width: 100%;
+  max-width: 768px;
   padding: 3px 0;
 }
 
