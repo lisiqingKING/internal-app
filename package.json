@@ -25,6 +25,7 @@
     "vue-virtual-scroller": "^3.0.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@types/lodash-es": "^4.17.12",
     "@vitejs/plugin-vue": "^5.2.4",
     "@vue/test-utils": "^2.5.0",
