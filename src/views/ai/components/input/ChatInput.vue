@@ -69,7 +69,11 @@ function handleSend() {
 
 <style scoped>
 .chat-input {
-  padding: 0 120px 36px;
+  width: 100%;
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 0 24px 36px;
+  box-sizing: border-box;
 }
 
 .input-container {

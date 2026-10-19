@@ -20,6 +20,7 @@
         @rename-category="handleRenameCategory"
         @delete-category="handleDeleteCategory"
         @move-session="handleMoveSession"
+        @reorder-categories="handleReorderCategories"
       />
       <button class="collapse-btn" @click="collapsed = !collapsed" :title="collapsed ? '展开' : '收起'">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
@@ -159,6 +160,7 @@ const {
   renameCategory,
   removeCategory,
   removeCategoryWithSessions,
+  reorderCategories,
   moveSessionToCategory,
 } = useChatSessions()
 
@@ -229,8 +231,8 @@ async function handleDeleteSession(convId: string) {
   await deleteSession(convId)
 }
 
-function handlePinSession(convId: string) {
-  togglePin(convId)
+async function handlePinSession(convId: string) {
+  await togglePin(convId)
 }
 
 function handleRenameSession(convId: string, title: string) {
@@ -263,6 +265,10 @@ function handleDeleteCategory(id: string, withSessions: boolean) {
 
 function handleMoveSession(convId: string, categoryId: string | null) {
   moveSessionToCategory(convId, categoryId)
+}
+
+async function handleReorderCategories(orderedIds: string[]) {
+  await reorderCategories(orderedIds)
 }
 
 </script>

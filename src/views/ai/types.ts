@@ -69,6 +69,7 @@ export interface ChatSession {
   abortController?: AbortController
   hasNewMessages?: boolean  // 是否有未审查的新消息
   persisted?: boolean       // 是否已持久化到后端
+  previousCategoryId?: string | null  // 置顶前的分组，用于取消置顶时迁回
 }
 
 // 目录
@@ -89,3 +90,6 @@ export interface Concept {
 // 校验常量
 export const ILLEGAL_CHARS = /[\\/:*?"<>|]/
 export const MAX_TITLE_LENGTH = 50
+
+// 分组常量
+export const PINNED_CATEGORY_ID = '__pinned__'

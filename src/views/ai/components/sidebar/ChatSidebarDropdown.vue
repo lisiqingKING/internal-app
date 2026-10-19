@@ -1,12 +1,12 @@
 <template>
   <!-- 下拉菜单 -->
   <Teleport to="body">
-    <div v-if="menuSession" ref="dropdownRef" class="dropdown-menu" :style="menuStyle" @click.stop>
+    <div v-if="menuSession" ref="dropdownRef" class="dropdown-menu" :style="menuStyle" @click.stop @pointerdown.capture.stop>
       <button class="menu-item" @click="handlePin(menuSession.convId)">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
         </svg>
-        {{ menuSession.pinned ? '取消置顶' : '置顶' }}
+        {{ menuSession.categoryId === PINNED_CATEGORY_ID ? '取消置顶' : '置顶' }}
       </button>
       <button class="menu-item" @click="handleRename(menuSession)">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
@@ -54,13 +54,20 @@
 
   <!-- 目录右键菜单 -->
   <Teleport to="body">
-    <div v-if="menuCategory" ref="categoryMenuRef" class="dropdown-menu" :style="categoryMenuStyle" @click.stop>
+    <div v-if="menuCategory" ref="categoryMenuRef" class="dropdown-menu" :style="categoryMenuStyle" @click.stop @pointerdown.capture.stop>
       <button class="menu-item" @click="startRenameCategory(menuCategory)">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
         </svg>
         重命名
+      </button>
+      <button class="menu-item" @click="handleNewChatInCategory(menuCategory)">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        新建会话
       </button>
       <div class="menu-divider"></div>
       <button class="menu-item danger" @click="showDeleteCategoryModal = true">
@@ -69,23 +76,19 @@
           <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
           <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
         </svg>
-        删除目录
+        删除
       </button>
     </div>
   </Teleport>
 
-  <!-- 删除目录二次确认弹窗 -->
+  <!-- 删除分组二次确认弹窗 -->
   <Teleport to="body">
-    <div v-if="showDeleteCategoryModal" class="modal-overlay" @click.self="showDeleteCategoryModal = false">
+    <div v-if="showDeleteCategoryModal" class="modal-overlay" @click.self="showDeleteCategoryModal = false" @pointerdown.capture.stop>
       <div class="modal-dialog">
-        <div class="modal-header">删除目录「{{ menuCategory?.name }}」</div>
-        <div class="modal-body">
-          <p>目录内的会话将如何处理？</p>
-        </div>
+        <div class="modal-header">删除「{{ menuCategory?.name }}」</div>
         <div class="modal-footer">
           <button class="modal-btn cancel" @click="showDeleteCategoryModal = false">取消</button>
-          <button class="modal-btn danger" @click="confirmDeleteCategory(false)">仅删除目录</button>
-          <button class="modal-btn danger" @click="confirmDeleteCategory(true)">删除目录及会话</button>
+          <button class="modal-btn danger" @click="confirmDeleteCategory">删除</button>
         </div>
       </div>
     </div>
@@ -100,7 +103,7 @@
     @cancel="renamingSession = null"
   />
 
-  <!-- 重命名目录弹窗 -->
+  <!-- 重命名分组弹窗 -->
   <ChatHeaderRename
     v-if="renamingCategory"
     v-model="renameCategoryValue"
@@ -114,6 +117,7 @@
 import { ref } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import type { ChatSession, Category } from '@/views/ai/types'
+import { PINNED_CATEGORY_ID } from '@/views/ai/types'
 import ChatHeaderRename from './ChatHeaderRename.vue'
 
 defineProps<{
@@ -127,6 +131,7 @@ const emit = defineEmits<{
   'move-session': [convId: string, categoryId: string | null]
   'rename-category': [id: string, name: string]
   'delete-category': [id: string, withSessions: boolean]
+  'new-chat-in-category': [categoryId: string]
 }>()
 
 // ============ 下拉菜单 ============
@@ -205,9 +210,14 @@ function startRenameCategory(cat: Category) {
   renameCategoryError.value = ''
 }
 
-function confirmDeleteCategory(withSessions: boolean) {
+function handleNewChatInCategory(cat: Category) {
+  menuCategory.value = null
+  emit('new-chat-in-category', cat.id)
+}
+
+function confirmDeleteCategory() {
   if (menuCategory.value) {
-    emit('delete-category', menuCategory.value.id, withSessions)
+    emit('delete-category', menuCategory.value.id, true)
   }
   showDeleteCategoryModal.value = false
   menuCategory.value = null
@@ -248,6 +258,22 @@ defineExpose({
   left: 100%;
   top: 0;
   min-width: 120px;
+  max-width: 200px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.dropdown-menu.submenu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.dropdown-menu.submenu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dropdown-menu.submenu::-webkit-scrollbar-thumb {
+  background: var(--color-divider);
+  border-radius: 4px;
 }
 
 .menu-submenu-wrap {

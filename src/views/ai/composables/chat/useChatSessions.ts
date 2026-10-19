@@ -26,6 +26,7 @@ export function useChatSessions() {
     renameCategory: renameCategoryFn,
     removeCategory,
     removeCategoryWithSessions,
+    reorderCategories,
     moveSessionToCategory,
   } = useChatHistory()
 
@@ -101,6 +102,7 @@ export function useChatSessions() {
     renameCategory: renameCategoryFn,
     removeCategory,
     removeCategoryWithSessions,
+    reorderCategories,
     moveSessionToCategory,
   }
 }

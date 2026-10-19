@@ -9,12 +9,14 @@ const mockAdapter = {
   update: vi.fn(),
   delete: vi.fn(),
   updatePinned: vi.fn(),
+  moveSession: vi.fn(),
 }
 
 vi.mock('../src/views/ai/composables/storage/storageElectron', () => ({
   electronStorageAdapter: mockAdapter,
   initElectronStorage: vi.fn(),
   loadNextPage: mockAdapter.loadPage,
+  moveSession: mockAdapter.moveSession,
   PAGE_SIZE: 10,
 }))
 
@@ -143,14 +145,14 @@ describe('useChatHistory', () => {
   })
 
   describe('togglePin', () => {
-    it('should call backend updatePinned for any session', async () => {
+    it('should call moveSession to __pinned__ for any session', async () => {
       const { sessions, createSession, switchSession, togglePin } = useChatHistory()
       await createSession()
       switchSession(sessions.value[0].convId)
 
       await togglePin(sessions.value[0].convId)
 
-      expect(mockAdapter.updatePinned).toHaveBeenCalledWith(sessions.value[0].convId, 1)
+      expect(mockAdapter.moveSession).toHaveBeenCalledWith(sessions.value[0].convId, '__pinned__')
     })
   })
 })

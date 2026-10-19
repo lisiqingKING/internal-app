@@ -28,7 +28,7 @@ const hasContext = computed(() => true)
 <style scoped>
 .message-bubble {
   display: flex;
-  padding: 3px 0;
+  padding: 6px 0;
 }
 
 .message-bubble.user {
@@ -40,8 +40,8 @@ const hasContext = computed(() => true)
 }
 
 .bubble-content {
-  max-width: 78%;
-  padding: 10px 16px;
+  max-width: 85%;
+  padding: 2px 0;
   border-radius: 12px;
   font-size: 15px;
   line-height: 1.65;
@@ -50,10 +50,11 @@ const hasContext = computed(() => true)
 .message-bubble.user .bubble-content {
   background: var(--color-surface);
   border-bottom-right-radius: 4px;
+  padding: 10px 16px;
 }
 
 .message-bubble.assistant .bubble-content {
-  background: var(--color-bg-primary);
+  background: transparent;
   border-bottom-left-radius: 4px;
 }
 

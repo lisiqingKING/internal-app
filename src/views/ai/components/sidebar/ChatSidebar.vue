@@ -7,32 +7,61 @@
     />
 
     <div class="session-list" ref="sessionListRef">
-      <div v-for="cat in categoriesWithSessions" :key="cat.id" class="category-block">
+      <!-- 置顶分组（固定在顶部） -->
+      <div class="group">
+        <div class="group-header">
+          <svg class="pin-icon" viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+            <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
+          </svg>
+          <span class="group-name">置顶</span>
+          <span class="group-count">({{ pinnedSessions.length }})</span>
+        </div>
         <div
-          class="category-header"
-          :class="{ expanded: expandedCategories.has(cat.id) }"
-          @click="toggleCategory(cat.id)"
+          v-for="session in pinnedSessions"
+          :key="session.convId"
+          class="session-item"
+          :class="{ active: session.convId === currentSessionId, dragging: draggingSessionId === session.convId }"
+          draggable="true"
+          @click="$emit('switch-session', session.convId)"
+          @contextmenu.prevent="dropdownRef?.toggleMenu(session, $event)"
+          @dragstart="onDragStart(session.convId, $event)"
+          @dragend="onDragEnd"
         >
-          <svg class="chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="session-left">
+            <span class="status-placeholder">
+              <span v-if="session.isLoading" class="loading-spinner"></span>
+              <span v-else-if="session.hasNewMessages" class="unread-dot"></span>
+            </span>
+            <div class="session-title">{{ session.title }}</div>
+          </div>
+          <div class="session-time">{{ formatSidebarTime(session.updatedAt) }}</div>
+        </div>
+      </div>
+
+      <!-- 用户自定义分组 -->
+      <div v-for="cat in categoriesWithSessions" :key="cat.id" class="group">
+        <div
+          class="group-header"
+          :class="{ expanded: expandedCategories.has(cat.id), dragging: draggingCategoryId === cat.id, 'no-sessions': cat.sessions.length === 0, dragOver: dragOverCategoryId === cat.id }"
+          :data-cat-id="cat.id"
+          draggable="true"
+          @click="cat.sessions.length > 0 && toggleCategory(cat.id)"
+          @contextmenu.prevent="dropdownRef?.showCategoryMenu(cat, $event)"
+          @dragstart="onCategoryDragStart(cat.id, $event)"
+          @dragenter="onCategoryDragEnter(cat.id)"
+          @dragleave="onCategoryDragLeave"
+          @dragover="onCategoryDragOver"
+          @drop="onCategoryDrop(cat.id, $event)"
+          @dragend="draggingCategoryId = null; dragOverCategoryId = null"
+        >
+          <svg v-if="cat.sessions.length > 0" class="chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="9 18 15 12 9 6"/>
           </svg>
-          <span class="category-name" @click.stop="dropdownRef?.showCategoryMenu(cat, $event)">{{ cat.name }}</span>
-          <span class="category-count">({{ cat.sessions.length }})</span>
-          <button class="category-new-chat" @click.stop="$emit('new-chat-in-category', cat.id)" title="在此目录新建会话">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </button>
-          <button class="category-more" @click.stop="dropdownRef?.showCategoryMenu(cat, $event)">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
-              <circle cx="12" cy="5" r="2"/>
-              <circle cx="12" cy="12" r="2"/>
-              <circle cx="12" cy="19" r="2"/>
-            </svg>
-          </button>
+          <span v-else class="chevron-placeholder"></span>
+          <span class="group-name">{{ cat.name }}</span>
+          <span class="group-count">({{ cat.sessions.length }})</span>
         </div>
-        <div v-show="expandedCategories.has(cat.id)" class="category-sessions">
+        <div v-show="expandedCategories.has(cat.id)">
           <div
             v-for="session in cat.sessions"
             :key="session.convId"
@@ -40,6 +69,7 @@
             :class="{ active: session.convId === currentSessionId, dragging: draggingSessionId === session.convId }"
             draggable="true"
             @click="$emit('switch-session', session.convId)"
+            @contextmenu.prevent="dropdownRef?.toggleMenu(session, $event)"
             @dragstart="onDragStart(session.convId, $event)"
             @dragend="onDragEnd"
           >
@@ -50,32 +80,25 @@
               </span>
               <div class="session-title">{{ session.title }}</div>
             </div>
-            <div class="session-right">
-              <span class="session-time">{{ formatSidebarTime(session.updatedAt) }}</span>
-              <span v-if="session.pinned" class="pin-icon">
-                <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
-                  <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
-                </svg>
-              </span>
-            </div>
-            <button class="more-btn" @click.stop="dropdownRef?.toggleMenu(session, $event)">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                <circle cx="12" cy="5" r="2"/>
-                <circle cx="12" cy="12" r="2"/>
-                <circle cx="12" cy="19" r="2"/>
-              </svg>
-            </button>
+            <div class="session-time">{{ formatSidebarTime(session.updatedAt) }}</div>
           </div>
-          <div v-if="cat.sessions.length === 0" class="category-empty">暂无会话</div>
         </div>
       </div>
 
-      <div class="category-block">
-        <div class="category-header default-category">
-          <span class="category-name">默认分组</span>
-          <span class="category-count">({{ defaultSessions.length }})</span>
+      <!-- 默认分组（固定在底部） -->
+      <div class="group">
+        <div
+          class="group-header"
+          :class="{ expanded: expandedCategories.has('default') }"
+          @click="toggleCategory('default')"
+        >
+          <svg class="chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+          <span class="group-name">默认</span>
+          <span class="group-count">({{ defaultSessions.length }})</span>
         </div>
-        <div v-show="expandedCategories.has('default')" class="category-sessions">
+        <div v-show="expandedCategories.has('default')">
           <div
             v-for="session in defaultSessions"
             :key="session.convId"
@@ -83,6 +106,7 @@
             :class="{ active: session.convId === currentSessionId, dragging: draggingSessionId === session.convId }"
             draggable="true"
             @click="$emit('switch-session', session.convId)"
+            @contextmenu.prevent="dropdownRef?.toggleMenu(session, $event)"
             @dragstart="onDragStart(session.convId, $event)"
             @dragend="onDragEnd"
           >
@@ -93,23 +117,8 @@
               </span>
               <div class="session-title">{{ session.title }}</div>
             </div>
-            <div class="session-right">
-              <span class="session-time">{{ formatSidebarTime(session.updatedAt) }}</span>
-              <span v-if="session.pinned" class="pin-icon">
-                <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
-                  <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
-                </svg>
-              </span>
-            </div>
-            <button class="more-btn" @click.stop="dropdownRef?.toggleMenu(session, $event)">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                <circle cx="12" cy="5" r="2"/>
-                <circle cx="12" cy="12" r="2"/>
-                <circle cx="12" cy="19" r="2"/>
-              </svg>
-            </button>
+            <div class="session-time">{{ formatSidebarTime(session.updatedAt) }}</div>
           </div>
-          <div v-if="defaultSessions.length === 0" class="category-empty">暂无会话</div>
         </div>
       </div>
 
@@ -127,6 +136,7 @@
       @move-session="(convId, catId) => $emit('move-session', convId, catId)"
       @rename-category="(id, name) => $emit('rename-category', id, name)"
       @delete-category="(id, withSessions) => $emit('delete-category', id, withSessions)"
+      @new-chat-in-category="(id) => $emit('new-chat-in-category', id)"
     />
 
     <ChatSidebarSearchDialog
@@ -135,18 +145,15 @@
       :categories="categories"
       @select-session="(id) => $emit('switch-session', id)"
     />
-
-    <div class="sidebar-footer">
-      <button class="footer-btn" @click="handleOpenSaveDir">查看保存文件</button>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { ChatSession, Category } from '@/views/ai/types'
-import { formatSidebarTime } from '@/utils/time'
+import { PINNED_CATEGORY_ID } from '@/views/ai/types'
 import { sortSessions } from '@/utils/sessionSort'
+import { formatSidebarTime } from '@/utils/time'
 import ChatSidebarHeader from './ChatSidebarHeader.vue'
 import ChatSidebarDropdown from './ChatSidebarDropdown.vue'
 import ChatSidebarSearchDialog from './ChatSidebarSearchDialog.vue'
@@ -173,14 +180,8 @@ const emit = defineEmits<{
   'rename-category': [id: string, name: string]
   'delete-category': [id: string, withSessions: boolean]
   'move-session': [convId: string, categoryId: string | null]
+  'reorder-categories': [orderedIds: string[]]
 }>()
-
-function handleOpenSaveDir() {
-  const tabs = window.bridge.getModules(['tabs']).tabs
-  if (tabs?.createAiSaves) {
-    tabs.createAiSaves()
-  }
-}
 
 // ============ 搜索 ============
 const showSearchDialog = ref(false)
@@ -190,9 +191,13 @@ const expandedCategories = ref<Set<string>>(new Set(['default']))
 
 function toggleCategory(id: string) {
   if (expandedCategories.value.has(id)) {
-    expandedCategories.value.delete(id)
+    const next = new Set(expandedCategories.value)
+    next.delete(id)
+    expandedCategories.value = next
   } else {
-    expandedCategories.value.add(id)
+    const next = new Set(expandedCategories.value)
+    next.add(id)
+    expandedCategories.value = next
   }
 }
 
@@ -203,6 +208,14 @@ interface CategoryWithSessions extends Category {
 
 const sortedSessions = computed(() => sortSessions(props.sessions))
 
+const pinnedSessions = computed(() => {
+  return sortedSessions.value.filter(s => s.categoryId === PINNED_CATEGORY_ID)
+})
+
+const unpinnedSessions = computed(() => {
+  return sortedSessions.value.filter(s => s.categoryId !== PINNED_CATEGORY_ID && !s.categoryId)
+})
+
 const categoriesWithSessions = computed((): CategoryWithSessions[] => {
   return props.categories.map(cat => ({
     ...cat,
@@ -210,8 +223,19 @@ const categoriesWithSessions = computed((): CategoryWithSessions[] => {
   }))
 })
 
+// 分组收到新会话时自动展开
+watch(() => categoriesWithSessions.value.map(c => c.sessions.length), (newLens) => {
+  const next = new Set(expandedCategories.value)
+  categoriesWithSessions.value.forEach((cat, i) => {
+    if (newLens[i] > 0 && !next.has(cat.id)) {
+      next.add(cat.id)
+    }
+  })
+  expandedCategories.value = next
+})
+
 const defaultSessions = computed(() => {
-  return sortedSessions.value.filter(s => !s.categoryId)
+  return sortedSessions.value.filter(s => !s.pinned && !s.categoryId)
 })
 
 // ============ 拖拽 ============
@@ -225,6 +249,50 @@ function onDragStart(convId: string, event: DragEvent) {
 
 function onDragEnd() {
   draggingSessionId.value = null
+}
+
+// ============ 分组拖拽排序 ============
+const draggingCategoryId = ref<string | null>(null)
+const dragOverCategoryId = ref<string | null>(null)
+
+function onCategoryDragStart(catId: string, event: DragEvent) {
+  draggingCategoryId.value = catId
+  event.dataTransfer?.setData('text/plain', catId)
+}
+
+function onCategoryDragEnter(catId: string) {
+  if (draggingCategoryId.value && draggingCategoryId.value !== catId) {
+    dragOverCategoryId.value = catId
+  }
+}
+
+function onCategoryDragLeave() {
+  dragOverCategoryId.value = null
+}
+
+function onCategoryDragOver(event: DragEvent) {
+  event.preventDefault()
+}
+
+function onCategoryDrop(targetCatId: string, event: DragEvent) {
+  event.preventDefault()
+  dragOverCategoryId.value = null
+  if (!draggingCategoryId.value || draggingCategoryId.value === targetCatId) {
+    draggingCategoryId.value = null
+    return
+  }
+  const currentOrder = props.categories.map(c => c.id)
+  const fromIndex = currentOrder.indexOf(draggingCategoryId.value)
+  const toIndex = currentOrder.indexOf(targetCatId)
+  if (fromIndex === -1 || toIndex === -1) {
+    draggingCategoryId.value = null
+    return
+  }
+  const newOrder = [...currentOrder]
+  newOrder.splice(fromIndex, 1)
+  newOrder.splice(toIndex, 0, draggingCategoryId.value)
+  draggingCategoryId.value = null
+  emit('reorder-categories', newOrder)
 }
 
 // ============ 分页加载 ============
@@ -253,7 +321,7 @@ onUnmounted(() => {
 
 <style scoped>
 .sidebar {
-  width: 200px;
+  width: 100%;
   height: 100%;
   background: var(--color-bg-secondary);
   border-right: 1px solid var(--color-divider);
@@ -265,128 +333,99 @@ onUnmounted(() => {
 .session-list {
   flex: 1;
   overflow-y: auto;
-  padding: 0 8px;
+  padding: 0 4px;
 }
 
-.category-block {
+.group {
   margin-bottom: 4px;
 }
 
-.category-header {
+.group-header {
   display: flex;
   align-items: center;
-  padding: 6px 8px;
-  border-radius: 6px;
+  padding: 4px 6px;
+  border-radius: 5px;
   cursor: pointer;
   user-select: none;
   gap: 4px;
   transition: background 0.15s;
+  position: relative;
 }
 
-.category-header:hover {
+.group-header:hover {
   background: var(--color-surface);
-}
-
-.category-header:hover .category-more {
-  opacity: 1;
-}
-
-.category-header:hover .category-new-chat {
-  opacity: 1;
 }
 
 .chevron {
   flex-shrink: 0;
+  color: var(--color-text-tertiary);
   transition: transform 0.2s;
 }
 
-.category-header.expanded .chevron {
+.chevron-placeholder {
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.group-header.expanded .chevron {
   transform: rotate(90deg);
 }
 
-.category-name {
+.group-header.dragging {
+  opacity: 0.5;
+}
+
+.group-header.no-sessions {
+  cursor: default;
+}
+
+.group-header.dragOver::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--color-accent);
+  border-radius: 2px;
+}
+
+.group-name {
   flex: 1;
-  font-size: 12px;
-  color: var(--color-text-secondary);
+  font-size: 11px;
+  color: var(--color-text-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 500;
 }
 
-.category-count {
+.group-count {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+}
+
+.group-empty {
   font-size: 11px;
   color: var(--color-text-tertiary);
-}
-
-.category-new-chat {
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.15s, background 0.15s;
-  flex-shrink: 0;
-}
-
-.category-new-chat:hover {
-  background: var(--color-divider);
-  color: var(--color-text-secondary);
-}
-
-.category-more {
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.15s, background 0.15s;
-  flex-shrink: 0;
-}
-
-.category-more:hover {
-  background: var(--color-divider);
-  color: var(--color-text-secondary);
-}
-
-.category-sessions {
-  padding-left: 12px;
-}
-
-.category-empty {
-  font-size: 11px;
-  color: var(--color-text-tertiary);
-  padding: 8px 12px;
-  text-align: center;
+  padding: 4px 10px;
+  text-align: left;
 }
 
 .session-item {
   display: flex;
   align-items: center;
-  padding: 8px;
-  border-radius: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
   cursor: pointer;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
   transition: background 0.15s, opacity 0.15s;
+  position: relative;
 }
 
 .session-item:hover {
   background: var(--color-surface);
-}
-
-.session-item:hover .more-btn {
-  opacity: 1;
 }
 
 .session-item.active {
@@ -394,7 +433,7 @@ onUnmounted(() => {
 }
 
 .session-item.active .session-title {
-  color: var(--color-text-primary);
+  color: var(--color-accent);
   font-weight: 500;
 }
 
@@ -410,16 +449,9 @@ onUnmounted(() => {
   gap: 6px;
 }
 
-.session-right {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
 .unread-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #ef4444;
   flex-shrink: 0;
@@ -435,8 +467,8 @@ onUnmounted(() => {
 }
 
 .loading-spinner {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border: 2px solid var(--color-divider);
   border-top-color: var(--color-accent);
   border-radius: 50%;
@@ -454,70 +486,24 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
 }
 
 .session-time {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--color-text-tertiary);
-}
-
-.pin-icon {
-  color: var(--color-accent);
-  display: flex;
-  align-items: center;
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .load-more-trigger {
-  padding: 10px;
+  padding: 8px;
   text-align: center;
 }
 
 .loading-more {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--color-text-tertiary);
-}
-
-.sidebar-footer {
-  padding: 10px 12px 14px;
-  border-top: 1px solid var(--color-divider);
-}
-
-.footer-btn {
-  width: 100%;
-  padding: 7px 10px;
-  border-radius: 7px;
-  border: none;
-  background: transparent;
-  color: var(--color-text-tertiary);
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.footer-btn:hover {
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-}
-
-.more-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.15s, background 0.15s;
-  flex-shrink: 0;
-}
-
-.more-btn:hover {
-  background: var(--color-divider);
-  color: var(--color-text-secondary);
 }
 </style>

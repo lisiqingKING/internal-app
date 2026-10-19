@@ -123,6 +123,17 @@ export async function deleteCategoryWithSessions(id: string): Promise<void> {
   cachedSessions = cachedSessions.filter(s => s.categoryId !== id)
 }
 
+export async function reorderCategories(orderedIds: string[]): Promise<void> {
+  await window.electronApis?.ai?.reorderCategories(orderedIds)
+  // 更新本地 ord 值
+  orderedIds.forEach((id, index) => {
+    const cat = cachedCategories.find(c => c.id === id)
+    if (cat) cat.ord = index
+  })
+  // 按 ord 排序
+  cachedCategories.sort((a, b) => a.ord - b.ord)
+}
+
 export async function moveSession(convId: string, categoryId: string | null): Promise<void> {
   await window.electronApis?.ai?.moveSession(convId, categoryId)
   const session = cachedSessions.find(s => s.convId === convId)
