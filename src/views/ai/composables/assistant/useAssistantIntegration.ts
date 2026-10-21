@@ -1,4 +1,5 @@
 import { computed, nextTick, provide, type ComputedRef, type Ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import { ASSISTANT_PANEL, useAssistantPanel, type AssistantPanelState } from './useAssistantPanel'
 import {
   ASSISTANT_WORKSPACE,
@@ -63,9 +64,13 @@ export function useAssistantIntegration(
   /** 切换工作区前检查未保存修改；有则挂起切换，由行内确认条继续（FLOW-5 / FLOW-6） */
   function guardScopeChange(action: () => void): boolean {
     const executed = workspace.notes.requestSwitch(action)
-    if (!executed && !panel.visible.value) {
-      // 面板关闭时也要让用户看到确认条
-      panel.toggle()
+    if (!executed) {
+      // 挂起必须给出可见反馈：否则「被暂停」和「点击失败」在用户眼里没区别
+      ElMessage.warning('笔记有未保存的修改，已暂停切换 —— 请在辅助面板中保存或放弃')
+      if (!panel.visible.value) {
+        // 面板关闭时也要让用户看到确认条
+        panel.toggle()
+      }
     }
     return executed
   }
