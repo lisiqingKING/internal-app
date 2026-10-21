@@ -100,17 +100,24 @@ export function useChatHistory() {
   // 删除对话
   async function deleteSession(convId: string) {
     const index = sessions.value.findIndex(s => s.convId === convId)
-    if (index !== -1) {
-      const session = sessions.value[index]
-      sessions.value.splice(index, 1)
-      if (currentSessionId.value === convId) {
-        currentSessionId.value = sessions.value[0]?.convId || null
-      }
-      // 仅已持久化的会话才需要调用后端删除
-      if (session.persisted) {
-        await electronStorageAdapter.delete(convId)
-      }
+    if (index === -1) return
+
+    // 乐观更新：替换数组触发响应式
+    sessions.value = sessions.value.filter((_, i) => i !== index)
+
+    // 只有删掉的是当前会话才需要改选激活项：
+    // 删的是别的会话时保持不动；删的是最后一个会话时置空，
+    // 否则 currentSessionId 会继续指向已删除的会话
+    if (currentSessionId.value === convId) {
+      currentSessionId.value = sessions.value[0]?.convId ?? null
     }
+
+    // 一定要走后端删除：persisted 标记不可靠 ——
+    // 侧边栏新建的对话只存在于内存，标记始终是 false，
+    // 但主进程可能在首条消息或辅助面板落库时已经建好了这一行，
+    // 跳过删除会让会话在下次加载时又出现，工作区的笔记 / 辅助会话也清不掉。
+    // 后端删除对不存在的会话是空操作。
+    await electronStorageAdapter.delete(convId)
   }
 
   // 更新当前对话的消息

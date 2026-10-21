@@ -94,6 +94,7 @@ export function getCachedCategories(): Category[] {
 
 export async function createCategory(name: string): Promise<Category> {
   const category = await window.electronApis?.ai?.createCategory(name)
+  if (!category) throw new Error('Failed to create category')
   cachedCategories.push(category)
   return category
 }

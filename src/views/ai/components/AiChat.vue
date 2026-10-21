@@ -1,7 +1,12 @@
 <template>
   <div class="ai-chat">
     <!-- 左侧边栏 -->
-    <div class="sidebar-wrapper" :class="{ collapsed }" :style="{ width: collapsed ? '0px' : sidebarWidth + 'px' }">
+    <div
+      v-show="!assistantFullscreen"
+      class="sidebar-wrapper"
+      :class="{ collapsed }"
+      :style="{ width: collapsed ? '0px' : sidebarWidth + 'px' }"
+    >
       <ChatSidebar
         v-show="!collapsed"
         :sessions="sessions"
@@ -32,13 +37,13 @@
 
     <!-- 拖拽分隔线 -->
     <div
-      v-show="!collapsed"
+      v-show="!collapsed && !assistantFullscreen"
       class="sidebar-resize-handle"
       @mousedown="startSidebarResize"
     ></div>
 
     <!-- 中间主区域 -->
-    <div class="main-content">
+    <div v-show="!assistantFullscreen" class="main-content">
       <!-- 无会话时的欢迎页 -->
       <ChatEmptyState
         v-if="sessions.length === 0"
@@ -51,6 +56,7 @@
         <ChatTopToolbar
           :session-title="currentSessionTitle"
           @toggle-inspiration="inspirationCollapsed = !inspirationCollapsed"
+          @toggle-assistant="toggleAssistant"
         />
 
         <!-- 消息区域 -->
@@ -60,6 +66,7 @@
           :loading="currentService?.state.loading || false"
           :current-text="currentService?.state.currentText || ''"
           :current-reasoning="currentService?.state.currentReasoning || ''"
+          :highlight-msg-id="mainHighlightMsgId"
           @copy="copy"
           @delete="remove"
         />
@@ -81,12 +88,25 @@
     </div>
 
     <!-- 右侧灵感面板 -->
-    <div class="inspiration-panel" :class="{ collapsed: inspirationCollapsed }">
+    <div class="inspiration-panel" :class="{ collapsed: inspirationCollapsed || assistantVisible }">
       <InspirationPanel
         @use-prompt="(prompt) => { inputText = prompt }"
         @close="inspirationCollapsed = true"
       />
     </div>
+
+    <!-- 右侧辅助面板 -->
+    <AssistantPanel v-if="assistantVisible">
+      <template #conversations>
+        <AssistantConversations />
+      </template>
+      <template #notes>
+        <AssistantNotes />
+      </template>
+      <template #search>
+        <AssistantSearch @close="closeSearch" @navigate="handleSearchNavigate" />
+      </template>
+    </AssistantPanel>
   </div>
 </template>
 
@@ -102,6 +122,13 @@ import InputArea from './InputArea.vue'
 import ChatEmptyState from './common/ChatEmptyState.vue'
 import ChatTopToolbar from './toolbar/ChatTopToolbar.vue'
 import InspirationPanel from './inspiration/InspirationPanel.vue'
+import AssistantPanel from './assistant/AssistantPanel.vue'
+import AssistantConversations from './assistant/AssistantConversations.vue'
+import AssistantNotes from './assistant/AssistantNotes.vue'
+import AssistantSearch from './assistant/AssistantSearch.vue'
+import { useAssistantIntegration } from '../composables/assistant/useAssistantIntegration'
+import { assistantApi } from '../composables/assistant/useAssistantConversations'
+import { notesApi } from '../composables/assistant/useAssistantNotes'
 
 const collapsed = ref(false)
 const sidebarWidth = ref(220)
@@ -164,6 +191,27 @@ const {
   moveSessionToCategory,
 } = useChatSessions()
 
+/**
+ * 辅助面板集成：面板状态、工作区（辅助会话 + 笔记）、搜索跳转、未保存修改守卫。
+ * 打开面板时收起灵感面板，避免两个右侧面板叠加。
+ */
+const {
+  panel: assistantPanel,
+  visible: assistantVisible,
+  fullscreen: assistantFullscreen,
+  toggleAssistant,
+  closeSearch,
+  navigateFromSearch: handleSearchNavigate,
+  mainHighlightMsgId,
+  guardScopeChange,
+} = useAssistantIntegration({
+  currentSessionId,
+  switchSession: doSwitchSession,
+  onOpen: () => {
+    inspirationCollapsed.value = true
+  },
+})
+
 // 当前会话标题
 const currentSessionTitle = computed(() => {
   const session = sessions.value.find(s => s.convId === currentSessionId.value)
@@ -181,7 +229,17 @@ const { inputText, send, cancel, retry, copy, remove } = useChatActions({
 onMounted(async () => {
   const saved = localStorage.getItem('ai-sidebar-width')
   if (saved) sidebarWidth.value = Number(saved)
-  await initSessions()
+  // 设置读取失败不能拖垮整条初始化链，否则聊天页会是空白
+  try {
+    await assistantPanel.loadFromSettings()
+  } catch (err) {
+    console.error('[ai] 读取面板设置失败', err)
+  }
+  try {
+    await initSessions()
+  } catch (err) {
+    console.error('[ai] 加载会话列表失败', err)
+  }
   await checkConfig()
   nextTick(() => messagesAreaRef.value?.forceScrollToBottom())
 })
@@ -193,6 +251,10 @@ async function saveCurrentBeforeSwitch() {
 }
 
 async function handleNewChat() {
+  guardScopeChange(() => void doNewChat())
+}
+
+async function doNewChat() {
   await saveCurrentBeforeSwitch()
   await createSession()
   await checkConfig()
@@ -200,6 +262,10 @@ async function handleNewChat() {
 }
 
 async function handleUsePrompt(prompt: string) {
+  guardScopeChange(() => void doUsePrompt(prompt))
+}
+
+async function doUsePrompt(prompt: string) {
   await saveCurrentBeforeSwitch()
   const session = await createSession()
   await switchSession(session.convId)
@@ -209,6 +275,11 @@ async function handleUsePrompt(prompt: string) {
 }
 
 async function handleSwitchSession(convId: string) {
+  if (convId === currentSessionId.value) return
+  guardScopeChange(() => void doSwitchSession(convId))
+}
+
+async function doSwitchSession(convId: string) {
   await saveCurrentBeforeSwitch()
   // 清除目标会话的未读标记
   const target = sessions.value.find(s => s.convId === convId)
@@ -218,9 +289,26 @@ async function handleSwitchSession(convId: string) {
   nextTick(() => messagesAreaRef.value?.forceScrollToBottom())
 }
 
-async function handleDeleteSession(convId: string) {
+/** 删除主会话前统计将被一并删除的关联内容（AC-24 / FLOW-9） */
+async function fetchRelatedCounts(scopeId: string) {
   try {
-    await ElMessageBox.confirm('确定要删除该会话吗？', '确认删除', {
+    const [assistants, notes] = await Promise.all([
+      assistantApi().list(scopeId),
+      notesApi().list(scopeId),
+    ])
+    return { assistants: assistants.length, notes: notes.length }
+  } catch {
+    return { assistants: 0, notes: 0 }
+  }
+}
+
+async function handleDeleteSession(convId: string) {
+  const session = sessions.value.find(s => s.convId === convId)
+  const title = session?.title || '该会话'
+  const related = await fetchRelatedCounts(convId)
+  const detail = `将同时删除：主会话及其消息、关联辅助会话 ${related.assistants} 个（及各自消息）、笔记 ${related.notes} 条。`
+  try {
+    await ElMessageBox.confirm(`确定要删除「${title}」吗？${detail}`, '确认删除', {
       confirmButtonText: '删除',
       cancelButtonText: '取消',
       type: 'warning',
@@ -228,7 +316,13 @@ async function handleDeleteSession(convId: string) {
   } catch {
     return
   }
+  const wasCurrent = currentSessionId.value === convId
   await deleteSession(convId)
+  if (wasCurrent && currentSessionId.value) {
+    await switchSession(currentSessionId.value)
+    await checkConfig()
+    nextTick(() => messagesAreaRef.value?.forceScrollToBottom())
+  }
 }
 
 async function handlePinSession(convId: string) {
@@ -244,6 +338,10 @@ function handleCreateCategory(name: string) {
 }
 
 async function handleNewChatInCategory(categoryId: string) {
+  guardScopeChange(() => void doNewChatInCategory(categoryId))
+}
+
+async function doNewChatInCategory(categoryId: string) {
   await saveCurrentBeforeSwitch()
   const session = await createSessionInCategory(categoryId)
   await switchSession(session.convId)

@@ -3,9 +3,15 @@
     <!-- 中间: 会话标题 -->
     <div class="session-title">{{ sessionTitle }}</div>
 
-    <!-- 右侧: 灵感入口 -->
+    <!-- 右侧: 辅助面板入口 / 灵感入口 -->
     <div class="toolbar-right">
-      <button class="toolbar-btn" @click="emit('toggle-inspiration')" title="灵感大全">
+      <button class="toolbar-btn assistant-entry-btn" @click="emit('toggle-assistant')" title="辅助面板">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="16" rx="2"/>
+          <line x1="13" y1="4" x2="13" y2="20"/>
+        </svg>
+      </button>
+      <button class="toolbar-btn inspiration-entry-btn" @click="emit('toggle-inspiration')" title="灵感大全">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
         </svg>
@@ -21,6 +27,7 @@ defineProps<{
 
 const emit = defineEmits<{
   'toggle-inspiration': []
+  'toggle-assistant': []
 }>()
 </script>
 

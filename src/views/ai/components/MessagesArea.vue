@@ -16,6 +16,7 @@
           :active="active"
           :data-index="index"
           class="message-item"
+          :class="{ 'message-item--highlighted': item.msgId === highlightMsgId }"
         >
           <MessageBubble
             :content="item.content"
@@ -74,6 +75,8 @@ const props = defineProps<{
   loading: boolean
   currentText: string
   currentReasoning: string
+  /** 搜索跳转后需要高亮的消息（FR-5.4） */
+  highlightMsgId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -82,6 +85,20 @@ const emit = defineEmits<{
 }>()
 
 const scrollRef = ref<HTMLElement>()
+const scrollerRef = ref<{ scrollToItem: (index: number) => void } | null>(null)
+
+// 搜索跳转：滚动到被高亮的消息（FR-5.4）
+watch(
+  () => [props.highlightMsgId, props.messages.length] as const,
+  async ([id]) => {
+    if (!id) return
+    await nextTick()
+    const index = props.messages.findIndex(m => m.msgId === id)
+    if (index === -1) return
+    scrollerRef.value?.scrollToItem(index)
+  },
+  { flush: 'post' }
+)
 
 // 右键菜单
 const contextMenu = ref<{ index: number; screenX: number; screenY: number } | null>(null)
@@ -203,6 +220,12 @@ defineExpose({ scrollToBottom, forceScrollToBottom })
 
 .message-item {
   padding: 3px 0;
+}
+
+.message-item--highlighted :deep(.message-bubble) {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 12px;
 }
 
 .empty-hint {

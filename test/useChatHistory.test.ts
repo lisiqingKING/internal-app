@@ -102,7 +102,7 @@ describe('useChatHistory', () => {
   })
 
   describe('deleteSession', () => {
-    it('should not call backend delete for non-persisted session', async () => {
+    it('本地会话也要走后端删除：主进程可能已经为它建了行', async () => {
       const { sessions, createSession, switchSession, deleteSession } = useChatHistory()
       await createSession()
       switchSession(sessions.value[0].convId)
@@ -110,7 +110,7 @@ describe('useChatHistory', () => {
       const localId = sessions.value[0].convId
       await deleteSession(localId)
 
-      expect(mockAdapter.delete).not.toHaveBeenCalled()
+      expect(mockAdapter.delete).toHaveBeenCalledWith(localId)
       expect(sessions.value).toHaveLength(0)
     })
 
@@ -126,6 +126,30 @@ describe('useChatHistory', () => {
 
       expect(mockAdapter.delete).toHaveBeenCalledWith(convId)
       expect(sessions.value).toHaveLength(0)
+    })
+
+    it('删掉最后一个会话时清空 currentSessionId，不残留指向已删除会话的 id', async () => {
+      const { sessions, createSession, switchSession, deleteSession, currentSessionId } =
+        useChatHistory()
+      await createSession()
+      switchSession(sessions.value[0].convId)
+
+      const convId = sessions.value[0].convId
+      await deleteSession(convId)
+
+      expect(sessions.value).toHaveLength(0)
+      expect(currentSessionId.value).toBe(null)
+    })
+
+    it('删除非当前会话时 currentSessionId 保持不变', async () => {
+      const { createSession, switchSession, deleteSession, currentSessionId } = useChatHistory()
+      const first = await createSession()
+      const second = await createSession()
+      switchSession(second.convId)
+
+      await deleteSession(first.convId)
+
+      expect(currentSessionId.value).toBe(second.convId)
     })
   })
 

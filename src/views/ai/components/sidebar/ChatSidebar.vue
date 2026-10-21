@@ -212,10 +212,6 @@ const pinnedSessions = computed(() => {
   return sortedSessions.value.filter(s => s.categoryId === PINNED_CATEGORY_ID)
 })
 
-const unpinnedSessions = computed(() => {
-  return sortedSessions.value.filter(s => s.categoryId !== PINNED_CATEGORY_ID && !s.categoryId)
-})
-
 const categoriesWithSessions = computed((): CategoryWithSessions[] => {
   return props.categories.map(cat => ({
     ...cat,

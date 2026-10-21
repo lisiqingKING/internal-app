@@ -20,7 +20,18 @@ describe('ChatTopToolbar', () => {
       },
     })
 
-    await wrapper.find('.toolbar-btn').trigger('click')
+    await wrapper.find('.inspiration-entry-btn').trigger('click')
     expect(wrapper.emitted('toggle-inspiration')).toBeTruthy()
+  })
+
+  it('点击辅助面板按钮，触发 toggle-assistant 事件', async () => {
+    const wrapper = mount(ChatTopToolbar, {
+      props: {
+        sessionTitle: '测试会话',
+      },
+    })
+
+    await wrapper.find('.assistant-entry-btn').trigger('click')
+    expect(wrapper.emitted('toggle-assistant')).toBeTruthy()
   })
 })
