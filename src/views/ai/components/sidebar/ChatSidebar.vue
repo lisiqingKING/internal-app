@@ -6,7 +6,7 @@
       @open-search="showSearchDialog = true"
     />
 
-    <div class="session-list" ref="sessionListRef">
+    <div class="session-list">
       <!-- 置顶分组（固定在顶部） -->
       <div class="group">
         <div class="group-header">
@@ -122,9 +122,6 @@
         </div>
       </div>
 
-      <div ref="loadMoreTrigger" class="load-more-trigger">
-        <span v-if="loadingMore" class="loading-more">加载中...</span>
-      </div>
     </div>
 
     <ChatSidebarDropdown
@@ -149,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { ChatSession, Category } from '@/views/ai/types'
 import { PINNED_CATEGORY_ID } from '@/views/ai/types'
 import { sortSessions } from '@/utils/sessionSort'
@@ -164,8 +161,6 @@ const props = defineProps<{
   sessions: ChatSession[]
   categories: Category[]
   currentSessionId: string | null
-  loadingMore: boolean
-  hasMore: boolean
 }>()
 
 const emit = defineEmits<{
@@ -173,7 +168,6 @@ const emit = defineEmits<{
   'new-chat-in-category': [categoryId: string]
   'switch-session': [id: string]
   'delete-session': [id: string]
-  'load-more': []
   'pin-session': [id: string]
   'rename-session': [id: string, title: string]
   'create-category': [name: string]
@@ -206,7 +200,17 @@ interface CategoryWithSessions extends Category {
   sessions: ChatSession[]
 }
 
-const sortedSessions = computed(() => sortSessions(props.sessions))
+const sortedSessions = computed(() => {
+  // 同一个 convId 只渲染一次。
+  // 列表是全量拉取的，主进程保证一个 convId 一行；这里是渲染层兜底 ——
+  // 万一上游出现重复，不会渲染出两个高亮（点第二个会被当成「点当前会话」直接返回，看起来像没反应）。
+  const seen = new Set<string>()
+  return sortSessions(props.sessions).filter((s) => {
+    if (seen.has(s.convId)) return false
+    seen.add(s.convId)
+    return true
+  })
+})
 
 const pinnedSessions = computed(() => {
   return sortedSessions.value.filter(s => s.categoryId === PINNED_CATEGORY_ID)
@@ -231,7 +235,10 @@ watch(() => categoriesWithSessions.value.map(c => c.sessions.length), (newLens) 
 })
 
 const defaultSessions = computed(() => {
-  return sortedSessions.value.filter(s => !s.pinned && !s.categoryId)
+  // 只看 categoryId：置顶是「categoryId = __pinned__」这个特殊分组，
+  // pinned 只是它的冗余副本。之前这里还判 !s.pinned，
+  // 于是 pinned=1 且 categoryId 为空的存量会话既不在置顶组也不在默认组 —— 直接消失。
+  return sortedSessions.value.filter(s => !s.categoryId)
 })
 
 // ============ 拖拽 ============
@@ -290,29 +297,6 @@ function onCategoryDrop(targetCatId: string, event: DragEvent) {
   draggingCategoryId.value = null
   emit('reorder-categories', newOrder)
 }
-
-// ============ 分页加载 ============
-const sessionListRef = ref<HTMLElement>()
-const loadMoreTrigger = ref<HTMLElement>()
-let observer: IntersectionObserver | null = null
-
-onMounted(() => {
-  if (loadMoreTrigger.value && sessionListRef.value) {
-    observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && props.hasMore && !props.loadingMore) {
-          emit('load-more')
-        }
-      },
-      { root: sessionListRef.value, threshold: 0.1 },
-    )
-    observer.observe(loadMoreTrigger.value)
-  }
-})
-
-onUnmounted(() => {
-  observer?.disconnect()
-})
 </script>
 
 <style scoped>
@@ -491,15 +475,5 @@ onUnmounted(() => {
   color: var(--color-text-tertiary);
   flex-shrink: 0;
   margin-left: 8px;
-}
-
-.load-more-trigger {
-  padding: 8px;
-  text-align: center;
-}
-
-.loading-more {
-  font-size: 10px;
-  color: var(--color-text-tertiary);
 }
 </style>

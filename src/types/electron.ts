@@ -6,7 +6,8 @@ export interface ElectronCategory {
 }
 
 export interface ElectronAPIModule {
-  list(options?: { limit?: number; offset?: number }): Promise<any[]>
+  /** 会话列表全量返回（分组及其会话一次拿全） */
+  list(): Promise<any[]>
   create(title: string, categoryId?: string | null): Promise<any>
   updateTitle(convId: string, title: string): Promise<void>
   updateMessages(convId: string, messages: any[]): Promise<void>

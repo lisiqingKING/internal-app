@@ -4,7 +4,6 @@ import type { ChatSession, Message } from '../src/views/ai/types'
 // Mock the storage adapter before importing useChatHistory
 const mockAdapter = {
   readAll: vi.fn(),
-  loadPage: vi.fn(),
   add: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
@@ -15,9 +14,8 @@ const mockAdapter = {
 vi.mock('../src/views/ai/composables/storage/storageElectron', () => ({
   electronStorageAdapter: mockAdapter,
   initElectronStorage: vi.fn(),
-  loadNextPage: mockAdapter.loadPage,
   moveSession: mockAdapter.moveSession,
-  PAGE_SIZE: 10,
+  getCachedCategories: vi.fn(() => []),
 }))
 
 const { useChatHistory } = await import('../src/views/ai/composables/chat/useChatHistory')
@@ -177,6 +175,21 @@ describe('useChatHistory', () => {
       await togglePin(sessions.value[0].convId)
 
       expect(mockAdapter.moveSession).toHaveBeenCalledWith(sessions.value[0].convId, '__pinned__')
+    })
+  })
+
+  describe('init', () => {
+    it('一次拿到全部分组及其会话（无分页、无截断）', async () => {
+      const all = Array.from({ length: 30 }, (_, i) =>
+        makeSession({ convId: `c${i}`, title: `会话${i}` })
+      )
+      mockAdapter.readAll.mockResolvedValue(all)
+
+      const { sessions, init } = useChatHistory()
+      await init()
+
+      expect(sessions.value).toHaveLength(30)
+      expect(new Set(sessions.value.map((s) => s.convId)).size).toBe(30)
     })
   })
 })

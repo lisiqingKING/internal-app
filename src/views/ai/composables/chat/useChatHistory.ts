@@ -5,8 +5,6 @@ import { PINNED_CATEGORY_ID } from '@/views/ai/types'
 import {
   electronStorageAdapter,
   initElectronStorage,
-  loadNextPage,
-  PAGE_SIZE,
   getCachedCategories,
   createCategory,
   renameCategory,
@@ -23,27 +21,14 @@ export function useChatHistory() {
   const sessions = ref<ChatSession[]>([])
   const categories = ref<Category[]>([])
   const currentSessionId = ref<string | null>(null)
-  const loadingMore = ref(false)
-  const hasMore = ref(true)
 
-  // 初始化加载数据
+  // 初始化加载数据（会话与分组全量）
   async function init() {
     await initElectronStorage()
     const data = await electronStorageAdapter.readAll()
     sessions.value = data
     categories.value = getCachedCategories()
     currentSessionId.value = null
-    hasMore.value = data.length >= PAGE_SIZE
-  }
-
-  // 加载更多会话
-  async function loadMore() {
-    if (loadingMore.value || !hasMore.value) return
-    loadingMore.value = true
-    const moreSessions = await loadNextPage()
-    sessions.value.push(...moreSessions)
-    hasMore.value = moreSessions.length >= PAGE_SIZE
-    loadingMore.value = false
   }
 
   // 创建新对话（不立即持久化，等发送第一条消息后再持久化）
@@ -224,7 +209,13 @@ export function useChatHistory() {
 
     // 先乐观更新本地
     const oldSession = sessions.value[index]
-    const updated = { ...oldSession, categoryId, previousCategoryId }
+    // pinned 是 categoryId 的冗余副本（后端会同步），本地也保持一致
+    const updated = {
+      ...oldSession,
+      categoryId,
+      previousCategoryId,
+      pinned: categoryId === PINNED_CATEGORY_ID ? 1 : 0,
+    }
     sessions.value = [
       ...sessions.value.slice(0, index),
       updated,
@@ -265,10 +256,7 @@ export function useChatHistory() {
     sessions,
     categories,
     currentSessionId,
-    loadingMore,
-    hasMore,
     init,
-    loadMore,
     createSession,
     createSessionInCategory,
     getCurrentSession,

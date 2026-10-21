@@ -1,11 +1,9 @@
 import type { ChatSession, Category } from '@/views/ai/types'
-
-export const PAGE_SIZE = 10
+import { PINNED_CATEGORY_ID } from '@/views/ai/types'
 
 // 存储适配器接口 - CRUD 风格（异步）
 export interface StorageAdapter {
   readAll(): Promise<ChatSession[]>
-  loadPage(limit: number, offset: number): Promise<ChatSession[]>
   add(title: string): Promise<ChatSession>
   update(convId: string, updates: Partial<ChatSession>): Promise<void>
   delete(convId: string): Promise<void>
@@ -19,15 +17,6 @@ let cachedCategories: Category[] = []
 export const electronStorageAdapter: StorageAdapter = {
   readAll: async () => {
     return [...cachedSessions]
-  },
-
-  loadPage: async (limit, offset) => {
-    if (window.electronApis?.ai) {
-      const page = await window.electronApis.ai.list({ limit, offset })
-      cachedSessions.push(...page)
-      return page
-    }
-    return []
   },
 
   add: async (title): Promise<ChatSession> => {
@@ -55,35 +44,20 @@ export const electronStorageAdapter: StorageAdapter = {
   updatePinned: async (convId, pinned) => {
     const index = cachedSessions.findIndex(s => s.convId === convId)
     if (index !== -1) {
+      // 置顶是「categoryId = __pinned__」这个特殊分组，pinned 只是冗余副本
       cachedSessions[index].pinned = pinned
+      cachedSessions[index].categoryId = pinned ? PINNED_CATEGORY_ID : null
     }
     await window.electronApis?.ai?.updatePinned(convId, pinned)
   }
 }
 
-// 初始化 Electron 存储适配器（加载第一页 + 目录列表）
+// 初始化 Electron 存储适配器（全量会话 + 目录列表）
 export async function initElectronStorage(): Promise<void> {
   if (window.electronApis?.ai) {
-    cachedSessions = await window.electronApis.ai.list({ limit: PAGE_SIZE, offset: 0 })
+    cachedSessions = await window.electronApis.ai.list()
     cachedCategories = await window.electronApis.ai.listCategories()
   }
-}
-
-// 加载下一页
-export async function loadNextPage(): Promise<ChatSession[]> {
-  return electronStorageAdapter.loadPage(PAGE_SIZE, cachedSessions.length)
-}
-
-// 检查是否还有更多数据（不修改缓存）
-export async function hasMoreSessions(): Promise<boolean> {
-  if (!window.electronApis?.ai) return false
-  const page = await window.electronApis.ai.list({ limit: 1, offset: cachedSessions.length })
-  return page.length > 0
-}
-
-// 获取缓存数据
-export function getCachedSessions(): ChatSession[] {
-  return cachedSessions
 }
 
 // ============ Category（目录）操作 ============
@@ -140,6 +114,7 @@ export async function moveSession(convId: string, categoryId: string | null): Pr
   const session = cachedSessions.find(s => s.convId === convId)
   if (session) {
     session.categoryId = categoryId
+    session.pinned = categoryId === PINNED_CATEGORY_ID ? 1 : 0
   }
 }
 

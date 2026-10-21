@@ -5,13 +5,6 @@ import ChatSidebar from '../src/views/ai/components/sidebar/ChatSidebar.vue'
 import type { ChatSession, Category } from '../src/views/ai/types'
 import { PINNED_CATEGORY_ID } from '../src/views/ai/types'
 
-// Mock IntersectionObserver
-const mockIntersectionObserver = vi.fn(() => ({
-  observe: vi.fn(),
-  disconnect: vi.fn(),
-}))
-vi.stubGlobal('IntersectionObserver', mockIntersectionObserver)
-
 const mockSessions: ChatSession[] = [
   {
     convId: 'conv-1',
@@ -54,8 +47,6 @@ describe('ChatSidebar', () => {
         sessions: mockSessions,
         categories: mockCategories,
         currentSessionId: null,
-        loadingMore: false,
-        hasMore: false,
       },
       global: {
         stubs: {
@@ -75,8 +66,6 @@ describe('ChatSidebar', () => {
         sessions: mockSessions,
         categories: mockCategories,
         currentSessionId: null,
-        loadingMore: false,
-        hasMore: false,
       },
       global: {
         stubs: {
@@ -101,8 +90,6 @@ describe('ChatSidebar', () => {
         sessions: mockSessions,
         categories: mockCategories,
         currentSessionId: 'conv-1',
-        loadingMore: false,
-        hasMore: false,
       },
       global: {
         stubs: {
@@ -123,8 +110,6 @@ describe('ChatSidebar', () => {
         sessions: mockSessions,
         categories: mockCategories,
         currentSessionId: null,
-        loadingMore: false,
-        hasMore: false,
       },
       global: {
         stubs: {
@@ -157,8 +142,6 @@ describe('ChatSidebar', () => {
         sessions: mockSessions,
         categories: mockCategories,
         currentSessionId: null,
-        loadingMore: false,
-        hasMore: false,
       },
       global: {
         stubs: {
@@ -187,8 +170,6 @@ describe('ChatSidebar', () => {
         sessions: sessionsWithUnread,
         categories: [],
         currentSessionId: null,
-        loadingMore: false,
-        hasMore: false,
       },
       global: {
         stubs: {
@@ -200,5 +181,67 @@ describe('ChatSidebar', () => {
     })
 
     expect(wrapper.find('.unread-dot').exists()).toBe(true)
+  })
+
+  describe('分组归属', () => {
+    function mountSidebar(sessions: ChatSession[], currentSessionId: string | null = null) {
+      return mount(ChatSidebar, {
+        props: {
+          sessions,
+          categories: mockCategories,
+          currentSessionId,
+        },
+        global: {
+          stubs: {
+            ChatSidebarHeader: true,
+            ChatSidebarDropdown: true,
+            ChatSidebarSearchDialog: true,
+          },
+        },
+      })
+    }
+
+    function titles(wrapper: ReturnType<typeof mountSidebar>) {
+      return wrapper.findAll('.session-title').map((n) => n.text())
+    }
+
+    it('pinned=1 但没进分组的会话仍出现在默认分组，不会从侧边栏消失', () => {
+      // 置顶的唯一判据是 categoryId；pinned 只是它的冗余副本
+      const legacy: ChatSession = {
+        convId: 'conv-legacy',
+        title: '老数据只标了置顶',
+        messages: [],
+        createdAt: Date.now() - 3000,
+        updatedAt: Date.now() - 3000,
+        pinned: 1,
+        categoryId: null,
+      }
+
+      const wrapper = mountSidebar([legacy])
+
+      expect(titles(wrapper)).toContain('老数据只标了置顶')
+    })
+
+    it('置顶分组的会话不会同时出现在默认分组', () => {
+      const wrapper = mountSidebar(mockSessions)
+
+      const occurrences = titles(wrapper).filter((t) => t === '会话2')
+      expect(occurrences).toHaveLength(1)
+    })
+
+    it('同一 convId 重复出现时只渲染一次，不会有两个高亮', () => {
+      const dup: ChatSession = {
+        convId: 'conv-1',
+        title: '会话1',
+        messages: [],
+        createdAt: Date.now() - 1000,
+        updatedAt: Date.now() - 1000,
+        categoryId: null,
+      }
+
+      const wrapper = mountSidebar([dup, { ...dup }], 'conv-1')
+
+      expect(wrapper.findAll('.session-item.active')).toHaveLength(1)
+    })
   })
 })

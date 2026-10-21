@@ -12,13 +12,10 @@
         :sessions="sessions"
         :categories="categories"
         :current-session-id="currentSessionId"
-        :loading-more="loadingMore"
-        :has-more="hasMore"
         @new-chat="handleNewChat"
         @new-chat-in-category="handleNewChatInCategory"
         @switch-session="handleSwitchSession"
         @delete-session="handleDeleteSession"
-        @load-more="loadMore"
         @pin-session="handlePinSession"
         @rename-session="handleRenameSession"
         @create-category="handleCreateCategory"
@@ -172,10 +169,7 @@ const {
   categories,
   currentSessionId,
   currentService,
-  loadingMore,
-  hasMore,
   initSessions,
-  loadMore,
   createSession,
   createSessionInCategory,
   switchSession,
