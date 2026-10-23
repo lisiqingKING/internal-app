@@ -51,7 +51,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import ChatHeaderRename from './ChatHeaderRename.vue'
+import ChatHeaderRename from '../common/ChatHeaderRename.vue'
 
 const emit = defineEmits<{
   'new-chat': []

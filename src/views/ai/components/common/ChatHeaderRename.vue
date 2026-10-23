@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div class="modal-overlay" @click.self="emit('cancel')">
       <div class="modal-dialog">
-        <div class="modal-header">重命名对话</div>
+        <div class="modal-header">{{ heading }}</div>
         <input
           ref="inputRef"
           v-model="localValue"
@@ -29,6 +29,8 @@ import { ILLEGAL_CHARS, MAX_TITLE_LENGTH } from '@/views/ai/types'
 const props = defineProps<{
   modelValue: string
   error: string
+  /** 弹窗标题，辅助会话用的是「重命名辅助会话」 */
+  heading?: string
 }>()
 
 const emit = defineEmits<{
@@ -40,6 +42,7 @@ const emit = defineEmits<{
 
 const inputRef = ref<HTMLInputElement>()
 const localValue = ref(props.modelValue)
+const heading = computed(() => props.heading ?? '重命名对话')
 
 const canConfirm = computed(() => {
   const val = localValue.value.trim()

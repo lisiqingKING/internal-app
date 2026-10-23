@@ -10,6 +10,7 @@
       </div>
     </div>
 
+    <!-- 标题行与工具行分开：笔记区可能只有 240px 宽，同一行塞不下标题+5 个格式键+保存 -->
     <div class="editor-toolbar">
       <input
         class="editor-title"
@@ -17,14 +18,17 @@
         placeholder="新笔记"
         @input="onTitleInput"
       />
-      <div class="editor-tools">
-        <button class="tool-btn" title="加粗" @click="onFormat('bold')"><strong>B</strong></button>
-        <button class="tool-btn" title="斜体" @click="onFormat('italic')"><em>I</em></button>
-        <button class="tool-btn" title="无序列表" @click="onFormat('insertUnorderedList')">•</button>
-        <button class="tool-btn" title="有序列表" @click="onFormat('insertOrderedList')">1.</button>
-        <button class="tool-btn" title="插入图片 URL" @click="onInsertImage">🖼</button>
-      </div>
       <button class="editor-save" :disabled="!dirty" @click="onSave">保存</button>
+    </div>
+
+    <div class="editor-tools">
+      <button class="tool-btn" title="加粗" @click="onFormat('bold')"><strong>B</strong></button>
+      <button class="tool-btn" title="斜体" @click="onFormat('italic')"><em>I</em></button>
+      <button class="tool-btn" title="无序列表" @click="onFormat('insertUnorderedList')">•</button>
+      <button class="tool-btn" title="有序列表" @click="onFormat('insertOrderedList')">1.</button>
+      <button class="tool-btn" title="插入图片 URL" @click="onInsertImage">
+        <Image :size="13" />
+      </button>
     </div>
 
     <div
@@ -40,6 +44,7 @@
 
 <script setup lang="ts">
 import { inject, nextTick, ref, watch } from 'vue'
+import { Image } from 'lucide-vue-next'
 import { ASSISTANT_WORKSPACE } from '../../composables/assistant/useAssistantWorkspace'
 import { sanitizeHtml } from '../../../../utils/sanitizeHtml'
 
@@ -200,14 +205,14 @@ function onCancelSwitch() {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 8px;
+  padding: 5px 8px;
   border-bottom: 1px solid var(--color-divider);
   flex-shrink: 0;
 }
 
 .editor-title {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: 40px;
   font-size: 13px;
   font-weight: 600;
   padding: 2px 6px;
@@ -227,9 +232,15 @@ function onCancelSwitch() {
 .editor-tools {
   display: flex;
   gap: 2px;
+  padding: 2px 8px 4px;
+  border-bottom: 1px solid var(--color-divider);
+  flex-shrink: 0;
 }
 
 .tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 24px;
   height: 24px;
   border: none;
@@ -245,7 +256,14 @@ function onCancelSwitch() {
   color: var(--color-text-primary);
 }
 
+.tool-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
 .editor-save {
+  flex-shrink: 0;
+  white-space: nowrap;
   padding: 3px 12px;
   font-size: 12px;
   border: none;

@@ -1,7 +1,7 @@
 <template>
   <div class="assistant-search">
     <div class="search-input-row">
-      <span class="search-icon">🔍</span>
+      <Search :size="13" class="search-icon" />
       <input
         ref="inputRef"
         class="search-input"
@@ -9,7 +9,9 @@
         placeholder="搜索笔记和对话内容..."
         @input="onInput"
       />
-      <button class="search-close" title="关闭搜索" @click="emit('close')">✕</button>
+      <button class="search-close" title="关闭搜索" @click="emit('close')">
+        <X :size="13" />
+      </button>
     </div>
 
     <div class="search-body">
@@ -20,7 +22,7 @@
 
       <template v-else>
         <section v-if="notes.length" class="result-group">
-          <header class="group-title">📝 笔记 ({{ notes.length }})</header>
+          <header class="group-title"><StickyNote :size="12" />笔记 ({{ notes.length }})</header>
           <button
             v-for="hit in notes"
             :key="hit.noteId"
@@ -36,7 +38,7 @@
         </section>
 
         <section v-if="messages.length" class="result-group">
-          <header class="group-title">💬 对话 ({{ messages.length }})</header>
+          <header class="group-title"><MessageCircle :size="12" />对话 ({{ messages.length }})</header>
           <button
             v-for="hit in messages"
             :key="hit.msgId"
@@ -57,6 +59,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
+import { MessageCircle, Search, StickyNote, X } from 'lucide-vue-next'
 import { useAssistantSearch, type MessageHit, type NoteHit } from '../../composables/assistant/useAssistantSearch'
 import { highlightKeyword } from '../../../../utils/highlight'
 
@@ -119,7 +122,8 @@ function onMessageClick(hit: MessageHit) {
 }
 
 .search-icon {
-  font-size: 13px;
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
 }
 
 .search-input {
@@ -139,6 +143,9 @@ function onMessageClick(hit: MessageHit) {
 }
 
 .search-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 22px;
   height: 22px;
   border: none;
@@ -173,6 +180,9 @@ function onMessageClick(hit: MessageHit) {
 }
 
 .group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
   font-weight: 600;
   color: var(--color-text-secondary);

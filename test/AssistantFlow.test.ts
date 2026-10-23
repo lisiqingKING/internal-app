@@ -6,9 +6,9 @@
  * FLOW-1（加载工作区）、FLOW-3（摘录为笔记）、FLOW-4（编辑并保存）、
  * FLOW-6（切换主会话）、FLOW-8（删除辅助会话）、FLOW-7（搜索）。
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { nextTick, ref } from 'vue'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import AssistantPanel from '../src/views/ai/components/assistant/AssistantPanel.vue'
 import AssistantConversations from '../src/views/ai/components/assistant/AssistantConversations.vue'
 import AssistantNotes from '../src/views/ai/components/assistant/AssistantNotes.vue'
@@ -52,6 +52,7 @@ const aiMock = {
   getActiveProfile: vi.fn(async () => null),
   getSystemPromptsByIds: vi.fn(async () => []),
   getMessages: vi.fn(async () => []),
+  ensureConversation: vi.fn(async () => true),
   chat: vi.fn(async () => ({ messageId: 'msg-1' })),
   abort: vi.fn(),
   onStart: vi.fn(() => () => {}),
@@ -144,6 +145,16 @@ beforeEach(() => {
   ])
 })
 
+/**
+ * 每个用例结束都卸载组件：下拉浮层是 Teleport 到 body 的，
+ * 不卸载的话旧浮层会留在 body 里，下一个用例的 document.body 查询会命中上一个的残留。
+ */
+const mountedWrappers: ReturnType<typeof mount>[] = []
+
+afterEach(() => {
+  for (const w of mountedWrappers.splice(0)) w.unmount()
+})
+
 /** 装配完整面板（会话区 + 笔记区 + 搜索区） */
 async function mountPanel() {
   const scopeId = ref<string | null>('scope-1')
@@ -167,6 +178,7 @@ async function mountPanel() {
       },
     },
   })
+  mountedWrappers.push(wrapper)
 
   await workspace.whenLoaded()
   await nextTick()
@@ -174,19 +186,107 @@ async function mountPanel() {
   return { wrapper, workspace, scopeId, panel }
 }
 
+/**
+ * 展开下拉浮层并返回其中的条目。
+ *
+ * 展开按钮是 toggle：已经在展开状态时再点会关掉。所以先看 body 里有没有浮层，
+ * 没有才点一次 —— 单击就能确定地展开，不依赖「点几次」。
+ */
+async function openDropdown(
+  wrapper: ReturnType<typeof mount>,
+  trigger: string,
+  dropdownClass: string,
+  itemClass: string
+): Promise<HTMLElement[]> {
+  if (!document.body.querySelector(`.${dropdownClass}`)) {
+    await wrapper.find(trigger).trigger('click')
+    await nextTick()
+  }
+  const dropdown = document.body.querySelector<HTMLElement>(`.${dropdownClass}`)
+  expect(dropdown).not.toBeNull()
+  return Array.from(dropdown!.querySelectorAll<HTMLElement>(`.${itemClass}`))
+}
+
+/** 展开辅助会话下拉，返回会话条目 */
+async function openConvDropdown(wrapper: ReturnType<typeof mount>): Promise<HTMLElement[]> {
+  return openDropdown(wrapper, '.conv-entry-btn', 'conv-dropdown', 'conv-item')
+}
+
+/** 展开笔记下拉，返回笔记条目 */
+async function openNotesDropdown(wrapper: ReturnType<typeof mount>): Promise<HTMLElement[]> {
+  return openDropdown(wrapper, '.notes-title', 'notes-dropdown', 'note-item')
+}
+
 describe('FLOW-1 打开辅助面板并加载工作区', () => {
-  it('同时显示该工作区的辅助会话 Tab 与笔记列表', async () => {
+  it('同时显示该工作区的辅助会话与笔记列表', async () => {
     const { wrapper } = await mountPanel()
 
-    expect(wrapper.findAll('.tab-title').map(n => n.text())).toEqual(['会话A', '会话B'])
-    expect(wrapper.findAll('.note-item-title').map(n => n.text())).toEqual(['索引优化结论'])
+    const convs = await openConvDropdown(wrapper)
+    expect(convs.map(el => el.querySelector('.conv-item-title')?.textContent)).toEqual([
+      '会话A',
+      '会话B',
+    ])
+
+    const notes = await openNotesDropdown(wrapper)
+    expect(notes.map(el => el.querySelector('.note-item-title')?.textContent)).toEqual([
+      '索引优化结论',
+    ])
   })
 
   it('激活项取自工作区状态', async () => {
     const { wrapper } = await mountPanel()
 
-    expect(wrapper.findAll('.tab')[1].classes()).toContain('active')
-    expect(wrapper.findAll('.note-item')[0].classes()).toContain('active')
+    const convs = await openConvDropdown(wrapper)
+    expect(convs[1].classList.contains('active')).toBe(true)
+
+    const notes = await openNotesDropdown(wrapper)
+    expect(notes[0].classList.contains('active')).toBe(true)
+  })
+})
+
+describe('FR-3.1 从下拉浮层切换辅助会话', () => {
+  it('浮层列出全部辅助会话，点击后切换激活会话', async () => {
+    const { wrapper } = await mountPanel()
+
+    const convs = await openConvDropdown(wrapper)
+    expect(convs.map(el => el.querySelector('.conv-item-title')?.textContent)).toEqual([
+      '会话A',
+      '会话B',
+    ])
+
+    // 初始激活的是工作区状态里记录的会话B
+    expect(wrapper.find('.conv-entry-title').text()).toBe('会话B')
+
+    convs[0].dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
+    await nextTick()
+
+    expect(workspaceMock.setActive).toHaveBeenCalledWith('scope-1', { convId: 'a' })
+    expect(wrapper.find('.conv-entry-title').text()).toBe('会话A')
+  })
+})
+
+describe('FR-3.5 重命名当前辅助会话', () => {
+  it('标题右侧的重命名按钮弹出改名框，确认后同步到主进程', async () => {
+    const { wrapper } = await mountPanel()
+
+    expect(wrapper.find('.conv-rename-btn').exists()).toBe(true)
+    await wrapper.find('.conv-rename-btn').trigger('click')
+    await nextTick()
+
+    // 改名框 Teleport 到 body，只能从 body 上取
+    const input = document.body.querySelector<HTMLInputElement>('.modal-input')
+    expect(input).not.toBeNull()
+    expect(input!.value).toBe('会话B')
+
+    input!.value = '新的会话名'
+    input!.dispatchEvent(new Event('input'))
+    await nextTick()
+
+    document.body.querySelector<HTMLButtonElement>('.modal-btn.confirm')!.click()
+    await flushPromises()
+
+    expect(assistantMock.rename).toHaveBeenCalledWith('b', '新的会话名')
   })
 })
 
@@ -206,7 +306,8 @@ describe('FLOW-3 从 AI 回复摘录为笔记', () => {
     expect(input.sourceConvTitle).toBe('会话B')
     expect(input.sourceMsgContent).toBe('这次聊到了索引优化的问题')
 
-    expect(wrapper.findAll('.note-item')).toHaveLength(2)
+    const notes = await openNotesDropdown(wrapper)
+    expect(notes).toHaveLength(2)
   })
 })
 
@@ -239,20 +340,30 @@ describe('FLOW-6 切换主会话', () => {
 
     expect(assistantMock.list).toHaveBeenCalledWith('scope-2')
     expect(notesMock.list).toHaveBeenCalledWith('scope-2')
-    expect(wrapper.findAll('.note-item-title').map(n => n.text())).toEqual(['另一个工作区的笔记'])
+    const notes = await openNotesDropdown(wrapper)
+    expect(notes.map(el => el.querySelector('.note-item-title')?.textContent)).toEqual([
+      '另一个工作区的笔记',
+    ])
   })
 })
 
 describe('FLOW-8 删除辅助会话', () => {
-  it('删除后 Tab 消失，该工作区的笔记保留', async () => {
+  it('删除后该会话从列表消失，该工作区的笔记保留', async () => {
     const { wrapper } = await mountPanel()
 
-    await wrapper.findAll('.tab-close')[0].trigger('click')
-    await nextTick()
+    const convs = await openConvDropdown(wrapper)
+    const del = convs[0].querySelector<HTMLElement>('.conv-item-del')
+    del?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
 
     expect(assistantMock.deleteSession).toHaveBeenCalledWith('a')
-    expect(wrapper.findAll('.tab-title').map(n => n.text())).toEqual(['会话B'])
-    expect(wrapper.findAll('.note-item')).toHaveLength(1)
+
+    // 点浮层内部会收起下拉，重新展开看列表
+    const after = await openConvDropdown(wrapper)
+    expect(after.map(el => el.querySelector('.conv-item-title')?.textContent)).toEqual(['会话B'])
+
+    const notes = await openNotesDropdown(wrapper)
+    expect(notes).toHaveLength(1)
   })
 })
 
@@ -321,7 +432,7 @@ describe('FLOW-7 搜索并跳转', () => {
     await new Promise(r => setTimeout(r, 250))
     await nextTick()
 
-    expect(wrapper.find('.group-title').text()).toBe('📝 笔记 (1)')
+    expect(wrapper.find('.group-title').text()).toBe('笔记 (1)')
 
     await wrapper.find('.result-item').trigger('click')
 

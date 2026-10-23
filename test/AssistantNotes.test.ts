@@ -4,7 +4,7 @@
  * 对应需求文档 docs/ASSISTANT_PANEL.md 的 FR-4（笔记）、
  * FLOW-4（编辑并保存）、FLOW-5（未保存修改的处理）、NFR-S2 / NFR-S3 / NFR-R5。
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { mount } from '@vue/test-utils'
 import AssistantNotes from '../src/views/ai/components/assistant/AssistantNotes.vue'
@@ -326,6 +326,16 @@ describe('FLOW-1 加载工作区的笔记', () => {
 
 // ===== 组件层 =====
 
+/**
+ * 每个用例结束都卸载组件：下拉浮层是 Teleport 到 body 的，
+ * 不卸载的话旧浮层会留在 body 里，下一个用例的 document.body 查询会命中上一个的残留。
+ */
+const mountedWrappers: ReturnType<typeof mount>[] = []
+
+afterEach(() => {
+  for (const w of mountedWrappers.splice(0)) w.unmount()
+})
+
 async function mountNotes(notes = useAssistantNotes()) {
   await notes.load('scope-1')
   const workspace = {
@@ -341,6 +351,7 @@ async function mountNotes(notes = useAssistantNotes()) {
   const wrapper = mount(AssistantNotes, {
     global: { provide: { [ASSISTANT_WORKSPACE as symbol]: workspace } },
   })
+  mountedWrappers.push(wrapper)
   await nextTick()
   return { wrapper, notes }
 }
@@ -350,6 +361,33 @@ async function typeContent(wrapper: ReturnType<typeof mount>, html: string) {
   const el = wrapper.find('.editor-content').element as HTMLElement
   el.innerHTML = html
   await wrapper.find('.editor-content').trigger('input')
+}
+
+/**
+ * 笔记列表收在下拉浮层里（Teleport 到 body），断言前先展开。
+ *
+ * 展开按钮是 toggle：已经在展开状态时再点会关掉。所以先看 body 里有没有浮层，
+ * 没有才点一次 —— 单击就能确定地展开，不依赖「点几次」。
+ */
+async function openNotesDropdown(wrapper: ReturnType<typeof mount>): Promise<HTMLElement[]> {
+  if (!document.body.querySelector('.notes-dropdown')) {
+    await wrapper.find('.notes-title').trigger('click')
+    await nextTick()
+  }
+  const dropdown = document.body.querySelector<HTMLElement>('.notes-dropdown')
+  expect(dropdown).not.toBeNull()
+  return Array.from(dropdown!.querySelectorAll<HTMLElement>('.note-item'))
+}
+
+/** 浮层里各条笔记的标题 */
+function itemTitles(items: HTMLElement[]): (string | null)[] {
+  return items.map(el => el.querySelector('.note-item-title')?.textContent)
+}
+
+/** 点击浮层里的某条笔记 */
+async function clickNote(items: HTMLElement[], index: number) {
+  items[index].dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  await nextTick()
 }
 
 describe('FR-4.1 笔记区结构', () => {
@@ -362,8 +400,8 @@ describe('FR-4.1 笔记区结构', () => {
     const { wrapper } = await mountNotes()
 
     expect(wrapper.find('.notes-title').text()).toContain('2')
-    const titles = wrapper.findAll('.note-item-title').map(n => n.text())
-    expect(titles).toEqual(['索引优化结论', '性能测试'])
+    const items = await openNotesDropdown(wrapper)
+    expect(itemTitles(items)).toEqual(['索引优化结论', '性能测试'])
   })
 
   it('当前编辑的笔记高亮', async () => {
@@ -371,13 +409,15 @@ describe('FR-4.1 笔记区结构', () => {
 
     const { wrapper } = await mountNotes()
 
-    expect(wrapper.findAll('.note-item')[0].classes()).toContain('active')
+    const items = await openNotesDropdown(wrapper)
+    expect(items[0].classList.contains('active')).toBe(true)
   })
 
   it('没有笔记时显示空状态', async () => {
     const { wrapper } = await mountNotes()
 
-    expect(wrapper.find('.notes-empty').exists()).toBe(true)
+    await openNotesDropdown(wrapper)
+    expect(document.body.querySelector('.notes-dropdown .notes-empty')).not.toBeNull()
     expect(wrapper.find('.editor-empty').exists()).toBe(true)
   })
 })
@@ -430,8 +470,8 @@ describe('FR-4.6 / FLOW-5 未保存确认条', () => {
     const { wrapper, notes } = await mountNotes()
 
     await typeContent(wrapper, '<p>改过的内容</p>')
-    await wrapper.findAll('.note-item')[1].trigger('click')
-    await nextTick()
+    const items = await openNotesDropdown(wrapper)
+    await clickNote(items, 1)
 
     expect(wrapper.find('.unsaved-bar').exists()).toBe(true)
     expect(ElMessageBox.confirm).not.toHaveBeenCalled()
@@ -443,7 +483,8 @@ describe('FR-4.6 / FLOW-5 未保存确认条', () => {
     const { wrapper, notes } = await mountNotes()
 
     await typeContent(wrapper, '<p>改过的内容</p>')
-    await wrapper.findAll('.note-item')[1].trigger('click')
+    const items = await openNotesDropdown(wrapper)
+    await clickNote(items, 1)
     await wrapper.find('.unsaved-save').trigger('click')
     await nextTick()
     await nextTick()
@@ -457,7 +498,8 @@ describe('FR-4.6 / FLOW-5 未保存确认条', () => {
     const { wrapper, notes } = await mountNotes()
 
     await typeContent(wrapper, '<p>改过的内容</p>')
-    await wrapper.findAll('.note-item')[1].trigger('click')
+    const items = await openNotesDropdown(wrapper)
+    await clickNote(items, 1)
     await wrapper.find('.unsaved-discard').trigger('click')
     await nextTick()
 
@@ -470,7 +512,8 @@ describe('FR-4.6 / FLOW-5 未保存确认条', () => {
     const { wrapper, notes } = await mountNotes()
 
     await typeContent(wrapper, '<p>改过的内容</p>')
-    await wrapper.findAll('.note-item')[1].trigger('click')
+    const items = await openNotesDropdown(wrapper)
+    await clickNote(items, 1)
     await wrapper.find('.unsaved-cancel').trigger('click')
     await nextTick()
 
@@ -484,7 +527,9 @@ describe('FR-4.10 删除笔记需要二次确认', () => {
     notesMock.list.mockResolvedValue([note({ id: 'n1' }), note({ id: 'n2' })])
     const { wrapper } = await mountNotes()
 
-    await wrapper.findAll('.note-item')[0].find('.note-item-delete').trigger('click')
+    const items = await openNotesDropdown(wrapper)
+    const del = items[0].querySelector<HTMLElement>('.note-item-delete')
+    del?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await nextTick()
 
     expect(ElMessageBox.confirm).toHaveBeenCalled()

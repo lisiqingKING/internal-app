@@ -7,23 +7,25 @@
       :class="{ collapsed }"
       :style="{ width: collapsed ? '0px' : sidebarWidth + 'px' }"
     >
-      <ChatSidebar
-        v-show="!collapsed"
-        :sessions="sessions"
-        :categories="categories"
-        :current-session-id="currentSessionId"
-        @new-chat="handleNewChat"
-        @new-chat-in-category="handleNewChatInCategory"
-        @switch-session="handleSwitchSession"
-        @delete-session="handleDeleteSession"
-        @pin-session="handlePinSession"
-        @rename-session="handleRenameSession"
-        @create-category="handleCreateCategory"
-        @rename-category="handleRenameCategory"
-        @delete-category="handleDeleteCategory"
-        @move-session="handleMoveSession"
-        @reorder-categories="handleReorderCategories"
-      />
+      <div class="sidebar-inner">
+        <ChatSidebar
+          v-show="!collapsed"
+          :sessions="sessions"
+          :categories="categories"
+          :current-session-id="currentSessionId"
+          @new-chat="handleNewChat"
+          @new-chat-in-category="handleNewChatInCategory"
+          @switch-session="handleSwitchSession"
+          @delete-session="handleDeleteSession"
+          @pin-session="handlePinSession"
+          @rename-session="handleRenameSession"
+          @create-category="handleCreateCategory"
+          @rename-category="handleRenameCategory"
+          @delete-category="handleDeleteCategory"
+          @move-session="handleMoveSession"
+          @reorder-categories="handleReorderCategories"
+        />
+      </div>
       <button class="collapse-btn" @click="collapsed = !collapsed" :title="collapsed ? '展开' : '收起'">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
           <polyline v-if="collapsed" points="9 18 15 12 9 6"/>
@@ -52,7 +54,9 @@
         <!-- 顶部工具栏 -->
         <ChatTopToolbar
           :session-title="currentSessionTitle"
-          @toggle-inspiration="inspirationCollapsed = !inspirationCollapsed"
+          :assistant-active="assistantVisible"
+          :inspiration-active="!inspirationCollapsed"
+          @toggle-inspiration="toggleInspiration"
           @toggle-assistant="toggleAssistant"
         />
 
@@ -84,8 +88,8 @@
       </template>
     </div>
 
-    <!-- 右侧灵感面板 -->
-    <div class="inspiration-panel" :class="{ collapsed: inspirationCollapsed || assistantVisible }">
+    <!-- 右侧灵感面板：与辅助面板互斥，任何时刻只有一个右侧面板展开 -->
+    <div class="inspiration-panel" :class="{ collapsed: inspirationCollapsed }">
       <InspirationPanel
         @use-prompt="(prompt) => { inputText = prompt }"
         @close="inspirationCollapsed = true"
@@ -109,7 +113,7 @@
 
 <script setup lang="ts">
 import { ref, nextTick, onMounted, computed } from 'vue'
-import { ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useChatSessions } from '../composables/chat/useChatSessions'
 import { useChatActions } from '../composables/chat/useChatActions'
 import { useConfigCheck } from '../composables/useConfigCheck'
@@ -206,6 +210,22 @@ const {
   },
 })
 
+/**
+ * 灵感大全与辅助面板互斥：打开一个必须先收起另一个。
+ * 辅助面板因笔记有未保存修改而无法关闭时，灵感面板不展开。
+ */
+function toggleInspiration() {
+  if (!inspirationCollapsed.value) {
+    inspirationCollapsed.value = true
+    return
+  }
+  if (assistantVisible.value && !assistantPanel.requestClose()) {
+    ElMessage.warning('笔记有未保存的修改，已暂停切换 —— 请在辅助面板中保存或放弃')
+    return
+  }
+  inspirationCollapsed.value = false
+}
+
 // 当前会话标题
 const currentSessionTitle = computed(() => {
   const session = sessions.value.find(s => s.convId === currentSessionId.value)
@@ -270,7 +290,11 @@ async function doUsePrompt(prompt: string) {
 
 async function handleSwitchSession(convId: string) {
   if (convId === currentSessionId.value) return
-  guardScopeChange(() => void doSwitchSession(convId))
+  // 切换主会话时关闭辅助面板；笔记有未保存修改时先走行内确认条
+  guardScopeChange(() => {
+    assistantPanel.close()
+    void doSwitchSession(convId)
+  })
 }
 
 async function doSwitchSession(convId: string) {
@@ -376,10 +400,19 @@ async function handleReorderCategories(orderedIds: string[]) {
 .sidebar-wrapper {
   flex-shrink: 0;
   height: 100%;
-  overflow: hidden;
+  /* 不能裁剪：折叠按钮要露在容器外，收起后仍要能点开 */
+  overflow: visible;
   transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   display: flex;
+}
+
+/* 侧栏内容单独裁剪：宽度收缩时内容跟着裁，不外溢 */
+.sidebar-inner {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .sidebar-wrapper.collapsed {
@@ -403,6 +436,12 @@ async function handleReorderCategories(orderedIds: string[]) {
   color: var(--color-text-secondary);
   z-index: 10;
   transition: background 0.15s;
+}
+
+/* 收起后容器宽度为 0，展开按钮改为贴在左边缘（否则整颗按钮都在视口外） */
+.sidebar-wrapper.collapsed .collapse-btn {
+  right: auto;
+  left: 4px;
 }
 
 .collapse-btn:hover {

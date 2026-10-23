@@ -46,10 +46,11 @@ function dragWindow(type: string, clientX: number, clientY = 0) {
 }
 
 describe('FR-1 面板形态与尺寸', () => {
-  it('渲染标题与四个操作入口', () => {
+  it('渲染区域开关与四个面板级操作入口', () => {
     const wrapper = mountPanel()
 
-    expect(wrapper.find('.panel-title').text()).toBe('辅助面板')
+    expect(wrapper.find('.conv-region-btn').text()).toContain('对话')
+    expect(wrapper.find('.notes-region-btn').text()).toContain('笔记')
     expect(wrapper.find('.layout-btn').exists()).toBe(true)
     expect(wrapper.find('.search-btn').exists()).toBe(true)
     expect(wrapper.find('.fullscreen-btn').exists()).toBe(true)
@@ -145,8 +146,8 @@ describe('FR-2 面板内布局', () => {
     dragWindow('mousemove', 700)
     await wrapper.vm.$nextTick()
 
-    // 比例 = 0.6 + 100/1000
-    expect(panel.splitRatio.value).toBeCloseTo(0.7, 5)
+    // 比例 = 0.55 + 100/1000
+    expect(panel.splitRatio.value).toBeCloseTo(0.65, 5)
   })
 
   it('搜索入口切换搜索面板的显示', async () => {
@@ -169,6 +170,98 @@ describe('FR-2 面板内布局', () => {
     expect(wrapper.find('.panel-body .search-overlay').exists()).toBe(true)
     expect(wrapper.find('.panel-header .search-overlay').exists()).toBe(false)
     expect(wrapper.find('.panel-header .close-btn').exists()).toBe(true)
+  })
+})
+
+describe('FR-2.6 / FR-2.7 子区收起与展开', () => {
+  /** 面板处于打开状态（useAssistantPanel 默认关闭） */
+  function mountOpenPanel() {
+    panel.visible.value = true
+    return mountPanel()
+  }
+
+  it('标题栏有会话区与笔记区两个收起开关', () => {
+    const wrapper = mountOpenPanel()
+
+    expect(wrapper.find('.conv-region-btn').exists()).toBe(true)
+    expect(wrapper.find('.notes-region-btn').exists()).toBe(true)
+  })
+
+  it('收起会话区后该区隐藏，笔记区仍在，面板不隐藏', async () => {
+    const wrapper = mountOpenPanel()
+
+    await wrapper.find('.conv-region-btn').trigger('click')
+
+    expect(wrapper.find('.region-main').isVisible()).toBe(false)
+    expect(wrapper.find('.region-side').isVisible()).toBe(true)
+    expect(panel.visible.value).toBe(true)
+  })
+
+  it('收起笔记区后该区隐藏，会话区仍在', async () => {
+    const wrapper = mountOpenPanel()
+
+    await wrapper.find('.notes-region-btn').trigger('click')
+
+    expect(wrapper.find('.region-side').isVisible()).toBe(false)
+    expect(wrapper.find('.region-main').isVisible()).toBe(true)
+    expect(panel.visible.value).toBe(true)
+  })
+
+  it('只剩一个区时隐藏内部分隔条', async () => {
+    const wrapper = mountOpenPanel()
+
+    await wrapper.find('.conv-region-btn').trigger('click')
+
+    expect(wrapper.find('.split-handle').isVisible()).toBe(false)
+  })
+
+  it('两个子区都收起时整个面板隐藏', async () => {
+    const wrapper = mountOpenPanel()
+
+    await wrapper.find('.conv-region-btn').trigger('click')
+    await wrapper.find('.notes-region-btn').trigger('click')
+
+    expect(panel.conversationsCollapsed.value).toBe(true)
+    expect(panel.notesCollapsed.value).toBe(true)
+    expect(panel.visible.value).toBe(false)
+  })
+
+  it('重新打开面板时两个子区都展开', async () => {
+    const wrapper = mountOpenPanel()
+    await wrapper.find('.conv-region-btn').trigger('click')
+    await wrapper.find('.notes-region-btn').trigger('click')
+    expect(panel.visible.value).toBe(false)
+
+    panel.toggle()
+    await wrapper.vm.$nextTick()
+
+    expect(panel.visible.value).toBe(true)
+    expect(panel.conversationsCollapsed.value).toBe(false)
+    expect(panel.notesCollapsed.value).toBe(false)
+    expect(wrapper.find('.region-main').isVisible()).toBe(true)
+    expect(wrapper.find('.region-side').isVisible()).toBe(true)
+  })
+
+  it('收起状态不写入 settings', async () => {
+    const wrapper = mountOpenPanel()
+
+    await wrapper.find('.conv-region-btn').trigger('click')
+
+    expect(setSetting).not.toHaveBeenCalled()
+  })
+
+  it('只剩一个区时，展开的那个区占满面板全部空间', async () => {
+    const wrapper = mountOpenPanel()
+
+    // 两区都在时按分隔比例分
+    expect(wrapper.find('.region-main').attributes('style')).toContain('55%')
+
+    await wrapper.find('.notes-region-btn').trigger('click')
+    expect(wrapper.find('.region-main').attributes('style')).toContain('100%')
+
+    // 重新展开笔记区 → 恢复之前的分栏比例
+    await wrapper.find('.notes-region-btn').trigger('click')
+    expect(wrapper.find('.region-main').attributes('style')).toContain('55%')
   })
 })
 

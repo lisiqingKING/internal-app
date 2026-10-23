@@ -140,7 +140,7 @@ describe('FR-5.3 结果分组与标注', () => {
     await searchIn(wrapper, '索引')
 
     const groups = wrapper.findAll('.group-title').map(n => n.text())
-    expect(groups).toEqual(['📝 笔记 (1)', '💬 对话 (1)'])
+    expect(groups).toEqual(['笔记 (1)', '对话 (1)'])
   })
 
   it('每条结果标注所属主会话标题', async () => {

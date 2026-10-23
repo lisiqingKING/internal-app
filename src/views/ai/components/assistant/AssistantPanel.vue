@@ -11,42 +11,65 @@
     ></div>
 
     <header class="panel-header">
-      <span class="panel-title">辅助面板</span>
+      <!-- 区域开关：两个区可以同时展开（分栏视图），所以是两个独立的开关而非互斥的 Tab -->
+      <div class="region-switches">
+        <button
+          class="region-chip conv-region-btn"
+          :class="{ active: !conversationsCollapsed }"
+          :title="conversationsCollapsed ? '展开辅助会话区' : '收起辅助会话区'"
+          @click="toggleConversations"
+        >
+          <MessageCircle :size="13" />
+          <span class="region-chip-text">对话</span>
+        </button>
+        <button
+          class="region-chip notes-region-btn"
+          :class="{ active: !notesCollapsed }"
+          :title="notesCollapsed ? '展开笔记区' : '收起笔记区'"
+          @click="toggleNotes"
+        >
+          <StickyNote :size="13" />
+          <span class="region-chip-text">笔记</span>
+        </button>
+      </div>
+
       <div class="panel-actions">
-        <button class="panel-btn layout-btn" title="切换布局" @click="toggleLayout">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <line x1="12" y1="3" x2="12" y2="21" />
-          </svg>
+        <!-- 图标表示当前布局：左右分栏=竖分割线，上下分栏=横分割线 -->
+        <button
+          class="panel-btn layout-btn"
+          :title="layout === 'horizontal' ? '切换为上下分栏' : '切换为左右分栏'"
+          @click="toggleLayout"
+        >
+          <Columns2 v-if="layout === 'horizontal'" :size="14" />
+          <Rows2 v-else :size="14" />
         </button>
         <button class="panel-btn search-btn" title="搜索" @click="toggleSearch">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
+          <Search :size="14" />
         </button>
         <button class="panel-btn fullscreen-btn" title="全屏" @click="toggleFullscreen">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-          </svg>
+          <Maximize2 :size="14" />
         </button>
         <button class="panel-btn close-btn" title="关闭" @click="requestClose">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+          <X :size="14" />
         </button>
       </div>
     </header>
 
     <div ref="bodyRef" class="panel-body">
-      <div class="region region-main" :style="mainRegionStyle">
+      <!-- 收起时用 v-show 而不是 v-if：组件保持挂载，输入草稿与滚动位置不丢 -->
+      <div v-show="!conversationsCollapsed" class="region region-main" :style="regionStyles.main">
         <slot name="conversations" />
       </div>
 
-      <div class="split-handle" role="separator" @mousedown="startSplitResize"></div>
+      <!-- 只剩一个区时没有可分割的空间，分隔条一并隐藏 -->
+      <div
+        v-show="!conversationsCollapsed && !notesCollapsed"
+        class="split-handle"
+        role="separator"
+        @mousedown="startSplitResize"
+      ></div>
 
-      <div class="region region-side">
+      <div v-show="!notesCollapsed" class="region region-side" :style="regionStyles.side">
         <slot name="notes" />
       </div>
 
@@ -61,6 +84,7 @@
 <script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { useEventListener } from '@vueuse/core'
+import { Columns2, Maximize2, MessageCircle, Rows2, Search, StickyNote, X } from 'lucide-vue-next'
 import {
   ASSISTANT_PANEL,
   clampPanelWidth,
@@ -76,9 +100,13 @@ const {
   width,
   splitRatio,
   searchOpen,
+  conversationsCollapsed,
+  notesCollapsed,
   toggleLayout,
   toggleFullscreen,
   toggleSearch,
+  toggleConversations,
+  toggleNotes,
   saveWidth,
   requestClose,
 } = panel
@@ -89,9 +117,23 @@ const panelStyle = computed(() => ({
   width: fullscreen.value ? '100%' : `${width.value}px`,
 }))
 
-const mainRegionStyle = computed(() => {
-  const percent = `${(splitRatio.value * 100).toFixed(2)}%`
-  return layout.value === 'horizontal' ? { width: percent } : { height: percent }
+/**
+ * 两个区的尺寸。左右分栏用宽度、上下分栏用高度。
+ * 收起一个区时，剩下的那个占满全部空间（分隔条同时隐藏）。
+ */
+const regionStyles = computed(() => {
+  const size = (percent: string) =>
+    layout.value === 'horizontal' ? { width: percent } : { height: percent }
+
+  if (notesCollapsed.value) {
+    return { main: size('100%'), side: size('100%') }
+  }
+  if (conversationsCollapsed.value) {
+    return { main: size('0%'), side: size('100%') }
+  }
+  const mainPercent = `${(splitRatio.value * 100).toFixed(2)}%`
+  const sidePercent = `${((1 - splitRatio.value) * 100).toFixed(2)}%`
+  return { main: size(mainPercent), side: size(sidePercent) }
 })
 
 // ===== 左边缘：宽度拖拽 =====
@@ -200,21 +242,58 @@ useEventListener(window, 'mouseup', onSplitEnd)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  gap: 8px;
+  height: 36px;
+  padding: 0 10px;
   border-bottom: 1px solid var(--color-divider);
   flex-shrink: 0;
 }
 
-.panel-title {
-  font-size: 14px;
-  font-weight: 600;
+/* 区域开关：两个区可以同时展开，所以是两个独立开关，不是互斥 Tab */
+.region-switches {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.region-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: none;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.region-chip:hover {
+  background: var(--color-surface);
   color: var(--color-text-primary);
+}
+
+/* 高亮 = 该区当前展开 */
+.region-chip.active {
+  background: var(--color-accent-muted);
+  color: var(--color-accent);
+}
+
+.region-chip:focus-visible,
+.panel-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
 }
 
 .panel-actions {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .panel-btn {
@@ -260,32 +339,65 @@ useEventListener(window, 'mouseup', onSplitEnd)
   overflow: hidden;
 }
 
+/* 会话区一档底色，笔记区另一档：色差本身就是分区信号 */
 .region-main {
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+  background: var(--color-bg-secondary);
 }
 
 .region-side {
-  flex: 1;
+  flex: 0 0 auto;
+  background: var(--color-bg-primary);
 }
 
+/* 分隔条：一条常驻的 1px 分界线 + 6px 拖拽热区，hover 时线变强调色 */
 .split-handle {
   flex-shrink: 0;
+  position: relative;
+  background: transparent;
+}
+
+.split-handle::after {
+  content: '';
+  position: absolute;
   background: var(--color-divider);
   transition: background 0.15s;
 }
 
 .layout-horizontal .split-handle {
-  width: 4px;
+  width: 6px;
   cursor: col-resize;
 }
 
+.layout-horizontal .split-handle::after {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
 .layout-vertical .split-handle {
-  height: 4px;
+  height: 6px;
   cursor: row-resize;
+}
+
+.layout-vertical .split-handle::after {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
 }
 
 .split-handle:hover,
 .split-handle:active {
+  background: var(--color-accent-muted);
+}
+
+.split-handle:hover::after,
+.split-handle:active::after {
   background: var(--color-accent);
 }
 

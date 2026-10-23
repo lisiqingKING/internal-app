@@ -118,7 +118,7 @@ import { ref } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import type { ChatSession, Category } from '@/views/ai/types'
 import { PINNED_CATEGORY_ID } from '@/views/ai/types'
-import ChatHeaderRename from './ChatHeaderRename.vue'
+import ChatHeaderRename from '../common/ChatHeaderRename.vue'
 
 defineProps<{
   categories: Category[]

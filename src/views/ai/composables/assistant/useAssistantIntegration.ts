@@ -68,7 +68,8 @@ export function useAssistantIntegration(
       // 挂起必须给出可见反馈：否则「被暂停」和「点击失败」在用户眼里没区别
       ElMessage.warning('笔记有未保存的修改，已暂停切换 —— 请在辅助面板中保存或放弃')
       if (!panel.visible.value) {
-        // 面板关闭时也要让用户看到确认条
+        // 面板关闭时也要让用户看到确认条；打开面板前先收起其他右侧面板
+        options.onOpen?.()
         panel.toggle()
       }
     }
