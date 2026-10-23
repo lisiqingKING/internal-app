@@ -46,7 +46,9 @@
           <div class="favorite-item-url">{{ item.url }}</div>
         </div>
         <div class="favorite-item-time">{{ formatTime(item.createdAt) }}</div>
-        <button class="delete-btn" @click.stop="deleteFavorite(item.url)">×</button>
+        <button class="delete-btn" @click.stop="deleteFavorite(item.url)">
+          <X :size="14" />
+        </button>
       </div>
     </div>
   </div>
@@ -55,6 +57,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessageBox } from 'element-plus'
+import { X } from 'lucide-vue-next'
 import { useFaviconState } from '../composables/useFaviconState'
 import { formatTime } from '../utils/time'
 

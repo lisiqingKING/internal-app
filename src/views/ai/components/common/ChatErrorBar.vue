@@ -3,11 +3,15 @@
     <span class="error-icon">!</span>
     <span class="error-text">{{ message }}</span>
     <button class="retry-btn" @click="emit('retry')">重试</button>
-    <button class="dismiss-btn" @click="emit('dismiss')">×</button>
+    <button class="dismiss-btn" title="关闭" @click="emit('dismiss')">
+      <X :size="14" />
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
+import { X } from 'lucide-vue-next'
+
 defineProps<{
   message: string
 }>()
@@ -71,7 +75,9 @@ const emit = defineEmits<{
   border: none;
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: background 0.2s;
 }

@@ -5,24 +5,35 @@
 
     <!-- 右侧: 辅助面板入口 / 灵感入口 -->
     <div class="toolbar-right">
-      <button class="toolbar-btn assistant-entry-btn" @click="emit('toggle-assistant')" title="辅助面板">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="4" width="18" height="16" rx="2"/>
-          <line x1="13" y1="4" x2="13" y2="20"/>
-        </svg>
+      <button
+        class="toolbar-btn assistant-entry-btn"
+        :class="{ active: assistantActive }"
+        :title="assistantActive ? '关闭辅助面板' : '辅助面板'"
+        @click="emit('toggle-assistant')"
+      >
+        <Bot :size="15" />
       </button>
-      <button class="toolbar-btn inspiration-entry-btn" @click="emit('toggle-inspiration')" title="灵感大全">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-        </svg>
+      <button
+        class="toolbar-btn inspiration-entry-btn"
+        :class="{ active: inspirationActive }"
+        :title="inspirationActive ? '收起灵感大全' : '灵感大全'"
+        @click="emit('toggle-inspiration')"
+      >
+        <Lightbulb :size="15" />
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { Bot, Lightbulb } from 'lucide-vue-next'
+
 defineProps<{
   sessionTitle: string
+  /** 辅助面板是否已打开 */
+  assistantActive?: boolean
+  /** 灵感面板是否已展开 */
+  inspirationActive?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -77,5 +88,17 @@ const emit = defineEmits<{
 .toolbar-btn:hover {
   background: var(--color-surface-hover);
   color: var(--color-text-primary);
+}
+
+/* 面板已打开：入口按钮给出状态提示 */
+.toolbar-btn.active {
+  background: var(--color-accent-muted);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.toolbar-btn.active:hover {
+  background: var(--color-accent-muted);
+  color: var(--color-accent);
 }
 </style>

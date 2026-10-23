@@ -54,7 +54,9 @@
               <div class="history-item-url">{{ item.url }}</div>
             </div>
             <div class="history-item-time">{{ formatTime(item.visitedAt) }}</div>
-            <button class="delete-btn" @click.stop="deleteHistory(item.id)">×</button>
+            <button class="delete-btn" @click.stop="deleteHistory(item.id)">
+              <X :size="14" />
+            </button>
           </div>
         </div>
       </div>
@@ -65,6 +67,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, h } from 'vue'
 import { ElMessageBox } from 'element-plus'
+import { X } from 'lucide-vue-next'
 import ContextMenu from '@imengyu/vue3-context-menu'
 import { useFaviconState } from '../composables/useFaviconState'
 import { formatTime } from '../utils/time'
