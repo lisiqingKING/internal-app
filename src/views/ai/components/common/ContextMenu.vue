@@ -8,27 +8,16 @@
       @click.stop
     >
       <button class="context-menu-item" @click="handleCopy">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="9" y="9" width="13" height="13" rx="2"/>
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-        </svg>
+        <Copy :size="14" />
         {{ copied ? '已复制' : '复制' }}
       </button>
       <button class="context-menu-item" @click="handleSave">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
+        <Import :size="14" />
         保存
       </button>
       <div class="context-menu-divider"></div>
       <button class="context-menu-item danger" @click="handleDelete">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 6h18"/>
-          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-        </svg>
+        <Trash2 :size="14" />
         删除
       </button>
     </div>
@@ -38,6 +27,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { onClickOutside } from '@vueuse/core'
+import { Copy, Import, Trash2 } from 'lucide-vue-next'
 import type { Message } from '@/views/ai/types'
 
 const props = defineProps<{

@@ -10,9 +10,7 @@
       <!-- 置顶分组（固定在顶部） -->
       <div class="group">
         <div class="group-header">
-          <svg class="pin-icon" viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
-            <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
-          </svg>
+          <Pin class="pin-icon" :size="12" fill="currentColor" />
           <span class="group-name">置顶</span>
           <span class="group-count">({{ pinnedSessions.length }})</span>
         </div>
@@ -54,9 +52,7 @@
           @drop="onCategoryDrop(cat.id, $event)"
           @dragend="draggingCategoryId = null; dragOverCategoryId = null"
         >
-          <svg v-if="cat.sessions.length > 0" class="chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
+          <ChevronRight v-if="cat.sessions.length > 0" class="chevron" :size="12" />
           <span v-else class="chevron-placeholder"></span>
           <span class="group-name">{{ cat.name }}</span>
           <span class="group-count">({{ cat.sessions.length }})</span>
@@ -92,9 +88,7 @@
           :class="{ expanded: expandedCategories.has('default') }"
           @click="toggleCategory('default')"
         >
-          <svg class="chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
+          <ChevronRight class="chevron" :size="12" />
           <span class="group-name">默认</span>
           <span class="group-count">({{ defaultSessions.length }})</span>
         </div>
@@ -147,6 +141,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { ChevronRight, Pin } from 'lucide-vue-next'
 import type { ChatSession, Category } from '@/views/ai/types'
 import { PINNED_CATEGORY_ID } from '@/views/ai/types'
 import { sortSessions } from '@/utils/sessionSort'

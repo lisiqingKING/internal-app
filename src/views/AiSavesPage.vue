@@ -26,10 +26,7 @@
           @click="selectFile(file)"
         >
           <div class="file-icon">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-            </svg>
+            <File :size="20" />
           </div>
           <div class="file-info">
             <div class="file-name">{{ file.filename }}</div>
@@ -39,11 +36,7 @@
             </div>
           </div>
           <button class="delete-btn" @click.stop="deleteFile(file)" title="删除">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 6h18"/>
-              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-            </svg>
+            <Trash2 :size="16" />
           </button>
         </div>
       </div>
@@ -60,9 +53,7 @@
           <div class="preview-header">
             <h3>{{ selectedFile.filename }}</h3>
             <button class="open-folder-btn" @click="openSaveDir">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-              </svg>
+              <Folder :size="16" />
               打开文件夹
             </button>
           </div>
@@ -76,6 +67,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessageBox } from 'element-plus'
+import { File, Folder, Trash2 } from 'lucide-vue-next'
 import { useMarkdown } from './ai/composables/useMarkdown'
 
 const { renderMarkdown } = useMarkdown()

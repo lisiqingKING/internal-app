@@ -2,36 +2,22 @@
   <div class="sidebar-header">
     <div class="header-top">
       <button class="new-chat-btn" @click="$emit('new-chat')">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"/>
-          <line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
+        <Plus :size="14" />
         新对话
       </button>
       <button class="menu-btn" @click="showMenu = !showMenu">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="5" r="2"/>
-          <circle cx="12" cy="12" r="2"/>
-          <circle cx="12" cy="19" r="2"/>
-        </svg>
+        <MoreVertical :size="16" />
       </button>
     </div>
 
     <!-- 下拉菜单 -->
     <div v-if="showMenu" class="dropdown-menu">
       <button class="dropdown-item" @click="handleCreateCategory">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-          <line x1="12" y1="11" x2="12" y2="17"/>
-          <line x1="9" y1="14" x2="15" y2="14"/>
-        </svg>
+        <FolderPlus :size="14" />
         新建分组
       </button>
       <button class="dropdown-item" @click="handleSearch">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
+        <Search :size="14" />
         搜索会话
       </button>
     </div>
@@ -51,6 +37,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { FolderPlus, MoreVertical, Plus, Search } from 'lucide-vue-next'
 import ChatHeaderRename from '../common/ChatHeaderRename.vue'
 
 const emit = defineEmits<{

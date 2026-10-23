@@ -19,9 +19,7 @@
               class="search-result-item"
               @click="handleSelect(item.convId)"
             >
-              <svg class="result-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
+              <MessageSquare class="result-icon" :size="14" />
               <span class="result-title">{{ item.title }}</span>
               <span v-if="item.categoryId" class="result-badge">{{ getCategoryName(item.categoryId) }}</span>
             </div>
@@ -35,6 +33,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
+import { MessageSquare } from 'lucide-vue-next'
 import type { ChatSession, Category } from '@/views/ai/types'
 import { sortSessions } from '@/utils/sessionSort'
 

@@ -3,27 +3,18 @@
   <Teleport to="body">
     <div v-if="menuSession" ref="dropdownRef" class="dropdown-menu" :style="menuStyle" @click.stop @pointerdown.capture.stop>
       <button class="menu-item" @click="handlePin(menuSession.convId)">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
-        </svg>
+        <Pin :size="14" />
         {{ menuSession.categoryId === PINNED_CATEGORY_ID ? '取消置顶' : '置顶' }}
       </button>
       <button class="menu-item" @click="handleRename(menuSession)">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-        </svg>
+        <SquarePen :size="14" />
         重命名
       </button>
       <div class="menu-submenu-wrap">
         <button class="menu-item has-submenu" @click="showMoveToSubmenu = true">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
+          <ArrowRight :size="14" />
           移动到
-          <svg class="submenu-arrow" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
+          <ChevronRight class="submenu-arrow" :size="12" />
         </button>
         <div v-if="showMoveToSubmenu" class="dropdown-menu submenu">
           <button class="menu-item" @click="moveSessionTo(null)">
@@ -42,11 +33,7 @@
       </div>
       <div class="menu-divider"></div>
       <button class="menu-item danger" @click="handleDelete(menuSession.convId)">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 6h18"/>
-          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-        </svg>
+        <Trash2 :size="14" />
         删除
       </button>
     </div>
@@ -56,26 +43,16 @@
   <Teleport to="body">
     <div v-if="menuCategory" ref="categoryMenuRef" class="dropdown-menu" :style="categoryMenuStyle" @click.stop @pointerdown.capture.stop>
       <button class="menu-item" @click="startRenameCategory(menuCategory)">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-        </svg>
+        <SquarePen :size="14" />
         重命名
       </button>
       <button class="menu-item" @click="handleNewChatInCategory(menuCategory)">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"/>
-          <line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
+        <Plus :size="14" />
         新建会话
       </button>
       <div class="menu-divider"></div>
       <button class="menu-item danger" @click="showDeleteCategoryModal = true">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 6h18"/>
-          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-        </svg>
+        <Trash2 :size="14" />
         删除
       </button>
     </div>
@@ -116,6 +93,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { onClickOutside } from '@vueuse/core'
+import { ArrowRight, ChevronRight, Pin, Plus, SquarePen, Trash2 } from 'lucide-vue-next'
 import type { ChatSession, Category } from '@/views/ai/types'
 import { PINNED_CATEGORY_ID } from '@/views/ai/types'
 import ChatHeaderRename from '../common/ChatHeaderRename.vue'

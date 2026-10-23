@@ -2,10 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { useEventListener } from '@vueuse/core'
 import { debounce } from 'lodash-es'
-import { ChevronRight, Search } from 'lucide-vue-next'
+import { ChevronRight, Download, Globe, History, Search, Settings, Star } from 'lucide-vue-next'
 import aiSvg from '../assets/icons/ai.svg?raw'
-import historySvg from '../assets/icons/history.svg?raw'
-import downloadsSvg from '../assets/icons/downloads.svg?raw'
 import { useFaviconState } from '../composables/useFaviconState'
 
 document.title = '首页'
@@ -148,18 +146,14 @@ useEventListener(document, 'keydown', (e: KeyboardEvent) => {
                 <path :d="getInternalIconPath(item.url) ?? ''"/>
               </svg>
               <img v-else-if="item.favicon" :src="item.favicon" class="fav-favicon" />
-              <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
-              </svg>
+              <Globe v-else :size="16" />
             </div>
             <span class="search-item-title">{{ item.title }}</span>
             <ChevronRight class="search-item-arrow" :size="16" />
           </button>
           <button v-if="searchResults.length === 0" class="search-item" @click="handleSearch(); clearSearch()">
             <div class="fav-icon">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-              </svg>
+              <Search :size="16" />
             </div>
             <span class="search-item-title">搜索 {{ query }}</span>
             <ChevronRight class="search-item-arrow" :size="16" />
@@ -180,29 +174,25 @@ useEventListener(document, 'keydown', (e: KeyboardEvent) => {
         </button>
         <button class="entry-btn small" @click="openLink('history')">
           <div class="entry-icon">
-            <span v-html="historySvg" />
+            <History :size="32" />
           </div>
           <span class="entry-name">历史记录</span>
         </button>
         <button class="entry-btn small" @click="openLink('favorites')">
           <div class="entry-icon">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
-              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-            </svg>
+            <Star :size="32" fill="currentColor" />
           </div>
           <span class="entry-name">收藏夹</span>
         </button>
         <button class="entry-btn small" @click="openLink('downloads')">
           <div class="entry-icon">
-            <span v-html="downloadsSvg" />
+            <Download :size="32" />
           </div>
           <span class="entry-name">下载管理</span>
         </button>
         <button class="entry-btn small" @click="openLink('settings')">
           <div class="entry-icon">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
-              <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
-            </svg>
+            <Settings :size="32" />
           </div>
           <span class="entry-name">设置</span>
         </button>
@@ -234,9 +224,7 @@ useEventListener(document, 'keydown', (e: KeyboardEvent) => {
                 @error="onFaviconError(item.favicon)"
                 @load="onFaviconLoad(item.favicon)"
               />
-              <svg v-else viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
-              </svg>
+              <Globe v-else :size="20" />
             </div>
             <span class="fav-name">{{ item.title || item.url }}</span>
           </button>
@@ -269,9 +257,7 @@ useEventListener(document, 'keydown', (e: KeyboardEvent) => {
                 @error="onFaviconError(tab.favicon)"
                 @load="onFaviconLoad(tab.favicon)"
               />
-              <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
-              </svg>
+              <Globe v-else :size="16" />
             </div>
             <span class="fav-name">{{ tab.title || tab.url }}</span>
             <ChevronRight class="card-more" :size="16" />

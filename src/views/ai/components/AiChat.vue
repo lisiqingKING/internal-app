@@ -27,10 +27,8 @@
         />
       </div>
       <button class="collapse-btn" @click="collapsed = !collapsed" :title="collapsed ? '展开' : '收起'">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline v-if="collapsed" points="9 18 15 12 9 6"/>
-          <polyline v-else points="15 18 9 12 15 6"/>
-        </svg>
+        <ChevronRight v-if="collapsed" :size="16" />
+        <ChevronLeft v-else :size="16" />
       </button>
     </div>
 
@@ -114,6 +112,7 @@
 <script setup lang="ts">
 import { ref, nextTick, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { useChatSessions } from '../composables/chat/useChatSessions'
 import { useChatActions } from '../composables/chat/useChatActions'
 import { useConfigCheck } from '../composables/useConfigCheck'

@@ -28,9 +28,7 @@
             <span class="theme-desc">自动适配</span>
           </div>
           <div v-if="theme === 'system'" class="check-icon">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-            </svg>
+            <Check :size="14" />
           </div>
         </button>
 
@@ -54,9 +52,7 @@
             <span class="theme-desc">明亮清爽</span>
           </div>
           <div v-if="theme === 'light'" class="check-icon">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-            </svg>
+            <Check :size="14" />
           </div>
         </button>
 
@@ -80,9 +76,7 @@
             <span class="theme-desc">护眼沉浸</span>
           </div>
           <div v-if="theme === 'dark'" class="check-icon">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-            </svg>
+            <Check :size="14" />
           </div>
         </button>
       </div>
@@ -100,9 +94,7 @@
         <!-- 上传卡片 -->
         <button class="skin-card upload-card" @click="pickCustomSkin">
           <div class="skin-preview upload-preview">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-            </svg>
+            <Plus :size="24" />
           </div>
         </button>
 
@@ -135,9 +127,7 @@
         >
           <div class="skin-preview" :style="skin.previewUrl ? { backgroundImage: `url(${skin.previewUrl})` } : {}"></div>
           <span class="delete-btn" @click.stop="deleteCustomSkin(skin.id)">
-            <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
-              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-            </svg>
+            <X :size="10" />
           </span>
         </button>
       </div>
@@ -147,6 +137,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { Check, Plus, X } from 'lucide-vue-next'
 import SettingsToggle from './SettingsToggle.vue'
 
 const settings = window.bridge.getModules(['settings']).settings

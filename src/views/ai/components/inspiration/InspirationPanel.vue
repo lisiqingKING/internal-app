@@ -3,10 +3,7 @@
     <div class="panel-header">
       <span class="panel-title">灵感大全</span>
       <button class="close-btn" @click="emit('close')">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
+        <X :size="14" />
       </button>
     </div>
 
@@ -54,6 +51,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { X } from 'lucide-vue-next'
 
 const emit = defineEmits<{
   'use-prompt': [prompt: string]

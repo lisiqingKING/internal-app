@@ -14,14 +14,10 @@
         </div>
         <div class="setting-actions">
           <button class="icon-btn" @click="selectDownloadDir" title="修改">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
-              <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
-            </svg>
+            <Folder :size="15" />
           </button>
           <button class="icon-btn" @click="openDownloadDir" title="打开">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
-              <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
-            </svg>
+            <FolderOpen :size="15" />
           </button>
         </div>
       </div>
@@ -46,6 +42,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { Folder, FolderOpen } from 'lucide-vue-next'
 import SettingsToggle from './SettingsToggle.vue'
 
 const settings = window.bridge.getModules(['settings']).settings
